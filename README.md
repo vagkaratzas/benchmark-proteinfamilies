@@ -37,10 +37,10 @@ During the `post` `workflow_mode`, general statistics are caluclated regarding t
 
 A configuration file with the following output paths from both `pre` mode of `benchamrk-proteinfamilies` and the `nf-core/proteinfamilies` run must be provided:
 ```
-path_to_db_fasta             = '/path/to/benchmark_proteinfamilies/output/combine/combined_db.fasta'
-path_to_decoys               = '/path/to/benchmark_proteinfamilies/output/identify/decoys.fasta'
-path_to_sampled_metadata     = '/path/to/benchmark_proteinfamilies/output/convert/updated_sampled_metadata.csv'
-path_to_sampled_fasta_folder = '/path/to/benchmark_proteinfamilies/output/convert/sampled_fasta'
+path_to_db_fasta             = '/path/to/benchmark_proteinfamilies/output/pre/families/sampled/combined_db.fasta'
+path_to_decoys               = '/path/to/benchmark_proteinfamilies/output/pre/decoys/decoys.fasta'
+path_to_sampled_metadata     = '/path/to/benchmark_proteinfamilies/output/pre/families/sampled/updated_sampled_metadata.csv'
+path_to_sampled_fasta_folder = '/path/to/benchmark_proteinfamilies/output/pre/families/sampled/sampled_fasta'
 
 path_to_alignments       = '/path/to/proteinfamilies/use-case/output_1/full_msa/filtered/hhsuite_reformat/use_case'
 path_to_mmseqs_tsv       = '/path/to/proteinfamilies/use-case/output_1/mmseqs/initial_clustering/mmseqs_createtsv/use_case.tsv'
