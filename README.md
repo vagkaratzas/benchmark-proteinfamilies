@@ -1,4 +1,4 @@
-# nf-core-proteinfamilies-use-case
+# benchamrk-proteinfamilies
 Sample InterPro families and test how well they can be reconstructed via nf-core/proteinfamilies
 
 ## Protein families database links and versions

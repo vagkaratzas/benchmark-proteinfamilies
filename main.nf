@@ -1,7 +1,7 @@
 include { PRE  } from './workflows/pre'
 include { POST } from './workflows/post'
 
-workflow NFCORE_PROTEINFAMILIES_USE_CASE {
+workflow BENCHMARK_PROTEINFAMILIES {
 
     take:
     workflow_mode // channel: samplesheet read in from --input
@@ -33,7 +33,7 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    NFCORE_PROTEINFAMILIES_USE_CASE (
+    BENCHMARK_PROTEINFAMILIES (
         params.workflow_mode
     )
 
