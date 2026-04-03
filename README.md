@@ -1,7 +1,56 @@
-# nf-core-proteinfamilies-use-case
-Sample InterPro families and test how well they can be reconstructed via nf-core/proteinfamilies
+# benchamrk-proteinfamilies
+Sample InterPro families (`pre` workflow) and test how well they can be reconstructed via nf-core/proteinfamilies (`post` workflow).
 
-## Protein families database links and versions
+## pre-proteinfamilies
+
+During the `pre` `workflow_mode`, the InterPro hierarchy tree is parsed and sampled (different branches)
+for NCBIFAM, PANTHER, HAMAP and PFAM protein families.
+Their member amino acid sequences are compiled in a fasta file, 
+along with unrelated sequences from UniProt-SwissProt.
+
+A configuration file with the following paths must be provided:
+```
+interpo_hierarchy_file = '/path/to/interpro/ParentChildTreeFile.txt'
+id_mapping_file        = '/path/to/interpro/interpro.xml.gz'
+path_to_hamap          = '/path/to/hamap/hamap_alignments'
+path_to_ncbifam        = '/path/to/ncbifam/hmm_PGAP'
+path_to_panther        = '/path/to/panther/msa/PANTHER19.0_fasta'
+path_to_pfam           = '/path/to/pfam/37.2/seed/alignments'
+path_to_swissprot      = '/path/to/uniprot/fasta/uniprot_sprot_parsed.fasta'
+```
+
+Example versions and formats of the databases can be found [here](#protein-families-database-links-and-versions).
+
+An example run command looks like this:
+`nextflow run benchmark-proteinfamilies -c slurm_benchmark.config -profile singularity,slurm --workflow_mode pre -resume`
+
+## nf-core/proteinfamilies
+
+The generated output file named `combined_decoy.fasta` must be given as input to `nf-core/proteinfamilies` by placing its path in the `samplesheet.csv` input file.
+
+An example run command looks like this:
+`nextflow run proteinfamilies -c slurm.config -profile singularity,slurm --input samplesheet.csv --outdir /path/to/proteinfamilies/use-case/output_1 --clustering_tool cluster --cluster_size_threshold 3 --cluster_seq_identity 0.5 --hmmsearch_family_length_threshold 1 --remove_sequence_redundancy false --save_non_redundant_fams_fasta true -with-tower -resume`
+
+## post-proteinfamilies
+
+During the `post` `workflow_mode`, general statistics are caluclated regarding the coverage of the original families that was achieved by the generated families.
+
+A configuration file with the following output paths from both `pre` mode of `benchamrk-proteinfamilies` and the `nf-core/proteinfamilies` run must be provided:
+```
+path_to_db_fasta             = '/path/to/benchmark_proteinfamilies/output/pre/families/sampled/combined_db.fasta'
+path_to_decoys               = '/path/to/benchmark_proteinfamilies/output/pre/decoys/decoys.fasta'
+path_to_sampled_metadata     = '/path/to/benchmark_proteinfamilies/output/pre/families/sampled/updated_sampled_metadata.csv'
+path_to_sampled_fasta_folder = '/path/to/benchmark_proteinfamilies/output/pre/families/sampled/sampled_fasta'
+
+path_to_alignments       = '/path/to/proteinfamilies/use-case/output_1/full_msa/filtered/hhsuite_reformat/use_case'
+path_to_mmseqs_tsv       = '/path/to/proteinfamilies/use-case/output_1/mmseqs/initial_clustering/mmseqs_createtsv/use_case.tsv'
+path_to_generated_fasta  = '/path/to/proteinfamilies/use-case/output_1/fasta/non_redundant_family_filtered/use_case'
+```
+
+An example run command looks like this:
+`nextflow run benchmark-proteinfamilies -c slurm_benchmark.config -profile singularity,slurm --workflow_mode post -resume`
+
+### Protein families database links and versions
 Need to first download and decompress the protein family SEED alignments from the following databases, then update path parameters accordingly.
 ```
 DB  ver link    last_update size

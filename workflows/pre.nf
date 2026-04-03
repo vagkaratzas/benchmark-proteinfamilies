@@ -30,6 +30,7 @@ workflow PRE {
     main:
     ch_hierarchy = Channel.fromPath(interpo_hierarchy_file, checkIfExists: true)
     REMOVE_DUPLICATE_BRANCHES( ch_hierarchy )
+    
     EXTRACT_VALID_INTERPRO_IDS( REMOVE_DUPLICATE_BRANCHES.out.hierarchy )
 
     ch_mapping = Channel.fromPath(id_mapping_file, checkIfExists: true)
