@@ -28,7 +28,7 @@ process SAMPLE_INTERPRO {
         --min_membership ${min_membership} \\
         --num_per_db ${num_per_db} \\
         --logfile log.txt \\
-        --output sampled_metadata.csv         
+        --output sampled_metadata.csv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
