@@ -6,12 +6,22 @@ import gzip
 from pathlib import Path
 from Bio import SeqIO
 
+
 def parse_args():
-    parser = argparse.ArgumentParser(description="Count decoy sequences in MSAs and output stats.")
-    parser.add_argument("--msa_folder", required=True, help="Folder containing MSA files (FASTA format, optionally gzipped).")
-    parser.add_argument("--decoy_fasta", required=True, help="FASTA file containing decoy sequences.")
+    parser = argparse.ArgumentParser(
+        description="Count decoy sequences in MSAs and output stats."
+    )
+    parser.add_argument(
+        "--msa_folder",
+        required=True,
+        help="Folder containing MSA files (FASTA format, optionally gzipped).",
+    )
+    parser.add_argument(
+        "--decoy_fasta", required=True, help="FASTA file containing decoy sequences."
+    )
     parser.add_argument("--output_csv", required=True, help="Output CSV filename.")
     return parser.parse_args()
+
 
 def read_decoy_ids(decoy_fasta):
     decoy_ids = set()
@@ -19,13 +29,14 @@ def read_decoy_ids(decoy_fasta):
         decoy_ids.add(record.id)
     return decoy_ids
 
+
 def process_msa_file(msa_path, decoy_ids):
     total_sequences = 0
     decoy_sequences = 0
 
     is_gzipped = msa_path.suffix == ".gz"
     open_func = gzip.open if is_gzipped else open
-    mode = 'rt'  # read text mode
+    mode = "rt"  # read text mode
 
     with open_func(msa_path, mode) as handle:
         for record in SeqIO.parse(handle, "fasta"):
@@ -52,8 +63,9 @@ def process_msa_file(msa_path, decoy_ids):
         "family": family,
         "decoy_count": decoy_sequences,
         "total_sequences": total_sequences,
-        "decoy_percentage": percentage
+        "decoy_percentage": percentage,
     }
+
 
 def main():
     args = parse_args()
@@ -71,10 +83,14 @@ def main():
 
     # Write output CSV
     with open(args.output_csv, "w", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=["family", "decoy_count", "total_sequences", "decoy_percentage"])
+        writer = csv.DictWriter(
+            csvfile,
+            fieldnames=["family", "decoy_count", "total_sequences", "decoy_percentage"],
+        )
         writer.writeheader()
         for row in results:
             writer.writerow(row)
+
 
 if __name__ == "__main__":
     main()

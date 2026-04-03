@@ -3,10 +3,12 @@
 import argparse
 import pandas as pd
 
+
 def load_metadata(path):
     df = pd.read_csv(path, sep="\t", dtype=str)
     df.set_index("id", inplace=True)
     return df["num_proteins"].to_dict()
+
 
 def main(interpro_path, hamap_path, ncbifam_path, panther_path, pfam_path, output_path):
     # Load metadata into lookup dicts
@@ -33,8 +35,11 @@ def main(interpro_path, hamap_path, ncbifam_path, panther_path, pfam_path, outpu
     filtered_df = pd.DataFrame(valid_rows)
     filtered_df.to_csv(output_path, sep="\t", index=False)
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Filter InterPro entries based on metadata and update protein_count")
+    parser = argparse.ArgumentParser(
+        description="Filter InterPro entries based on metadata and update protein_count"
+    )
     parser.add_argument("interpro", help="Path to InterPro TSV file")
     parser.add_argument("hamap", help="HAMAP metadata TSV")
     parser.add_argument("ncbifam", help="NCBIFAM metadata TSV")

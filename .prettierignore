@@ -1,0 +1,9 @@
+.nextflow*
+work/
+data/
+results/
+.DS_Store
+*.pyc
+.nf-test/
+modules/nf-core/
+subworkflows/nf-core/

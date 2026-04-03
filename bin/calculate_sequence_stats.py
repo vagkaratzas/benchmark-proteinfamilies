@@ -7,12 +7,16 @@ from collections import defaultdict
 from Bio import SeqIO
 from Bio import AlignIO
 
+
 def load_fasta_names(fasta_path):
     names = set()
-    with (gzip.open(fasta_path, "rt") if fasta_path.endswith(".gz") else open(fasta_path)) as handle:
+    with (
+        gzip.open(fasta_path, "rt") if fasta_path.endswith(".gz") else open(fasta_path)
+    ) as handle:
         for record in SeqIO.parse(handle, "fasta"):
             names.add(record.id.split("/", 1)[0])
     return names
+
 
 def parse_alignment_folder(folder_path, original_set, decoy_set, file_type):
     original_count = defaultdict(int)
@@ -62,12 +66,14 @@ def parse_alignment_folder(folder_path, original_set, decoy_set, file_type):
 
     return original_count, decoy_count, unknown_proteins
 
+
 def write_counts_file(counts_dict, output_path, label):
     sorted_counts = sorted(counts_dict.items(), key=lambda x: -x[1])
     with open(output_path, "w") as f:
         f.write(f"{label} Proteins (sorted by count):\n")
         for name, count in sorted_counts:
             f.write(f"{name}\t{count}\n")
+
 
 def write_summary(original_count, decoy_count, unknown_proteins, summary_file):
     unique_original_found = sum(1 for count in original_count.values() if count > 0)
@@ -88,6 +94,7 @@ def write_summary(original_count, decoy_count, unknown_proteins, summary_file):
     with open(summary_file, "w") as f:
         f.write(summary)
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Parse alignment files and count matches for original and decoy proteins."
@@ -96,8 +103,9 @@ def main():
     parser.add_argument("--decoy_fasta", help="Path to the decoy FASTA file")
     parser.add_argument("--alignment_folder", help="Folder containing alignment files")
     parser.add_argument(
-        "--alignment_type", choices=["sto", "aln", "fas.gz"],
-        help="Type of alignment files: 'sto', 'aln', or 'fas.gz'"
+        "--alignment_type",
+        choices=["sto", "aln", "fas.gz"],
+        help="Type of alignment files: 'sto', 'aln', or 'fas.gz'",
     )
 
     args = parser.parse_args()
@@ -129,6 +137,7 @@ def main():
 
     print(f"Found {len(unknown_proteins)} unknown sequences. Written to {unknown_file}")
     print("Done.")
+
 
 if __name__ == "__main__":
     main()

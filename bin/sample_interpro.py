@@ -2,10 +2,9 @@
 
 import argparse
 import pandas as pd
-import random
 import re
-from collections import defaultdict
 from pathlib import Path
+
 
 class Node:
     def __init__(self, ipr_id, label=None):
@@ -113,12 +112,16 @@ def sample_entries(df, tree_nodes, num_per_db, logfile):
                 to_remove = descendants | ancestors | siblings | {ipr}
                 excluded |= to_remove
 
-                log_selection(logfile, ipr, {
-                    "descendants": descendants,
-                    "ancestors": ancestors,
-                    "siblings": siblings,
-                    "self": {ipr},
-                })
+                log_selection(
+                    logfile,
+                    ipr,
+                    {
+                        "descendants": descendants,
+                        "ancestors": ancestors,
+                        "siblings": siblings,
+                        "self": {ipr},
+                    },
+                )
 
     sampled_df = pd.concat([pd.DataFrame(rows) for rows in samples_per_db.values()])
     return sampled_df

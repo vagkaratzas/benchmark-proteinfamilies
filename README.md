@@ -1,14 +1,16 @@
 # benchamrk-proteinfamilies
+
 Sample InterPro families (`pre` workflow) and test how well they can be reconstructed via nf-core/proteinfamilies (`post` workflow).
 
 ## pre-proteinfamilies
 
 During the `pre` `workflow_mode`, the InterPro hierarchy tree is parsed and sampled (different branches)
 for NCBIFAM, PANTHER, HAMAP and PFAM protein families.
-Their member amino acid sequences are compiled in a fasta file, 
+Their member amino acid sequences are compiled in a fasta file,
 along with unrelated sequences from UniProt-SwissProt.
 
 A configuration file with the following paths must be provided:
+
 ```
 interpo_hierarchy_file = '/path/to/interpro/ParentChildTreeFile.txt'
 id_mapping_file        = '/path/to/interpro/interpro.xml.gz'
@@ -36,6 +38,7 @@ An example run command looks like this:
 During the `post` `workflow_mode`, general statistics are caluclated regarding the coverage of the original families that was achieved by the generated families.
 
 A configuration file with the following output paths from both `pre` mode of `benchamrk-proteinfamilies` and the `nf-core/proteinfamilies` run must be provided:
+
 ```
 path_to_db_fasta             = '/path/to/benchmark_proteinfamilies/output/pre/families/sampled/combined_db.fasta'
 path_to_decoys               = '/path/to/benchmark_proteinfamilies/output/pre/decoys/decoys.fasta'
@@ -51,7 +54,9 @@ An example run command looks like this:
 `nextflow run benchmark-proteinfamilies -c slurm_benchmark.config -profile singularity,slurm --workflow_mode post -resume`
 
 ### Protein families database links and versions
+
 Need to first download and decompress the protein family SEED alignments from the following databases, then update path parameters accordingly.
+
 ```
 DB  ver link    last_update size
 NCBIFAM 17.0    https://ftp.ncbi.nlm.nih.gov/hmm/current/hmm_PGAP.SEED.tgz  2024-12-16 10:56    67M
@@ -62,7 +67,31 @@ PFAM    37.2    https://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam37.2/Pfam-
 
 NCBIFAM has two types of families; TIGRxxxxx and NFxxxxxx.
 
+## Linting
+
+This repository uses [pre-commit](https://pre-commit.com/) to enforce consistent formatting. Install it once after cloning:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+Hooks run automatically on `git commit`. To run them manually against all files:
+
+```bash
+pre-commit run --all-files
+```
+
+The following hooks are configured:
+
+- **prettier** — formats Nextflow, YAML, and Markdown files
+- **trailing-whitespace / end-of-file-fixer** — general whitespace hygiene
+- **ruff** — Python linting and formatting (`bin/` scripts)
+
+## Example file formats
+
 Example NF file: `NF000005.4.SEED`
+
 ```
 >AAG34545.1/3-119
 DQATPNLPSRDFDSTAAFYERLGFGIVFRDAGWMILQRGDLKLEFFAHPGLDPLASWFSCCLRLDDLAEFYRQCKSVGIQ
@@ -82,6 +111,7 @@ EKGSGYPRLHPPEEQDGGGRMGALIDLDGTLLRLIQN
 ```
 
 Example TIGR file: `TIGR01051.1.SEED`
+
 ```
 # STOCKHOLM 1.0
 SP|O83409|TOP1_TREPA/19-624             LVIVESPAKAQTIEKYLG.TQYVVRASMGHVIDLPKS.............................RLAIDIEHD..FQPEYITVRGRAQCLKELRTLSKQSLQVFLASDRDREGEAIAYHLAQSIQAYCDTP....IKRIVFNEITPHAIRAAIGHPVPIDTAKVNAQKARRVLDRLVGYHLCPLLWHKVKNGLSAGRVQSVALRLICEREVEVKRFVPEEYWTVEG.TFEKD......KKSFSALLILIQGKKAVFKS...................KQEATSAIGLFSQSEARVSQIRSFEKNVRPKQPFTTSTLQQCAANRLGFTSRKTMQVAQQLYEGVSLG.THRVGLITYMRTDSVRVSEAAVKEVRAWIATHFSDALPGTPN...RYAAKGK.SQDAHEAIRPT.YVAHTPERIKAHLTR...DQIRLYTLIWERFVASQMTDARVRSLTFEITA..G........PAVFSATETQVIEQGFYRVLKMLSPKDL......SKAVLPPTKEGEVVALHNVQSVQHFTQGPVRYTDASIVKMLEEKGIGRPSTYAPTISVLLDRYYVTRIQKQLMPTPLGKVISDLLTTYFHDVVDVSFTARMESKLDEVEEDKIKWNCVIADFYPAFSEKVST......VMKD..LNSMRGVFD...EKTDVVCSQCGD.TMVKKLGRFG..FFLACG.....KFP...ECRNTQPVP
@@ -98,6 +128,7 @@ SP|P47368|TOP1_MYCGE/5-653              LVVIESPNKVKTLKQYLPSDEFEIVSTVGHIREMVYKNFG
 ```
 
 Example PANTHER file: `PTHR10059.fasta`
+
 ```
 >BOVIN|Ensembl=ENSBTAG00000001570|UniProtKB=P11052
 MWLQNLLLLGTVVCSFSAPTRPPNTATRPWQHVDAIKEALSLLNHSSDTDAVMNDTEVVS
@@ -158,6 +189,7 @@ KSFKKNLKDFLFEIPFDCWSQPRSKAGLPARS
 ```
 
 Example HAMAP file: `MF_00264.msa`
+
 ```
 >A0A0S3QRG7_THET7 L=1  103.017  11200 pos.        1 -     230 [   21,    -4] T|A0A0S3QRG7|A0A0S3QRG7_THET7
 --------------------MSVVELREIQALNTLVFETLGQPEKEREFKFKTLKRWGLD
@@ -218,12 +250,13 @@ IANEVDKILGMLD---
 PFAM requires some preprocessing to break the single STOCKHOLM formatted SEED file into multiple ones.
 
 Example PFAM file: `PF00093.sto`
+
 ```
 # STOCKHOLM 1.0
 #=GF ID   VWC
 #=GF AC   PF00093.24
 #=GF DE   von Willebrand factor type C domain
-#=GF PI   vwc; 
+#=GF PI   vwc;
 #=GF AU   Sonnhammer ELL;0000-0002-9015-5588
 #=GF SE   Published_alignment
 #=GF GA   27.60 27.60;
@@ -237,8 +270,8 @@ Example PFAM file: `PF00093.sto`
 #=GF RN   [1]
 #=GF RM   7687569
 #=GF RT   The modular architecture of a new family of growth regulators
-#=GF RT   related to connective tissue growth factor. 
-#=GF RA   Bork P; 
+#=GF RT   related to connective tissue growth factor.
+#=GF RA   Bork P;
 #=GF RL   FEBS Lett 1993;327:125-130.
 #=GF DR   INTERPRO; IPR001007;
 #=GF DR   SO; 0000417; polypeptide_domain;

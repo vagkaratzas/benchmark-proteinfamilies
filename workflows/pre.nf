@@ -30,7 +30,7 @@ workflow PRE {
     main:
     ch_hierarchy = Channel.fromPath(interpo_hierarchy_file, checkIfExists: true)
     REMOVE_DUPLICATE_BRANCHES( ch_hierarchy )
-    
+
     EXTRACT_VALID_INTERPRO_IDS( REMOVE_DUPLICATE_BRANCHES.out.hierarchy )
 
     ch_mapping = Channel.fromPath(id_mapping_file, checkIfExists: true)
@@ -62,7 +62,7 @@ workflow PRE {
     )
 
     COMBINE_DB_FASTA( CONVERT_SAMPLED_TO_FASTA.out.fasta_folder )
-    
+
     ch_fasta = COMBINE_DB_FASTA.out.fasta
         .map { file ->
             [[id: 'combined_db_fasta'], file]

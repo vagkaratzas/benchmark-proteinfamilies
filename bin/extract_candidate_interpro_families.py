@@ -4,6 +4,7 @@ import argparse
 import gzip
 import xml.etree.ElementTree as ET
 
+
 def parse_interpro(interpro_xml_gz, valid_ids_file, output_tsv):
     valid_ids = set()
     with open(valid_ids_file) as f:
@@ -37,13 +38,20 @@ def parse_interpro(interpro_xml_gz, valid_ids_file, output_tsv):
                                 if db in allowed_dbs:
                                     dbkey = member.attrib.get("dbkey", "")
                                     name = member.attrib.get("name", "")
-                                    out.write(f"{interpro_id}\t{protein_count}\t{short_name}\t{db}\t{dbkey}\t{name}\n")
+                                    out.write(
+                                        f"{interpro_id}\t{protein_count}\t{short_name}\t{db}\t{dbkey}\t{name}\n"
+                                    )
                     root.clear()  # Free memory
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Parse InterPro XML and extract metadata.")
+    parser = argparse.ArgumentParser(
+        description="Parse InterPro XML and extract metadata."
+    )
     parser.add_argument("interpro_xml_gz", help="Path to interpro XML .gz file")
-    parser.add_argument("valid_ids_file", help="Text file with valid interpro IDs (one per line)")
+    parser.add_argument(
+        "valid_ids_file", help="Text file with valid interpro IDs (one per line)"
+    )
     parser.add_argument("output_tsv", help="Path to output TSV file")
 
     args = parser.parse_args()

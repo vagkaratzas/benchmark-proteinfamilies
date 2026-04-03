@@ -5,6 +5,7 @@ import csv
 import argparse
 from Bio import SeqIO
 
+
 def load_metadata(metadata_file):
     db_to_ids = {"pfam": set(), "hamap": set(), "panther": set(), "ncbifam": set()}
     with open(metadata_file, "r") as f:
@@ -16,6 +17,7 @@ def load_metadata(metadata_file):
                 db_to_ids[db].add(dbkey)
     return db_to_ids
 
+
 def load_original_hits(original_counts_file):
     found_proteins = set()
     with open(original_counts_file, "r") as f:
@@ -26,6 +28,7 @@ def load_original_hits(original_counts_file):
                     found_proteins.add(parts[0])
     return found_proteins
 
+
 def extract_protein_ids_from_alignment(file_path):
     protein_ids = set()
     try:
@@ -35,6 +38,7 @@ def extract_protein_ids_from_alignment(file_path):
     except Exception as e:
         print(f"Warning: Couldn't parse {file_path}: {e}")
     return protein_ids
+
 
 def compute_match_stats(db_to_ids, msa_paths, found_proteins, output_file):
     with open(output_file, "w") as out:
@@ -59,13 +63,27 @@ def compute_match_stats(db_to_ids, msa_paths, found_proteins, output_file):
             percentage = (matched_count / total_count) * 100 if total_count else 0
             out.write(f"{db}\t{percentage:.1f}\t{matched_count}\t{total_count}\n")
 
+
 def parse_args():
-    parser = argparse.ArgumentParser(description="Compute MSA match statistics from metadata and original hit counts.")
-    parser.add_argument("--metadata", required=True, help="Path to the metadata CSV file")
-    parser.add_argument("--original_counts", required=True, help="Path to the original counts file")
-    parser.add_argument("--msa_root", required=True, help="Root directory containing pfam, panther, hamap, ncbifam subfolders")
-    parser.add_argument("--output", required=True, help="Output file path to write results")
+    parser = argparse.ArgumentParser(
+        description="Compute MSA match statistics from metadata and original hit counts."
+    )
+    parser.add_argument(
+        "--metadata", required=True, help="Path to the metadata CSV file"
+    )
+    parser.add_argument(
+        "--original_counts", required=True, help="Path to the original counts file"
+    )
+    parser.add_argument(
+        "--msa_root",
+        required=True,
+        help="Root directory containing pfam, panther, hamap, ncbifam subfolders",
+    )
+    parser.add_argument(
+        "--output", required=True, help="Output file path to write results"
+    )
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
@@ -74,7 +92,7 @@ def main():
         "pfam": os.path.join(args.msa_root, "pfam"),
         "panther": os.path.join(args.msa_root, "panther"),
         "ncbifam": os.path.join(args.msa_root, "ncbifam"),
-        "hamap": os.path.join(args.msa_root, "hamap")
+        "hamap": os.path.join(args.msa_root, "hamap"),
     }
 
     print("Loading metadata...")
@@ -86,6 +104,7 @@ def main():
     print("Computing match statistics...")
     compute_match_stats(db_to_ids, msa_paths, found_proteins, args.output)
     print(f"Results written to: {args.output}")
+
 
 if __name__ == "__main__":
     main()

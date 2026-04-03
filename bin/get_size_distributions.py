@@ -3,12 +3,24 @@
 import pandas as pd
 import argparse
 
+
 def parse_args():
-    parser = argparse.ArgumentParser(description="Analyze matched and unmatched family size distributions based on similarity results.")
-    parser.add_argument("--metadata_file", required=True, help="Path to metadata TSV file (with protein_count, dbkey, etc.).")
-    parser.add_argument("--similarity_file", required=True, help="Path to similarity results TSV file.")
-    parser.add_argument("--output_file", required=True, help="Path to output report file (text format).")
+    parser = argparse.ArgumentParser(
+        description="Analyze matched and unmatched family size distributions based on similarity results."
+    )
+    parser.add_argument(
+        "--metadata_file",
+        required=True,
+        help="Path to metadata TSV file (with protein_count, dbkey, etc.).",
+    )
+    parser.add_argument(
+        "--similarity_file", required=True, help="Path to similarity results TSV file."
+    )
+    parser.add_argument(
+        "--output_file", required=True, help="Path to output report file (text format)."
+    )
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
@@ -41,6 +53,7 @@ def main():
     # Optionally save splits too if you want
     matched_df.to_csv("matched_metadata.tsv", sep="\t", index=False)
     unmatched_df.to_csv("unmatched_metadata.tsv", sep="\t", index=False)
+
 
 if __name__ == "__main__":
     main()
