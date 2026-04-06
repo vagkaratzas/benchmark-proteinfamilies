@@ -12,6 +12,63 @@ The benchmark-proteinfamilies pipeline currently has a `pre` mode (sample InterP
 
 ---
 
+## Phase 0: Reference Database Acquisition
+
+Currently the pipeline requires users to manually download and organize 7 separate databases before running PRE mode. This phase automates that acquisition so a user only needs to point to a cache directory (or let the pipeline download everything fresh).
+
+### Design
+
+- All 7 path params become optional (`null` by default). If a param is `null`, the corresponding download module runs and its output path is used downstream.
+- If a local path is supplied, it is used directly (HPC clusters with no internet access still work).
+- Downloaded files are stored under `params.db_cache_dir` in version-stamped subdirectories so re-runs skip re-downloading.
+- Version params (`interpro_release`, `pfam_version`, `panther_version`) pin which release to fetch.
+
+### 0.1 Update `nextflow.config` params
+
+- [ ] Make all 7 existing DB path params optional: default to `null`
+  - `interpro_hierarchy_file`, `id_mapping_file`, `path_to_hamap`, `path_to_ncbifam`, `path_to_panther`, `path_to_pfam`, `path_to_swissprot`
+- [ ] Add `db_cache_dir = "${projectDir}/data/reference"` — root directory for all downloaded databases
+- [ ] Add version params:
+  - `interpro_release = "current"` — resolves to latest InterPro release on EBI FTP
+  - `pfam_version = "37.2"`
+  - `panther_version = "19.0"`
+
+### 0.2 Create per-database download modules
+
+Each module: checks if the target already exists in `db_cache_dir` before downloading (idempotent).
+
+- [ ] `modules/local/download_interpro/main.nf` + `environment.yml`
+  - Downloads `ParentChildTreeFile.txt` and `interpro.xml.gz` from `https://ftp.ebi.ac.uk/pub/databases/interpro/{release}/`
+  - Outputs: `interpro_hierarchy_file`, `id_mapping_file`
+- [ ] `modules/local/download_hamap/main.nf` + `environment.yml`
+  - Downloads HAMAP alignment archive from ExPASy FTP and extracts to `hamap_alignments/`
+  - Output: `path_to_hamap` directory
+- [ ] `modules/local/download_ncbifam/main.nf` + `environment.yml`
+  - Downloads NCBI PGAP HMM library from `https://ftp.ncbi.nlm.nih.gov/hmm/current/`
+  - Output: `path_to_ncbifam` directory
+- [ ] `modules/local/download_panther/main.nf` + `environment.yml`
+  - Downloads PANTHER MSA archive for `panther_version` from PANTHER FTP
+  - **Large dataset** (tens of GB): emit a size warning in the log
+  - Output: `path_to_panther` directory
+- [ ] `modules/local/download_pfam/main.nf` + `environment.yml`
+  - Downloads PFAM seed alignments for `pfam_version` from EBI FTP
+  - Output: `path_to_pfam` directory
+- [ ] `modules/local/download_swissprot/main.nf` + `environment.yml`
+  - Downloads `uniprot_sprot.fasta.gz` from UniProt FTP and decompresses
+  - Output: `path_to_swissprot` FASTA file
+
+### 0.3 Wire conditional downloads in `workflows/pre.nf`
+
+- [ ] For each database param: `if (params.X == null) { DOWNLOAD_X(...) | set { X_path } } else { X_path = Channel.value(file(params.X)) }`
+- [ ] Pass resolved paths (downloaded or user-supplied) into all downstream modules unchanged — no other module changes needed
+- [ ] Add a preflight check: validate that each resolved path exists and is non-empty; fail early with a descriptive error if a download failed or a user-supplied path is wrong
+
+### 0.4 Update `conf/modules.config`
+
+- [ ] Add `publishDir` entries for all 6 download modules pointing to `${params.db_cache_dir}/{db_name}/{version}/`
+
+---
+
 ## Phase 1: POST Samplesheet Infrastructure
 
 ### 1.1 Define POST samplesheet format
@@ -218,6 +275,8 @@ Currently O(U × O) full-scan, re-parsing original files for every use-case file
 ## Dependency Graph
 
 ```
+Phase 0 (DB Downloads) ── independent, can be done in parallel with Phases 1-6
+
 Phase 1 (Samplesheet + Comparative) ──┐
                                         ├── Phase 3 (Optional Investigate) ──┐
 Phase 2 (Dynamic DBs) ─────────────────┘                                     ├── Phase 7 (Docs)
@@ -226,7 +285,7 @@ Phase 4 (Format Detection) ──┐                                            
                               ├────────────────────────────────────────────────┘
 Phase 5 (Performance) ───────┘
 
-Phase 6 (PRE Cleanup) ── independent, can be done in parallel with Phases 1-5
+Phase 6 (PRE Cleanup) ── independent, can be done in parallel with Phases 0-5
 ```
 
 ---
@@ -237,6 +296,18 @@ Phase 6 (PRE Cleanup) ── independent, can be done in parallel with Phases 1-
 
 | File                                                    | Purpose                                               |
 | ------------------------------------------------------- | ----------------------------------------------------- |
+| `modules/local/download_interpro/main.nf`               | Download InterPro hierarchy + XML mapping             |
+| `modules/local/download_interpro/environment.yml`       | Environment for InterPro download                     |
+| `modules/local/download_hamap/main.nf`                  | Download HAMAP alignments                             |
+| `modules/local/download_hamap/environment.yml`          | Environment for HAMAP download                        |
+| `modules/local/download_ncbifam/main.nf`                | Download NCBI PGAP HMM library                        |
+| `modules/local/download_ncbifam/environment.yml`        | Environment for NCBIFAM download                      |
+| `modules/local/download_panther/main.nf`                | Download PANTHER MSA files                            |
+| `modules/local/download_panther/environment.yml`        | Environment for PANTHER download                      |
+| `modules/local/download_pfam/main.nf`                   | Download PFAM seed alignments                         |
+| `modules/local/download_pfam/environment.yml`           | Environment for PFAM download                         |
+| `modules/local/download_swissprot/main.nf`              | Download UniProt/SwissProt FASTA                      |
+| `modules/local/download_swissprot/environment.yml`      | Environment for SwissProt download                    |
 | `assets/schema_post_samplesheet.json`                   | POST samplesheet JSON schema                          |
 | `subworkflows/local/validate_post_samplesheet/main.nf`  | Samplesheet parsing subworkflow                       |
 | `modules/local/extract_db_metadata/main.nf`             | Unified metadata extraction module                    |
@@ -254,23 +325,23 @@ Phase 6 (PRE Cleanup) ── independent, can be done in parallel with Phases 1-
 
 ### Key Files to Modify
 
-| File                                     | Change                                                                                         |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `nextflow.config`                        | Remove old POST params, add `post_samplesheet`, rename PRE-output params, update description   |
-| `main.nf`                                | Update POST call signature                                                                     |
-| `workflows/post.nf`                      | Samplesheet-driven input, per-sample channel ops, conditional modules, comparative aggregation |
-| `workflows/pre.nf`                       | Unified EXTRACT_DB_METADATA, merged PREPARE_BENCHMARK_FASTA, `.faa` output                     |
-| `bin/calculate_jaccard_similarity.py`    | Dynamic DBs, inverted index, multiprocessing                                                   |
-| `bin/calculate_sequence_stats.py`        | Auto-detect format, parallel parsing                                                           |
-| `bin/investigate_matched_originals.py`   | Optional inputs, multi-format, index optimization                                              |
-| `bin/calculate_db_sequence_coverage.py`  | Dynamic DB layers                                                                              |
-| `bin/calculate_db_family_coverage.py`    | Dynamic DB layers                                                                              |
-| `bin/produce_db_stacked_barplot.py`      | Dynamic DBs + colors                                                                           |
-| `bin/combine_decoy_fasta.py`             | `.faa` extension                                                                               |
-| `bin/filter_valid_candidate_families.py` | Accept variable metadata files                                                                 |
-| `bin/sample_interpro.py`                 | Pre-computed tree caches                                                                       |
-| `conf/modules.config`                    | Module name updates, per-sample output paths, new module entries                               |
-| `conf/base.config`                       | Resource label updates for parallelized modules                                                |
+| File                                     | Change                                                                                                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `nextflow.config`                        | Make DB path params optional, add `db_cache_dir` + version params, remove old POST params, add `post_samplesheet`, rename PRE-output params      |
+| `workflows/pre.nf`                       | Conditional download wiring for all 7 DB inputs (Phase 0) + unified EXTRACT_DB_METADATA, merged PREPARE_BENCHMARK_FASTA, `.faa` output (Phase 6) |
+| `main.nf`                                | Update POST call signature                                                                                                                       |
+| `workflows/post.nf`                      | Samplesheet-driven input, per-sample channel ops, conditional modules, comparative aggregation                                                   |
+| `bin/calculate_jaccard_similarity.py`    | Dynamic DBs, inverted index, multiprocessing                                                                                                     |
+| `bin/calculate_sequence_stats.py`        | Auto-detect format, parallel parsing                                                                                                             |
+| `bin/investigate_matched_originals.py`   | Optional inputs, multi-format, index optimization                                                                                                |
+| `bin/calculate_db_sequence_coverage.py`  | Dynamic DB layers                                                                                                                                |
+| `bin/calculate_db_family_coverage.py`    | Dynamic DB layers                                                                                                                                |
+| `bin/produce_db_stacked_barplot.py`      | Dynamic DBs + colors                                                                                                                             |
+| `bin/combine_decoy_fasta.py`             | `.faa` extension                                                                                                                                 |
+| `bin/filter_valid_candidate_families.py` | Accept variable metadata files                                                                                                                   |
+| `bin/sample_interpro.py`                 | Pre-computed tree caches                                                                                                                         |
+| `conf/modules.config`                    | Module name updates, per-sample output paths, new module entries                                                                                 |
+| `conf/base.config`                       | Resource label updates for parallelized modules                                                                                                  |
 
 ### Files to Delete
 

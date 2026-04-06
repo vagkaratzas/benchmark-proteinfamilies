@@ -12,7 +12,10 @@ Requires Nextflow >= 24.04.2. A container/conda profile is required alongside an
 
 ```bash
 # PRE workflow: sample InterPro families and prepare benchmark dataset
+# slurm
 nextflow run benchmark-proteinfamilies -c slurm_benchmark.config -profile singularity,slurm --workflow_mode pre -resume
+# local
+nextflow run benchmark-proteinfamilies --outdir /home/vangelis/Desktop/Projects/benchmark-proteinfamilies/output/pre -c conf/local_pre.config -profile singularity,local --workflow_mode pre -resume
 
 # POST workflow: analyze reconstruction results
 nextflow run benchmark-proteinfamilies -c slurm_benchmark.config -profile singularity,slurm --workflow_mode post -resume
