@@ -12,13 +12,13 @@ along with unrelated sequences from UniProt-SwissProt.
 A configuration file with the following paths must be provided:
 
 ```
-interpo_hierarchy_file = '/path/to/interpro/ParentChildTreeFile.txt'
-id_mapping_file        = '/path/to/interpro/interpro.xml.gz'
-path_to_hamap          = '/path/to/hamap/hamap_alignments'
-path_to_ncbifam        = '/path/to/ncbifam/hmm_PGAP'
-path_to_panther        = '/path/to/panther/msa/PANTHER19.0_fasta'
-path_to_pfam           = '/path/to/pfam/37.2/seed/alignments'
-path_to_swissprot      = '/path/to/uniprot/fasta/uniprot_sprot_parsed.fasta'
+interpro_hierarchy_file = '/path/to/interpro/ParentChildTreeFile.txt'
+id_mapping_file         = '/path/to/interpro/interpro.xml.gz'
+path_to_hamap           = '/path/to/hamap/hamap_alignments'
+path_to_ncbifam         = '/path/to/ncbifam/hmm_PGAP'
+path_to_panther         = '/path/to/panther/msa/PANTHER19.0_fasta'
+path_to_pfam            = '/path/to/pfam/37.2/seed/alignments'
+path_to_swissprot       = '/path/to/uniprot/fasta/uniprot_sprot_parsed.fasta'
 ```
 
 Example versions and formats of the databases can be found [here](#protein-families-database-links-and-versions).

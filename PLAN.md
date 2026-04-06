@@ -359,3 +359,194 @@ Phase 6 (PRE Cleanup) ── independent, can be done in parallel with Phases 0-
 | `modules/local/combine_db_fasta/`         | `modules/local/prepare_benchmark_fasta/` |
 | `bin/convert_sampled_to_fasta.py`         | `bin/prepare_benchmark_fasta.py`         |
 | `bin/combine_db_fasta.py`                 | `bin/prepare_benchmark_fasta.py`         |
+
+---
+
+## Phase 9: Nextflow Best-Practice Improvements
+
+These items are infrastructure and code-quality improvements that should be implemented in parallel with the functional phases above. Each item notes the earliest phase it should land alongside.
+
+### 9.1 Parameter validation with `nf-schema` (alongside Phase 0 + Phase 1)
+
+- [ ] Add `nextflow_schema.json` at the repository root — describes every `params.*` entry with type, description, required flag, and allowed values. Required for `nf-schema` plugin validation at pipeline start.
+- [ ] Add the `nf-schema` plugin declaration to `nextflow.config`:
+  ```
+  plugins { id 'nf-schema@2.x' }
+  ```
+  and call `validateParameters()` inside the `workflow {}` block in `main.nf`.
+- [ ] Replace the ad-hoc `'null'` string defaults (e.g. `path_to_alignments = 'null'`) with true `null` defaults throughout `nextflow.config`; `nf-schema` coerces and validates types correctly when defaults are the right type. **(Phase 1.3 param rename is the natural moment to do this.)**
+- [ ] Add `assets/schema_pre_samplesheet.json` alongside the existing `schema_post_samplesheet.json` plan — even though PRE currently uses positional params rather than a samplesheet, having the schema file documents the expected param shapes and makes future samplesheet adoption easier.
+
+### 9.2 `stub` blocks in every local module (alongside Phase 0 + Phase 6)
+
+The nf-core DIAMOND modules already have `stub` blocks. None of the 21 local modules do. Stub blocks enable `nextflow run … -stub` for rapid offline DAG validation without executing any tools.
+
+- [ ] Add `stub:` blocks to all existing local modules — each block should `touch` every declared output file and emit a minimal `versions.yml`. Priority order:
+  - [ ] `REMOVE_DUPLICATE_BRANCHES` — stub: `touch parsed_hierarchy.txt`
+  - [ ] `EXTRACT_VALID_INTERPRO_IDS` — stub: touch output file(s)
+  - [ ] `EXTRACT_CANDIDATE_INTERPRO_FAMILIES` — stub: touch output file(s)
+  - [ ] `EXTRACT_HAMAP_METADATA`, `EXTRACT_NCBIFAM_METADATA`, `EXTRACT_PANTHER_METADATA`, `EXTRACT_PFAM_METADATA` — stub each; these are deleted in Phase 6 so stub them now and the replacement `EXTRACT_DB_METADATA` inherits the pattern automatically.
+  - [ ] `FILTER_VALID_CANDIDATE_FAMILIES` — stub: touch output file(s)
+  - [ ] `SAMPLE_INTERPRO` — stub: touch `log.txt sampled_metadata.csv`
+  - [ ] `CONVERT_SAMPLED_TO_FASTA`, `COMBINE_DB_FASTA` — stub each before Phase 6 merges them; the replacement `PREPARE_BENCHMARK_FASTA` must also have a stub from the outset.
+  - [ ] `IDENTIFY_UNIPROT_DECOYS` — stub: `touch decoys.fasta`
+  - [ ] `COMBINE_DECOY_FASTA` — stub: touch output file
+  - [ ] `CALCULATE_SEQUENCE_STATS` — stub: touch the four `${type}_*.txt` outputs
+  - [ ] `CALCULATE_DB_SEQUENCE_COVERAGE`, `ANALYZE_RECRUITED_DECOYS`, `CALCULATE_JACCARD_SIMILARITY`, `PRODUCE_DB_STACKED_BARPLOT`, `CALCULATE_DB_FAMILY_COVERAGE`, `GET_SIZE_DISTRIBUTIONS`, `INVESTIGATE_MATCHED_ORIGINALS` — stub each
+- [ ] Add stubs to all 6 new Phase 0 download modules (`DOWNLOAD_INTERPRO` etc.) from the moment they are created — download modules are the most disruptive to test without stubs.
+- [ ] Add stubs to all Phase 1 + Phase 6 new modules (`COMPARE_BENCHMARK_RUNS`, `EXTRACT_DB_METADATA`, `PREPARE_BENCHMARK_FASTA`) from the moment they are created.
+
+### 9.3 `tag` directives on all local processes (alongside Phase 0 + Phase 6)
+
+`tag` makes the Nextflow execution log and Tower/Seqera Platform task list human-readable. The nf-core DIAMOND modules use `tag "$meta.id"`. All local modules lack a `tag` directive.
+
+- [ ] Add `tag` to every existing local module. For modules that already receive a `meta` map (e.g. `IDENTIFY_UNIPROT_DECOYS` takes `tuple val(meta), path(hits)`) use `tag "$meta.id"`. For single-path input modules use a descriptive literal or a derivable value such as the input filename:
+  - `REMOVE_DUPLICATE_BRANCHES` — `tag "interpro_hierarchy"`
+  - `EXTRACT_VALID_INTERPRO_IDS` — `tag "interpro"`
+  - `EXTRACT_CANDIDATE_INTERPRO_FAMILIES` — `tag "interpro"`
+  - `EXTRACT_HAMAP_METADATA` etc. — `tag "hamap"` / `"ncbifam"` / `"panther"` / `"pfam"`
+  - `FILTER_VALID_CANDIDATE_FAMILIES` — `tag "interpro"`
+  - `SAMPLE_INTERPRO` — `tag "interpro"`
+  - `CONVERT_SAMPLED_TO_FASTA`, `COMBINE_DB_FASTA`, `COMBINE_DECOY_FASTA` — `tag "pre"`
+  - `IDENTIFY_UNIPROT_DECOYS` — `tag "$meta.id"` (already receives meta)
+  - All POST modules — `tag "$meta.id"` once Phase 1 introduces the `meta` map per samplesheet row; use `tag "post"` in the interim.
+- [ ] All Phase 0 download modules created in Phase 0 must include a `tag` from the outset (e.g. `tag "interpro_${params.interpro_release}"`).
+- [ ] Phase 1 samplesheet refactor is the natural point to wire `meta.id` tags into POST modules.
+
+### 9.4 `meta` map convention and `tuple val(meta), ...` channel pattern (alongside Phase 1)
+
+Currently most local modules take bare `path` inputs. The nf-core DIAMOND modules and `IDENTIFY_UNIPROT_DECOYS` already use `tuple val(meta), path(...)`. Consistent use of the meta map is essential for multi-sample POST support introduced in Phase 1.
+
+- [ ] Phase 1 samplesheet subworkflow (`validate_post_samplesheet`) must emit `tuple val(meta), ...` channels — `meta` map must contain at minimum `id` (sample name) and `tool` (tool label). Document the full meta-map keys in `CLAUDE.md`.
+- [ ] All POST modules refactored in Phases 1–4 must be updated to accept `tuple val(meta), path(...)` inputs and propagate `meta` through outputs so downstream `publishDir` paths can use `${meta.id}`.
+- [ ] In `conf/modules.config`, update every POST `publishDir` path to include `${meta.id}` once Phase 1 lands (this is already called out in Phase 7 but should be treated as a meta-map concern, not just a config concern).
+- [ ] In `workflows/pre.nf`, the inline `meta` map created for `DIAMOND_MAKEDB` (line 68–70: `[[id: 'combined_db_fasta'], file]`) is correct; ensure any new PRE modules follow the same pattern.
+
+### 9.5 `storeDir` for reference database download modules (alongside Phase 0)
+
+`storeDir` is the correct Nextflow directive for content-addressed caching of files that should persist beyond a single run and never be re-computed if the cached file already exists — exactly the semantics needed for the Phase 0 database downloads.
+
+- [ ] Use `storeDir "${params.db_cache_dir}/<db_name>/<version>"` in each download module instead of `publishDir`. This means Nextflow itself manages the cache-hit check; the pipeline does not need manual `if (file.exists())` logic in the workflow script.
+- [ ] Set `errorStrategy 'retry'` and `maxRetries 3` on all download modules — network failures are transient and retrying is always safe for idempotent downloads.
+- [ ] Add label `error_retry` (already defined in `conf/base.config`) to all download modules so the retry policy is inherited automatically.
+- [ ] Document in `CLAUDE.md` that `--db_cache_dir` is a persistent store and must not be placed inside `work/` or `outdir/`.
+
+### 9.6 Software version tracking with `CUSTOM_DUMPSOFTWAREVERSIONS` (alongside Phase 7)
+
+All local modules already emit `versions.yml` but nothing aggregates them into a pipeline-level version report. The nf-core pattern uses the `CUSTOM_DUMPSOFTWAREVERSIONS` module (from `nf-core/modules`) to collate and publish a single `software_versions.yml` at the end of the run.
+
+- [ ] Add `modules/nf-core/custom/dumpsoftwareversions/` (pull via `nf-core modules install custom/dumpsoftwareversions`).
+- [ ] In both `workflows/pre.nf` and `workflows/post.nf`, collect all `*.out.versions` channels with `.mix()` and pass to `CUSTOM_DUMPSOFTWAREVERSIONS`.
+- [ ] Add `withName: 'CUSTOM_DUMPSOFTWAREVERSIONS'` block in `conf/modules.config` with `publishDir` pointing to `${params.outdir}/pipeline_info/`.
+- [ ] This is a Phase 7 (Configuration & Documentation) item but should be done before Phase 8 verification so version provenance is captured in the test runs.
+
+### 9.7 `nf-test` for module and workflow testing (alongside Phase 8)
+
+There are no tests of any kind in the repository. nf-test is the standard testing framework for Nextflow DSL2 and is required for nf-core module submission.
+
+- [ ] Initialize nf-test: `nf-test init` at the repository root (creates `nf-test.config`).
+- [ ] Write module-level tests for the highest-value modules first:
+  - [ ] `tests/modules/local/sample_interpro/main.nf.test` — validates correct CSV output structure and log generation.
+  - [ ] `tests/modules/local/calculate_jaccard_similarity/main.nf.test` — validates that similarity scores fall in [0, 1] and output CSV has expected columns.
+  - [ ] `tests/modules/local/extract_db_metadata/main.nf.test` — once Phase 6 creates it; test all four `--db_type` variants.
+  - [ ] `tests/modules/local/prepare_benchmark_fasta/main.nf.test` — once Phase 6 creates it; verify both output paths are produced.
+- [ ] Write workflow-level stub tests:
+  - [ ] `tests/workflows/pre/main.nf.test` — use `-stub` profile with minimal fixture files; validates DAG connectivity and output directory structure without any real computation.
+  - [ ] `tests/workflows/post/main.nf.test` — same approach with a single-row test samplesheet fixture.
+- [ ] Create `tests/` directory with `nextflow.config` that enables the `test` profile pointing to small fixture files in `tests/fixtures/`.
+- [ ] Add `test` profile to `nextflow.config` (minimal resources: 1 CPU, 2 GB RAM, no time limit) so CI can run without HPC.
+- [ ] Add small fixture files under `tests/fixtures/` (tiny hierarchy file, small FASTA, minimal alignment folder) so tests run in seconds.
+
+### 9.8 `PIPELINE_INITIALISATION` and `PIPELINE_COMPLETION` subworkflows (alongside Phase 7)
+
+nf-core pipelines wrap startup validation and completion notification in dedicated subworkflows. Adding these makes future nf-core compatibility straightforward.
+
+- [ ] Create `subworkflows/local/pipeline_initialisation/main.nf`:
+  - Calls `validateParameters()` (from `nf-schema`).
+  - Validates `params.workflow_mode` is one of `['pre', 'post']`; fails with a descriptive error otherwise.
+  - Validates `params.outdir` is set.
+  - Logs pipeline name, version, and parameter summary via `log.info`.
+- [ ] Create `subworkflows/local/pipeline_completion/main.nf`:
+  - Logs completion message with duration and output directory.
+  - Optionally sends a completion email if `params.email` is set (nf-core pattern).
+- [ ] Wire both subworkflows into the top-level `workflow {}` block in `main.nf` — initialisation before the mode branch, completion in an `onComplete` or terminal channel.
+- [ ] Add `params.email = null` and `params.hook_url = null` to `nextflow.config` (no-op by default, enables Tower notification hooks).
+
+### 9.9 `manifest` block completeness and Seqera Platform integration (alongside Phase 7)
+
+- [ ] `nextflow.config` manifest block additions:
+  - [ ] Add `doi` field once the pipeline has a publication or Zenodo DOI.
+  - [ ] Update `description` to match the new generic benchmark framing from Phase 7 (currently says "nf-core/proteinfamilies" specifically).
+  - [ ] Confirm `nextflowVersion = '!>=24.04.2'` is still the minimum required; bump if any Phase 0–8 feature requires a newer version.
+- [ ] Add `tower.yml` at the repository root for Seqera Platform workspace configuration:
+  ```yaml
+  reports:
+    - display: "Jaccard similarity report"
+      file: "post/**/jaccard_similarities.csv"
+    - display: "Decoy stats"
+      file: "post/**/decoy_stats.csv"
+    - display: "Software versions"
+      file: "pipeline_info/software_versions.yml"
+  ```
+- [ ] Add a `seqera` profile to `nextflow.config` that sets `tower.enabled = true` and any workspace-level resource overrides, so users running on Seqera Platform can activate it with `-profile seqera`.
+
+### 9.10 Container pinning with SHA digests (ongoing, enforce in Phase 6 + Phase 0)
+
+- [ ] Audit all local module container declarations. Several modules (e.g. `SAMPLE_INTERPRO`) use bare `biocontainers/pandas:1.4.3` Docker tags without SHA digests — these are mutable and can silently change. The Wave/community registry URLs used in other modules (e.g. `CALCULATE_JACCARD_SIMILARITY`, `REMOVE_DUPLICATE_BRANCHES`) already use SHA blob references, which is correct.
+  - [ ] `SAMPLE_INTERPRO`: replace `biocontainers/pandas:1.4.3` with a SHA-pinned community.wave.seqera.io URL equivalent (or lock the digest with `@sha256:...`).
+  - [ ] `modules/nf-core/diamond/makedb` uses `depot.galaxyproject.org/singularity/diamond:2.1.8` while `blastp` uses `2.1.11` — align both to the same DIAMOND version.
+- [ ] All Phase 0 download modules must use SHA-pinned containers from the moment they are created — download tools like `wget`/`curl` exist in many base images; pin to a specific community.wave.seqera.io SHA blob.
+- [ ] Add a note to `CLAUDE.md` explaining the container pinning convention used in this repository (community.wave.seqera.io SHA blobs for local modules, depot.galaxyproject.org for nf-core modules).
+
+### 9.11 `label` consistency and a `process_download` label (alongside Phase 0)
+
+The existing labels (`process_single`, `process_low`, `process_medium`, `process_high`, `process_long`, `process_high_memory`, `error_ignore`, `error_retry`) cover compute-bound work well, but download-heavy processes have different resource profiles: minimal CPU, minimal memory, long wall time, and multiple retries.
+
+- [ ] Add a `process_download` label to `conf/base.config`:
+  ```groovy
+  withLabel:process_download {
+      cpus   = { 1 }
+      memory = { 1.GB }
+      time   = { 12.h * task.attempt }
+      errorStrategy = 'retry'
+      maxRetries    = 3
+  }
+  ```
+- [ ] Apply `label 'process_download'` to all 6 Phase 0 download modules.
+- [ ] Audit that every local module has exactly one `label` directive; the following modules currently lack an `environment.yml` peer (and may lack a label review): `COMBINE_DECOY_FASTA`, `FILTER_VALID_CANDIDATE_FAMILIES`, `EXTRACT_NCBIFAM_METADATA`, `INVESTIGATE_MATCHED_ORIGINALS`. Verify labels are set and are the correct tier.
+
+### 9.12 `when:` clause standardisation (ongoing)
+
+All local modules already include the nf-core standard `when: task.ext.when == null || task.ext.when` guard. This is correct. The Phase 3 conditional logic for `INVESTIGATE_MATCHED_ORIGINALS` should extend this rather than adding Groovy `if` blocks in the workflow:
+
+- [ ] In Phase 3, set `ext.when` for `INVESTIGATE_MATCHED_ORIGINALS` via `conf/modules.config` based on a channel-level condition rather than an `if/else` block in `workflows/post.nf`. Use the pattern:
+  ```groovy
+  // in modules.config
+  withName: 'INVESTIGATE_MATCHED_ORIGINALS' {
+      ext.when = { meta.clustering_tsv != null && meta.generated_fasta_dir != null }
+  }
+  ```
+  so the skip condition is declared in config, not scattered across the workflow script.
+
+### 9.13 Workflow input validation preflight (alongside Phase 0 + Phase 1)
+
+- [ ] In `workflows/pre.nf`, add a preflight `assert` or `error()` block (or a dedicated `subworkflows/local/validate_pre_inputs/main.nf`) that checks: (a) if a DB param is non-null, the resolved `file()` exists and is non-empty; (b) `params.num_per_db > 0`; (c) `params.min_membership > 0`; (d) `params.num_decoys > 0`. This is listed in Phase 0.3 but should be implemented as a reusable validation subworkflow rather than inline guards.
+- [x] Fix the typo `params.interpo_hierarchy_file` (line 14 of `main.nf`) — should be `params.interpro_hierarchy_file`. This is a silent bug present today: the PRE workflow receives `null` for the hierarchy file if the correct param name is used on the CLI.
+
+### Summary Table
+
+| Sub-phase | Key deliverable                                                    | Implement alongside |
+| --------- | ------------------------------------------------------------------ | ------------------- |
+| 9.1       | `nextflow_schema.json` + `nf-schema` plugin + true `null` defaults | Phase 0 / Phase 1   |
+| 9.2       | `stub:` blocks in all 21 local modules + all new modules           | Phase 0 / Phase 6   |
+| 9.3       | `tag` directive on all local processes                             | Phase 0 / Phase 6   |
+| 9.4       | `meta` map + `tuple val(meta), ...` pattern in POST modules        | Phase 1             |
+| 9.5       | `storeDir` + `error_retry` label on download modules               | Phase 0             |
+| 9.6       | `CUSTOM_DUMPSOFTWAREVERSIONS` aggregation                          | Phase 7             |
+| 9.7       | `nf-test` initialisation + module + workflow tests                 | Phase 8             |
+| 9.8       | `PIPELINE_INITIALISATION` + `PIPELINE_COMPLETION` subworkflows     | Phase 7             |
+| 9.9       | `manifest` doi/description + `tower.yml` + `seqera` profile        | Phase 7             |
+| 9.10      | SHA-pinned containers; align DIAMOND versions                      | Phase 0 / Phase 6   |
+| 9.11      | `process_download` label + label audit across all modules          | Phase 0             |
+| 9.12      | `ext.when` in config for conditional modules (Phase 3)             | Phase 3             |
+| 9.13      | PRE input validation subworkflow + fix `interpo_` typo             | Phase 0 / Phase 1   |

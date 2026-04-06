@@ -16,7 +16,7 @@ include { COMBINE_DECOY_FASTA                 } from '../modules/local/combine_d
 
 workflow PRE {
     take:
-    interpo_hierarchy_file
+    interpro_hierarchy_file
     id_mapping_file
     path_to_hamap
     path_to_ncbifam
@@ -28,7 +28,7 @@ workflow PRE {
     num_decoys
 
     main:
-    ch_hierarchy = Channel.fromPath(interpo_hierarchy_file, checkIfExists: true)
+    ch_hierarchy = Channel.fromPath(interpro_hierarchy_file, checkIfExists: true)
     REMOVE_DUPLICATE_BRANCHES( ch_hierarchy )
 
     EXTRACT_VALID_INTERPRO_IDS( REMOVE_DUPLICATE_BRANCHES.out.hierarchy )
