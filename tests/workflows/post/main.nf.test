@@ -1,0 +1,38 @@
+nextflow_workflow {
+
+    name "Test Workflow POST"
+    script "workflows/post.nf"
+    workflow "POST"
+
+    test("test - stub - succeeds") {
+
+        options "-stub -profile test --outdir /tmp/nf-test-post"
+
+        when {
+            workflow {
+                """
+                input[0] = params.fixture_dir + "/universe/post_samplesheet.absolute.csv"
+                input[1] = params.fixture_dir + "/universe/id_registry.tsv"
+                input[2] = params.fixture_dir + "/universe/combined_decoy.faa"
+                input[3] = params.fixture_dir + "/universe/universe.sha256"
+                input[4] = params.fixture_dir + "/universe/sampled_metadata.csv"
+                input[5] = params.fixture_dir + "/universe/sampled_fasta"
+                input[6] = 0.5
+                input[7] = 0.1
+                input[8] = 0.05
+                input[9] = 0.01
+                input[10] = 1
+                input[11] = ''
+                input[12] = ''
+                input[13] = true
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+        }
+
+    }
+
+}

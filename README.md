@@ -9,7 +9,7 @@ for NCBIFAM, PANTHER, HAMAP and PFAM protein families.
 Their member amino acid sequences are compiled in a fasta file,
 along with unrelated sequences from UniProt-SwissProt.
 
-A configuration file with the following paths must be provided:
+A configuration file can provide the following paths:
 
 ```
 interpro_hierarchy_file = '/path/to/interpro/ParentChildTreeFile.txt'
@@ -20,6 +20,11 @@ path_to_panther         = '/path/to/panther/msa/PANTHER19.0_fasta'
 path_to_pfam            = '/path/to/pfam/37.2/seed/alignments'
 path_to_swissprot       = '/path/to/uniprot/fasta/uniprot_sprot_parsed.fasta'
 ```
+
+When any of these seven path parameters is `null`, the PRE workflow downloads the corresponding
+reference database into `--db_cache_dir` and uses the cached path. `--db_cache_dir` is a persistent
+Nextflow `storeDir` root, not a published output directory. Keep it outside `work/` and outside
+`--outdir` so cached databases survive work cleanup and are not copied into result bundles.
 
 Example versions and formats of the databases can be found [here](#protein-families-database-links-and-versions).
 
@@ -75,13 +80,15 @@ An example run command looks like this:
 
 ### Protein families database links and versions
 
-Need to first download and decompress the protein family SEED alignments from the following databases, then update path parameters accordingly.
+If internet access is unavailable on worker nodes, download and decompress the protein family SEED
+alignments yourself and set the path parameters above. Otherwise leave those params as `null` and
+let the PRE workflow populate `--db_cache_dir`.
 
 ```
 DB  ver link    last_update size
-NCBIFAM 17.0    https://ftp.ncbi.nlm.nih.gov/hmm/current/hmm_PGAP.SEED.tgz  2024-12-16 10:56    67M
+NCBIFAM current https://ftp.ncbi.nlm.nih.gov/hmm/current/hmm_PGAP.SEED.tgz  2026-06-25 10:24    77M
 PANTHER 19.0    https://data.pantherdb.org/ftp/panther_library/current_release/PANTHER19.0_fasta.tgz    2024    461M
-HAMAP   -   https://ftp.expasy.org/databases/hamap/hamap_alignments.tar.gz  2025-02-05 16:00    1.2G
+HAMAP   -   https://ftp.expasy.org/databases/hamap/old/hamap_alignments.tar.gz  2025-10-07 01:41    2.2G
 PFAM    37.2    https://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam37.2/Pfam-A.seed.gz   2024-12-05 07:31    159M
 ```
 

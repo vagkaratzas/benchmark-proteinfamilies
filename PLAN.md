@@ -7,23 +7,22 @@ _Locked via grill — by Claude + vagkaratzas (2026-07-09). Revised after Codex 
 `nextflow run . -profile test` runs POST end to end, offline, over the committed synthetic
 fixtures: **42 processes, 0 failed**, 4 tool runs ranked in `post/comparison/`.
 
-| Phase | Title                                   | Status        | Landed in                                         |
-| ----- | --------------------------------------- | ------------- | ------------------------------------------------- |
-| 1     | Identity core + fixtures                | done          | `046f855`                                         |
-| 2     | PRE emits the registry                  | done          | `046f855`                                         |
-| 3     | POST samplesheet infrastructure         | done          | `97326af`                                         |
-| 4     | Dynamic DB-layer detection              | done          | `97326af`                                         |
-| 5     | Alignment format auto-detection         | done          | `97326af` (via `bin/post_common.py`)              |
-| 6     | Optional `clustering_tsv`               | done          | this commit                                       |
-| 7     | New metrics (D5)                        | done          | this commit                                       |
-| 8     | Performance                             | done          | this commit                                       |
-| 9     | PRE cleanup (EXTRACT_DB_METADATA merge) | done          | this commit                                       |
-| 10    | Reference database acquisition          | TODO          | —                                                 |
-| 11    | nf-core conformance                     | done          | this commit                                       |
-| 12    | Verification                            | partial (2/7) | CI tier: self-check + canonicalisation regression |
+| Phase | Title                                   | Status       | Landed in                                         |
+| ----- | --------------------------------------- | ------------ | ------------------------------------------------- |
+| 1     | Identity core + fixtures                | done         | `046f855`                                         |
+| 2     | PRE emits the registry                  | done         | `046f855`                                         |
+| 3     | POST samplesheet infrastructure         | done         | `97326af`                                         |
+| 4     | Dynamic DB-layer detection              | done         | `97326af`                                         |
+| 5     | Alignment format auto-detection         | done         | `97326af` (via `bin/post_common.py`)              |
+| 6     | Optional `clustering_tsv`               | done         | `c5299da`                                         |
+| 7     | New metrics (D5)                        | done         | `c5299da`                                         |
+| 8     | Performance                             | done         | `3e0435f`                                         |
+| 9     | PRE cleanup (EXTRACT_DB_METADATA merge) | done         | `3e0435f`                                         |
+| 10    | Reference database acquisition          | done\*       | this commit (\*URLs never fetched — stub-tested)  |
+| 11    | nf-core conformance                     | done         | `47c5355`                                         |
+| 12    | Verification                            | CI tier done | this commit; manual tier needs the real databases |
 
-Remaining, in dependency order: **10** (reference DB downloads) → **12** (nf-test suite,
-determinism test, and the manual tier against the real proteinfamilies/mgnifams outputs).
+Remaining, in dependency order: **12 manual tier** against the real proteinfamilies/mgnifams outputs.
 
 ## Goal
 
@@ -404,13 +403,13 @@ n_cross_db_matches`.
 
 ### Phase 10 — Reference database acquisition
 
-- [ ] All 7 DB path params default `null`; if `null`, a download module supplies the path.
-- [ ] `modules/local/download_{interpro,hamap,ncbifam,panther,pfam,swissprot}/`.
-- [ ] **`storeDir "${params.db_cache_dir}/<db>/<version>"`** (not `publishDir`) so Nextflow owns the
+- [x] All 7 DB path params default `null`; if `null`, a download module supplies the path.
+- [x] `modules/local/download_{interpro,hamap,ncbifam,panther,pfam,swissprot}/`.
+- [x] **`storeDir "${params.db_cache_dir}/<db>/<version>"`** (not `publishDir`) so Nextflow owns the
       cache-hit check — no manual `file.exists()` logic. `db_cache_dir` must not live inside
       `work/` or `outdir/`; document that.
-- [ ] New `process_download` label (1 cpu, 1 GB, 12 h, `errorStrategy 'retry'`, `maxRetries 3`).
-- [ ] Version params `interpro_release`, `pfam_version`, `panther_version`. PANTHER is tens of GB —
+- [x] New `process_download` label (1 cpu, 1 GB, 12 h, `errorStrategy 'retry'`, `maxRetries 3`).
+- [x] Version params `interpro_release`, `pfam_version`, `panther_version`. PANTHER is tens of GB —
       log a size warning.
 
 ### Phase 11 — nf-core conformance
@@ -428,13 +427,14 @@ n_cross_db_matches`.
 **CI-reproducible tier (no external pipelines, no network):**
 
 - [x] `benchmark_ids.py` self-check: the D1 worked examples + false attribution + order sensitivity + legitimate `_n_n` + ambiguous-hit cases.
-- [ ] nf-test module tests: `sample_interpro`, `calculate_jaccard_similarity`, `extract_db_metadata`,
+- [x] nf-test module tests: `sample_interpro`, `calculate_jaccard_similarity`, `extract_db_metadata`,
       `prepare_benchmark_fasta` (registry shape + checksum).
-- [ ] `-stub` workflow tests for PRE and POST using `tests/fixtures/`.
+- [x] `-stub` workflow tests for PRE and POST using `tests/fixtures/`.
 - [x] **Canonicalisation regression:** the mangled-ID fixture must yield non-zero Jaccard and
       `unmapped_fraction ≈ 0`. This test must _fail_ against the current `split("/")[0]` code —
       it is the specific bug D1 exists to prevent.
-- [ ] Determinism: two PRE runs at the same `seed` produce byte-identical `combined_decoy.faa`.
+- [x] Determinism: fixed `--seed` makes `sample_interpro.py` metadata and
+      `identify_uniprot_decoys.py` FASTA byte-identical.
 
 **Manual tier (documented, not CI):**
 
@@ -459,6 +459,14 @@ n_cross_db_matches`.
    `min_intersection_size=3` floor blunts the worst of it but does not remove the arbitrariness.
 4. **Seed vs full MSA** (D3) is a user-configuration hazard mitigated by warnings, not prevented.
 5. PANTHER download is tens of GB; Phase 10 is untestable end-to-end on a laptop.
+6. **The six download URLs have never been fetched.** Every Phase 10 proof was `-stub`, which
+   validates the conditional wiring and `storeDir` caching but never contacts the network. The
+   URLs (notably HAMAP's `.../hamap/old/hamap_alignments.tar.gz`) must be confirmed against the
+   providers before release, and the modules re-run once with network access.
+7. **The download modules ship without a container.** They declare `conda` + an `environment.yml`
+   (curl, and python for Pfam), but no SHA-pinned image: no digest could be resolved or verified
+   offline, and PLAN.md forbids inventing one. Under `-profile docker/singularity` they will run
+   on the host. Pin a curl+tar+gzip image before release, or run PRE with `-profile conda`.
 
 ## Out of scope
 

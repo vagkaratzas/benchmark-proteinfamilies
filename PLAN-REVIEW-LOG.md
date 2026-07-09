@@ -512,3 +512,46 @@ Also accepted: a one-line `def args = task.ext.args ?: ''` in `diamond/blastp`'s
 PRE stub graph genuinely needs.
 
 Fix rounds used: 0 of 2 delegated. Codex never committed.
+
+## Act 3 — Build, slice 6 (Phase 10 + Phase 12 CI tier)
+
+Builder: codex-cli 0.142.5, gpt-5.5 @ xhigh. Thread `019f4755-b794-7a11-942f-1e3e1d2c0ca1`.
+
+### Round 1 — Codex build
+
+Six `DOWNLOAD_*` modules on `storeDir`; `process_download` label; conditional resolution of the 7 DB
+params in `workflows/pre.nf`; `bin/split_pfam_seed.py` (Pfam ships one `Pfam-A.seed`, but
+EXTRACT_DB_METADATA wants per-family `.sto`); nf-test init + 4 module tests + 2 workflow stub tests;
+`tests/test_determinism.py`.
+
+### Claude's verdict — accepted, with one honest limitation recorded
+
+Verified independently:
+
+- `conf/base.config` only **gained** `withLabel:process_download`; no production tier was touched.
+- All six modules use `storeDir`, never `publishDir` — Nextflow owns the cache-hit check.
+- Conditional wiring proven three ways, all with `-stub` so nothing is fetched:
+  - all 7 paths supplied → **0** `DOWNLOAD_*` processes (15 tasks, SUCCESS)
+  - `path_to_pfam` set to a genuine `null` via `-c` (not the CLI string `"null"`) → `DOWNLOAD_PFAM`
+    runs (16 tasks, SUCCESS)
+  - `storeDir` populated `/tmp/dbcache/pfam/...` on the first run
+    `pre.nf` correctly treats BOTH a real `null` and the CLI string `"null"` as "download it".
+- `nf-test test` → **6/6 PASSED** (4 module tests + PRE/POST workflow stub tests), run by me.
+- `python -m unittest` → 10 tests pass. **The determinism test is load-bearing:** mutating
+  `sample_interpro.py` to ignore `random_state` kills it.
+- `nextflow lint` → 0 errors / 41 files (warnings down from 9 to 1).
+
+**Limitation, recorded rather than papered over:** the six download URLs have **never been fetched**.
+Every Phase 10 proof is `-stub`, which exercises the conditional graph and `storeDir` semantics but
+never contacts the network. One URL already looks wrong —
+`ftp.expasy.org/databases/hamap/**old**/hamap_alignments.tar.gz`. Added as Risk #6 in PLAN.md;
+Phase 10 is marked `done*` in the status table with that asterisk spelled out.
+
+Fix rounds used: 0 of 2 delegated. Codex never committed.
+
+**Second gap Codex reported as "Deviations: none".** All six download modules shipped with neither a
+`container` nor an `environment.yml`, though PLAN.md requires SHA-pinned containers "from the moment
+they are created". Added a real `environment.yml` (curl; + python for Pfam) so `-profile conda` is
+correct, and left the container deliberately unset with an explanatory TODO rather than inventing a
+digest that could not be resolved or verified offline — inventing one was explicitly forbidden by the
+build spec, and an unverified image fails at runtime rather than at review. Recorded as Risk #7.

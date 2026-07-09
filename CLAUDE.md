@@ -21,7 +21,7 @@ nextflow run benchmark-proteinfamilies --outdir /home/vangelis/Desktop/Projects/
 nextflow run benchmark-proteinfamilies -c slurm_benchmark.config -profile singularity,slurm --workflow_mode post -resume
 ```
 
-PRE mode requires a config file with paths to InterPro hierarchy, XML mapping, and database directories (HAMAP, NCBIFAM, PANTHER, PFAM, SwissProt). POST mode requires paths to PRE outputs plus nf-core/proteinfamilies results. See `nextflow.config` for all parameters.
+PRE mode accepts paths to InterPro hierarchy, XML mapping, and database directories (HAMAP, NCBIFAM, PANTHER, PFAM, SwissProt). If any of those seven path params is `null`, the matching download module populates the path under `--db_cache_dir`. `--db_cache_dir` is a persistent Nextflow `storeDir` root; do not place it inside `work/` or inside `--outdir`, because work cleanup or output publishing would otherwise destroy or duplicate large reference databases. POST mode requires paths to PRE outputs plus nf-core/proteinfamilies results. See `nextflow.config` for all parameters.
 
 ## Architecture
 

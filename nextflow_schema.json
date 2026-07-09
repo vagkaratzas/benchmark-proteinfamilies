@@ -64,6 +64,26 @@
                     "description": "PRE-only required path to the SwissProt FASTA used for decoy selection.",
                     "default": null
                 },
+                "db_cache_dir": {
+                    "type": "string",
+                    "description": "Persistent storeDir root for downloaded reference databases used when PRE database path parameters are null. Must not be inside work/ or outdir/.",
+                    "default": "data/reference"
+                },
+                "interpro_release": {
+                    "type": "string",
+                    "description": "InterPro release directory to download when interpro_hierarchy_file or id_mapping_file is null. Use 'current' for the current_release FTP directory.",
+                    "default": "current"
+                },
+                "pfam_version": {
+                    "type": "string",
+                    "description": "Pfam release version used when path_to_pfam is null.",
+                    "default": "37.2"
+                },
+                "panther_version": {
+                    "type": "string",
+                    "description": "PANTHER library version used when path_to_panther is null.",
+                    "default": "19.0"
+                },
                 "min_membership": {
                     "type": ["integer", "string"],
                     "description": "Minimum InterPro family membership count retained for PRE sampling. Must be greater than zero.",

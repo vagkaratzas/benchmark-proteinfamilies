@@ -208,7 +208,9 @@ def main():
         open(args.log_file, "w") as log,
     ):
         reader = csv.DictReader(metadata_handle, delimiter=",")
-        fieldnames = reader.fieldnames
+        fieldnames = list(reader.fieldnames or [])
+        if "protein_count" not in fieldnames:
+            fieldnames.append("protein_count")
 
         log.write("Deduplication Report\n")
         log.write("====================\n")
