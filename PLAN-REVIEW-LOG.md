@@ -555,3 +555,35 @@ they are created". Added a real `environment.yml` (curl; + python for Pfam) so `
 correct, and left the container deliberately unset with an explanatory TODO rather than inventing a
 digest that could not be resolved or verified offline — inventing one was explicitly forbidden by the
 build spec, and an unverified image fails at runtime rather than at review. Recorded as Risk #7.
+
+## Real-data validation (no curated databases required)
+
+The full benchmark needs a PRE run against the real InterPro/Pfam/PANTHER/HAMAP/NCBIfam databases,
+which are not on this machine. But the load-bearing claim — that D1 resolves real tool output — can
+be tested today, by building a registry from the exact FASTA each pipeline consumed and resolving the
+headers in its actual output MSAs.
+
+| tool                    | universe                            | raw IDs | resolved | unmapped   | ambiguous | fragments/seq |
+| ----------------------- | ----------------------------------- | ------- | -------- | ---------- | --------- | ------------- |
+| nf-core/proteinfamilies | `mgnifams_input_small.faa` (50,000) | 115     | 115      | **0.0000** | 0.0000    | 1.00          |
+| mgnifams                | `mgnifams_v2.fa` (26,949)           | 486     | 486      | **0.0000** | 0.0000    | **1.40**      |
+
+mgnifams' 1.40 fragments per input sequence is the domain-shredding signal the plan insisted on
+preserving rather than discarding.
+
+And the counterfactual, on the same real mgnifams output:
+
+```
+OLD CODE  record.id.split("/")[0]
+  raw observed IDs           : 486
+  resolve to a real input ID : 95
+  unmapped                   : 391  (fraction 0.8045)
+  example: '1814953751/178-297' -> '1814953751'   in universe? False
+```
+
+**80.45% of real mgnifams sequences would have vanished**, leaving membership sets empty and Jaccard
+at 0.0 against every curated family — reported as a legitimate score, never as an error. That is the
+bug this whole overhaul exists to kill, measured on real data.
+
+Still open: the end-to-end benchmark against curated InterPro families, which requires the reference
+databases (Phase 10 fetches them, but its URLs have not been exercised — Risk #6).

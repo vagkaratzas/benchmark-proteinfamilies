@@ -438,6 +438,13 @@ n_cross_db_matches`.
 
 **Manual tier (documented, not CI):**
 
+- [x] **Real-data ID-resolution validation** (done, no curated DBs required). A registry built
+      from the exact FASTA each tool consumed resolves their real outputs:
+      nf-core/proteinfamilies 115/115 IDs, mgnifams 486/486, both `unmapped_fraction = 0.0000`.
+      mgnifams shows `1.40` fragments per input sequence, i.e. it genuinely splits proteins into
+      domains. Against the same real mgnifams output, the old `record.id.split("/")[0]` resolves
+      only 95/486 -- **80.45% unmapped**, silently scoring Jaccard 0.0 against every family.
+
 - [ ] PRE end-to-end; run both reference pipelines per `CLAUDE.md`; 1-row POST (proteinfamilies);
       1-row POST (mgnifams, empty `clustering_tsv`); 2-row POST → ranked scorecard.
 - [ ] Benchmark `calculate_jaccard_similarity.py` before/after on real data.
