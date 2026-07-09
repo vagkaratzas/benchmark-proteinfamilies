@@ -1,0 +1,235 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/vagkaratzas/benchmark-proteinfamilies/nextflow_schema.json",
+    "title": "benchmark-proteinfamilies pipeline parameters",
+    "description": "Benchmark protein family reconstruction tools against manually curated InterPro families.",
+    "type": "object",
+    "$defs": {
+        "input_options": {
+            "title": "Input options",
+            "type": "object",
+            "description": "Pipeline mode and legacy input alias.",
+            "required": ["workflow_mode"],
+            "properties": {
+                "input": {
+                    "type": ["string", "null"],
+                    "description": "Legacy input parameter reserved for compatibility; mode-specific inputs are configured with PRE or POST parameters.",
+                    "default": null
+                },
+                "workflow_mode": {
+                    "type": "string",
+                    "description": "Select the workflow branch to run. Use 'pre' to sample curated InterPro families and create the benchmark universe; use 'post' to compare tool outputs against a PRE universe.",
+                    "default": null,
+                    "enum": ["pre", "post"]
+                }
+            }
+        },
+        "pre_options": {
+            "title": "PRE workflow options",
+            "type": "object",
+            "description": "Parameters used when workflow_mode is 'pre'. Path parameters in this section are required for PRE runs and ignored by POST runs.",
+            "properties": {
+                "interpro_hierarchy_file": {
+                    "type": ["string", "null"],
+                    "description": "PRE-only required path to the InterPro ParentChildTreeFile.txt hierarchy.",
+                    "default": null
+                },
+                "id_mapping_file": {
+                    "type": ["string", "null"],
+                    "description": "PRE-only required path to the InterPro XML mapping file read by EXTRACT_CANDIDATE_INTERPRO_FAMILIES, typically interpro.xml.gz.",
+                    "default": null
+                },
+                "path_to_hamap": {
+                    "type": ["string", "null"],
+                    "description": "PRE-only required path to the HAMAP alignment directory.",
+                    "default": null
+                },
+                "path_to_ncbifam": {
+                    "type": ["string", "null"],
+                    "description": "PRE-only required path to the NCBIFAM alignment directory.",
+                    "default": null
+                },
+                "path_to_panther": {
+                    "type": ["string", "null"],
+                    "description": "PRE-only required path to the PANTHER alignment directory.",
+                    "default": null
+                },
+                "path_to_pfam": {
+                    "type": ["string", "null"],
+                    "description": "PRE-only required path to the PFAM alignment directory.",
+                    "default": null
+                },
+                "path_to_swissprot": {
+                    "type": ["string", "null"],
+                    "description": "PRE-only required path to the SwissProt FASTA used for decoy selection.",
+                    "default": null
+                },
+                "min_membership": {
+                    "type": ["integer", "string"],
+                    "description": "Minimum InterPro family membership count retained for PRE sampling. Must be greater than zero.",
+                    "default": 25,
+                    "minimum": 1,
+                    "pattern": "^-?\\d+$",
+                    "help_text": "Nextflow 26 passes CLI values as strings, so a string-encoded number is accepted here; PIPELINE_INITIALISATION coerces it and rejects non-numeric or non-positive values."
+                },
+                "num_per_db": {
+                    "type": ["integer", "string"],
+                    "description": "Number of InterPro families to sample per database in PRE mode. Must be greater than zero.",
+                    "default": 50,
+                    "minimum": 1,
+                    "pattern": "^-?\\d+$",
+                    "help_text": "Nextflow 26 passes CLI values as strings, so a string-encoded number is accepted here; PIPELINE_INITIALISATION coerces it and rejects non-numeric or non-positive values."
+                },
+                "num_decoys": {
+                    "type": ["integer", "string"],
+                    "description": "Number of SwissProt decoy sequences to sample in PRE mode. Must be greater than zero.",
+                    "default": 10000,
+                    "minimum": 1,
+                    "pattern": "^-?\\d+$",
+                    "help_text": "Nextflow 26 passes CLI values as strings, so a string-encoded number is accepted here; PIPELINE_INITIALISATION coerces it and rejects non-numeric or non-positive values."
+                },
+                "seed": {
+                    "type": ["integer", "null"],
+                    "description": "Optional random seed for reproducible PRE family and decoy sampling.",
+                    "default": null
+                }
+            }
+        },
+        "post_options": {
+            "title": "POST workflow options",
+            "type": "object",
+            "description": "Parameters used when workflow_mode is 'post'. PRE-output path parameters in this section are required for POST runs and ignored by PRE runs.",
+            "properties": {
+                "post_samplesheet": {
+                    "type": ["string", "null"],
+                    "description": "POST-only required CSV samplesheet with sample, tool, msa_dir, and optional clustering_tsv columns.",
+                    "default": null
+                },
+                "pre_id_registry": {
+                    "type": ["string", "null"],
+                    "description": "POST-only required path to the PRE id_registry.tsv.",
+                    "default": null
+                },
+                "pre_universe_fasta": {
+                    "type": ["string", "null"],
+                    "description": "POST-only required path to the PRE combined universe FASTA.",
+                    "default": null
+                },
+                "pre_universe_sha256": {
+                    "type": ["string", "null"],
+                    "description": "POST-only required path to the PRE universe SHA256 checksum file.",
+                    "default": null
+                },
+                "pre_sampled_metadata": {
+                    "type": ["string", "null"],
+                    "description": "POST-only required path to the PRE sampled metadata CSV.",
+                    "default": null
+                },
+                "pre_sampled_fasta_dir": {
+                    "type": ["string", "null"],
+                    "description": "POST-only required path to the PRE sampled FASTA directory.",
+                    "default": null
+                },
+                "match_threshold": {
+                    "type": ["number", "string"],
+                    "description": "Minimum F1 threshold used to call generated/original family matches in POST reports.",
+                    "default": 0.5,
+                    "minimum": 0,
+                    "pattern": "^-?\\d*\\.?\\d+$",
+                    "help_text": "Nextflow 26 passes CLI values as strings, so a string-encoded number is accepted here; PIPELINE_INITIALISATION coerces it and rejects non-numeric or non-positive values."
+                },
+                "association_threshold": {
+                    "type": ["number", "string"],
+                    "description": "Precision/recall threshold used for POST split and merge association calls.",
+                    "default": 0.1,
+                    "minimum": 0,
+                    "pattern": "^-?\\d*\\.?\\d+$",
+                    "help_text": "Nextflow 26 passes CLI values as strings, so a string-encoded number is accepted here; PIPELINE_INITIALISATION coerces it and rejects non-numeric or non-positive values."
+                },
+                "max_unmapped_fraction": {
+                    "type": ["number", "string"],
+                    "description": "Maximum allowed fraction of generated sequence IDs that cannot be mapped through the PRE id registry.",
+                    "default": 0.05,
+                    "minimum": 0,
+                    "pattern": "^-?\\d*\\.?\\d+$",
+                    "help_text": "Nextflow 26 passes CLI values as strings, so a string-encoded number is accepted here; PIPELINE_INITIALISATION coerces it and rejects non-numeric or non-positive values."
+                },
+                "max_ambiguous_fraction": {
+                    "type": ["number", "string"],
+                    "description": "Maximum allowed fraction of ambiguous generated sequence ID mappings through the PRE id registry.",
+                    "default": 0.01,
+                    "minimum": 0,
+                    "pattern": "^-?\\d*\\.?\\d+$",
+                    "help_text": "Nextflow 26 passes CLI values as strings, so a string-encoded number is accepted here; PIPELINE_INITIALISATION coerces it and rejects non-numeric or non-positive values."
+                },
+                "min_intersection_size": {
+                    "type": ["integer", "string"],
+                    "description": "Minimum generated/original universe-id intersection size used for POST split and merge associations. Must be greater than zero.",
+                    "default": 3,
+                    "minimum": 1,
+                    "pattern": "^-?\\d+$",
+                    "help_text": "Nextflow 26 passes CLI values as strings, so a string-encoded number is accepted here; PIPELINE_INITIALISATION coerces it and rejects non-numeric or non-positive values."
+                },
+                "min_universe_coverage": {
+                    "type": ["number", "null"],
+                    "description": "Optional minimum generated universe coverage required by POST Jaccard calculation.",
+                    "default": null,
+                    "minimum": 0
+                },
+                "scorecard_weights": {
+                    "type": ["object", "string", "null"],
+                    "description": "Optional POST exploratory scorecard weights, provided as a JSON/object map or key=value string for mean_f1, family_coverage, sequence_coverage, no_decoy_recruitment, and no_split_merge.",
+                    "default": null
+                },
+                "skip_multiqc": {
+                    "type": "boolean",
+                    "description": "Skip MultiQC report generation for POST runs when true.",
+                    "default": false
+                }
+            }
+        },
+        "boilerplate_options": {
+            "title": "Boilerplate options",
+            "type": "object",
+            "description": "Common runtime, publishing, and notification parameters.",
+            "required": ["outdir"],
+            "properties": {
+                "outdir": {
+                    "type": "string",
+                    "description": "Required output directory for published pipeline results.",
+                    "default": null
+                },
+                "publish_dir_mode": {
+                    "type": "string",
+                    "description": "Nextflow publishDir mode used when publishing outputs.",
+                    "default": "copy",
+                    "enum": ["copy", "copyNoFollow", "link", "rellink", "symlink", "move"]
+                },
+                "email": {
+                    "type": ["string", "null"],
+                    "description": "Reserved no-op email notification parameter; defaults to null.",
+                    "default": null
+                },
+                "hook_url": {
+                    "type": ["string", "null"],
+                    "description": "Reserved no-op webhook notification parameter; defaults to null.",
+                    "default": null
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/$defs/input_options"
+        },
+        {
+            "$ref": "#/$defs/pre_options"
+        },
+        {
+            "$ref": "#/$defs/post_options"
+        },
+        {
+            "$ref": "#/$defs/boilerplate_options"
+        }
+    ]
+}

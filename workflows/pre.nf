@@ -9,6 +9,7 @@ include { DIAMOND_MAKEDB                      } from '../modules/nf-core/diamond
 include { DIAMOND_BLASTP                      } from '../modules/nf-core/diamond/blastp/main'
 include { IDENTIFY_UNIPROT_DECOYS             } from '../modules/local/identify_uniprot_decoys/main'
 include { COMBINE_DECOY_FASTA                 } from '../modules/local/combine_decoy_fasta/main'
+include { DUMP_SOFTWARE_VERSIONS              } from '../modules/local/dump_software_versions/main'
 
 workflow PRE {
     take:
@@ -73,4 +74,20 @@ workflow PRE {
     COMBINE_DECOY_FASTA( PREPARE_BENCHMARK_FASTA.out.fasta, IDENTIFY_UNIPROT_DECOYS.out.decoys, \
         PREPARE_BENCHMARK_FASTA.out.registry
     )
+
+    ch_versions = REMOVE_DUPLICATE_BRANCHES.out.versions
+        .mix(
+            EXTRACT_VALID_INTERPRO_IDS.out.versions,
+            EXTRACT_CANDIDATE_INTERPRO_FAMILIES.out.versions,
+            EXTRACT_DB_METADATA.out.versions.map { _meta, versions -> versions },
+            FILTER_VALID_CANDIDATE_FAMILIES.out.versions,
+            SAMPLE_INTERPRO.out.versions,
+            PREPARE_BENCHMARK_FASTA.out.versions,
+            DIAMOND_MAKEDB.out.versions,
+            DIAMOND_BLASTP.out.versions,
+            IDENTIFY_UNIPROT_DECOYS.out.versions,
+            COMBINE_DECOY_FASTA.out.versions
+        )
+
+    DUMP_SOFTWARE_VERSIONS( ch_versions.collect() )
 }

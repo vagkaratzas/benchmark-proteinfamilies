@@ -1,0 +1,7 @@
+reports:
+  "post/**/jaccard_similarities.csv":
+    display: "Jaccard similarities"
+  "post/comparison/benchmark_comparison.csv":
+    display: "Benchmark comparison"
+  "pipeline_info/software_versions.yml":
+    display: "Software versions"

@@ -1,4 +1,5 @@
 process EXTRACT_CANDIDATE_INTERPRO_FAMILIES {
+    tag "interpro"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -25,6 +26,16 @@ process EXTRACT_CANDIDATE_INTERPRO_FAMILIES {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version 2>&1 | sed 's/Python //g')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch intepro_families.tsv
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: stub
     END_VERSIONS
     """
 }

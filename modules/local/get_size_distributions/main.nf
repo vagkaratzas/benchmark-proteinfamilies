@@ -4,8 +4,8 @@ process GET_SIZE_DISTRIBUTIONS {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/pandas:1.4.3' :
-        'biocontainers/pandas:1.4.3' }"
+        'docker://quay.io/biocontainers/pandas:1.4.3@sha256:3a2c607b31c9f34dcdefb7045dd23063091f55c78050530b79c4755335fb7ba7' :
+        'quay.io/biocontainers/pandas:1.4.3@sha256:3a2c607b31c9f34dcdefb7045dd23063091f55c78050530b79c4755335fb7ba7' }"
 
     input:
     tuple val(meta), path(similarity_file)

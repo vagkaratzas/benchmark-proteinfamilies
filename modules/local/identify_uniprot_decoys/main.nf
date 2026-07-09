@@ -1,4 +1,5 @@
 process IDENTIFY_UNIPROT_DECOYS {
+    tag "$meta.id"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -33,6 +34,17 @@ process IDENTIFY_UNIPROT_DECOYS {
     "${task.process}":
         python: \$(python --version 2>&1 | sed 's/Python //g')
         pyfastx: \$(python -c "import importlib.metadata; print(importlib.metadata.version('pyfastx'))")
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch decoys.fasta
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: stub
+        pyfastx: stub
     END_VERSIONS
     """
 }

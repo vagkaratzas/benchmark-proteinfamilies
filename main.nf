@@ -1,5 +1,7 @@
 include { PRE  } from './workflows/pre'
 include { POST } from './workflows/post'
+include { PIPELINE_INITIALISATION } from './subworkflows/local/pipeline_initialisation'
+include { PIPELINE_COMPLETION     } from './subworkflows/local/pipeline_completion'
 
 workflow BENCHMARK_PROTEINFAMILIES {
 
@@ -45,11 +47,13 @@ workflow BENCHMARK_PROTEINFAMILIES {
 workflow {
 
     main:
+    PIPELINE_INITIALISATION()
     //
     // WORKFLOW: Run main workflow
     //
     BENCHMARK_PROTEINFAMILIES (
         params.workflow_mode
     )
+    PIPELINE_COMPLETION()
 
 }

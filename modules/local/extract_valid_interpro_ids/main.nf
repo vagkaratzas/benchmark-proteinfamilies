@@ -1,10 +1,11 @@
 process EXTRACT_VALID_INTERPRO_IDS {
+    tag "interpro"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/ubuntu:20.04' :
-        'nf-core/ubuntu:20.04' }"
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/31/313e1c18a344323886cf97a151ab66d81c1a146fb129558cb9382b69a72d5532/data' :
+        'community.wave.seqera.io/library/python:b1b4b1f458c605bb' }"
 
     input:
     path hierarchy
@@ -23,6 +24,16 @@ process EXTRACT_VALID_INTERPRO_IDS {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         sed: \$(sed --version 2>&1 | sed -n 1p | sed 's/sed (GNU sed) //')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch intepro_valid_ids.txt
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        sed: stub
     END_VERSIONS
     """
 }

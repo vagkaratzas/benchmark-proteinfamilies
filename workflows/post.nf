@@ -12,6 +12,7 @@ include { ANALYZE_SPLITS_MERGES          } from '../modules/local/analyze_splits
 include { COMPUTE_SCORECARD              } from '../modules/local/compute_scorecard/main'
 include { COMPARE_BENCHMARK_RUNS         } from '../modules/local/compare_benchmark_runs/main'
 include { MULTIQC                        } from '../modules/nf-core/multiqc/main'
+include { DUMP_SOFTWARE_VERSIONS         } from '../modules/local/dump_software_versions/main'
 
 workflow POST {
     take:
@@ -172,6 +173,21 @@ workflow POST {
         ch_post_common
     )
 
+    ch_versions = CALCULATE_SEQUENCE_STATS.out.versions.map { _meta, versions -> versions }
+        .mix(
+            CALCULATE_DB_SEQUENCE_COVERAGE.out.versions.map { _meta, versions -> versions },
+            ANALYZE_RECRUITED_DECOYS.out.versions.map { _meta, versions -> versions },
+            CALCULATE_JACCARD_SIMILARITY.out.versions.map { _meta, versions -> versions },
+            PRODUCE_DB_STACKED_BARPLOT.out.versions.map { _meta, versions -> versions },
+            CALCULATE_DB_FAMILY_COVERAGE.out.versions.map { _meta, versions -> versions },
+            GET_SIZE_DISTRIBUTIONS.out.versions.map { _meta, versions -> versions },
+            INVESTIGATE_MATCHED_ORIGINALS.out.versions.map { _meta, versions -> versions },
+            CALCULATE_FAMILY_METRICS.out.versions.map { _meta, versions -> versions },
+            ANALYZE_SPLITS_MERGES.out.versions.map { _meta, versions -> versions },
+            COMPUTE_SCORECARD.out.versions.map { _meta, versions -> versions },
+            COMPARE_BENCHMARK_RUNS.out.versions.map { _meta, versions -> versions }
+        )
+
     if (!skip_multiqc) {
         ch_mqc_files = CALCULATE_FAMILY_METRICS.out.mqc
             .mix(
@@ -189,5 +205,9 @@ workflow POST {
             ch_mqc_files,
             ch_multiqc_config
         )
+
+        ch_versions = ch_versions.mix(MULTIQC.out.versions.map { _meta, versions -> versions })
     }
+
+    DUMP_SOFTWARE_VERSIONS( ch_versions.collect() )
 }

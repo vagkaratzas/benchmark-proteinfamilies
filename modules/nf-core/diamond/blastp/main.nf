@@ -72,6 +72,7 @@ process DIAMOND_BLASTP {
     """
 
     stub:
+    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
 
     def out_ext = ""

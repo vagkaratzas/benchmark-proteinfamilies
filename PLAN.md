@@ -19,12 +19,11 @@ fixtures: **42 processes, 0 failed**, 4 tool runs ranked in `post/comparison/`.
 | 8     | Performance                             | done          | this commit                                       |
 | 9     | PRE cleanup (EXTRACT_DB_METADATA merge) | done          | this commit                                       |
 | 10    | Reference database acquisition          | TODO          | —                                                 |
-| 11    | nf-core conformance                     | TODO          | —                                                 |
+| 11    | nf-core conformance                     | done          | this commit                                       |
 | 12    | Verification                            | partial (2/7) | CI tier: self-check + canonicalisation regression |
 
-Remaining, in dependency order: **11** (nf-schema, nf-test, stubs on the remaining PRE
-modules, version aggregation, container pinning) → **10** (DB downloads) → **12** (determinism
-test + the manual tier against the real proteinfamilies/mgnifams outputs).
+Remaining, in dependency order: **10** (reference DB downloads) → **12** (nf-test suite,
+determinism test, and the manual tier against the real proteinfamilies/mgnifams outputs).
 
 ## Goal
 
@@ -416,13 +415,13 @@ n_cross_db_matches`.
 
 ### Phase 11 — nf-core conformance
 
-- [ ] `nextflow_schema.json` + `nf-schema`; `validateParameters()` in `main.nf`.
-- [ ] `stub:` block in every local module (none today). `tag` on every local process (none today).
-- [ ] `subworkflows/local/{pipeline_initialisation,pipeline_completion}`.
-- [ ] Aggregate `versions.yml` → `pipeline_info/software_versions.yml`.
-- [ ] Pin containers; replace bare `biocontainers/pandas:1.4.3` in `SAMPLE_INTERPRO`.
+- [x] `nextflow_schema.json` + `nf-schema`; `validateParameters()` in `main.nf`.
+- [x] `stub:` block in every local module (none today). `tag` on every local process (none today).
+- [x] `subworkflows/local/{pipeline_initialisation,pipeline_completion}`.
+- [x] Aggregate `versions.yml` → `pipeline_info/software_versions.yml`.
+- [x] Pin containers; replace bare `biocontainers/pandas:1.4.3` in `SAMPLE_INTERPRO`.
       **Align DIAMOND: `makedb` is 2.1.8, `blastp` is 2.1.11.**
-- [ ] `manifest` description; `tower.yml`; `seqera` profile.
+- [x] `manifest` description; `tower.yml`; `seqera` profile.
 
 ### Phase 12 — Verification
 

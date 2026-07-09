@@ -1,4 +1,5 @@
 process REMOVE_DUPLICATE_BRANCHES {
+    tag "interpro"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -27,6 +28,16 @@ process REMOVE_DUPLICATE_BRANCHES {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version 2>&1 | sed 's/Python //g')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch parsed_hierarchy.txt
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: stub
     END_VERSIONS
     """
 }

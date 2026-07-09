@@ -452,3 +452,63 @@ profile, which is the directive designed for exactly this. (A bare `process.memo
 default; `withLabel` still wins.) The pipeline passes with the production tier intact.
 
 Fix rounds used: 0 of 2 delegated. Codex never committed.
+
+## Act 3 — Build, slice 5 (Phase 11: nf-core conformance)
+
+Builder: codex-cli 0.142.5, gpt-5.5 @ xhigh. Thread `019f473b-dbc2-7723-9279-78830566bc07`.
+
+### Round 1 — Codex build
+
+`stub:` + `tag` on the six PRE modules that lacked both; SHA-pinned containers; DIAMOND aligned;
+`nextflow_schema.json` + `nf-schema@2.1.1`; PIPELINE_INITIALISATION / PIPELINE_COMPLETION;
+`DUMP_SOFTWARE_VERSIONS`; `tower.yml`; `seqera` + `test_pre` profiles.
+
+### Claude's verdict — one severe regression, caught only by testing the happy path
+
+Verified independently: `nextflow run . -stub -profile test_pre` → 15 processes SUCCESS (which is
+what actually proves the six new stubs); `-profile test` → 43 processes SUCCESS;
+`software_versions.yml` aggregates 12 processes; `nextflow lint` 0 errors / 34 files;
+`conf/base.config` untouched; no bare container tags remain; DIAMOND is `2.1.11` in both the
+container and the conda env of makedb and blastp.
+
+**`nf-schema` rejected every numeric parameter given on the command line.**
+
+```
+--num_per_db (10):       Value is [string] but should be [integer]
+--match_threshold (0.7): Value is [string] but should be [number]
+```
+
+Codex's proof only exercised an _invalid_ value (`--workflow_mode bogus`), which failed as intended,
+so the regression was invisible: the pipeline would reject `--num_per_db 10` from any user.
+
+Root cause, established empirically rather than guessed — on **Nextflow 26.04.4**, CLI params arrive
+as `String` while config defaults stay `Integer`:
+
+```
+defaults (no CLI):  n=50 (Integer)  f=0.5 (BigDecimal)
+with --n 10 --f 0.7: n=10 (String)   f=0.7 (String)
+```
+
+`validation { lenientMode = true }` does **not** fix it in nf-schema 2.1.1 (verified; my first probe
+was contaminated because I had already written the key into `nextflow.config`, so I restored and
+retested cleanly).
+
+**Fix:** numeric params in `nextflow_schema.json` now accept `["integer","string"]` /
+`["number","string"]` with a numeric `pattern`, which is what the CLI actually delivers. The
+semantics are unchanged because `PIPELINE_INITIALISATION` already coerces (`value as BigDecimal`)
+and rejects non-positive values. Defense in depth, all four guards verified to still fire:
+
+| input                   | rejected by                                            |
+| ----------------------- | ------------------------------------------------------ |
+| `--num_per_db 0`        | PIPELINE_INITIALISATION (`expected a positive number`) |
+| `--num_per_db abc`      | schema `pattern`                                       |
+| `--min_membership -3`   | PIPELINE_INITIALISATION                                |
+| `--workflow_mode bogus` | schema `enum` (`Expected any of [pre, post]`)          |
+| `--outdir` omitted      | schema `required`                                      |
+
+…and `--num_per_db 7 --match_threshold 0.6` now runs to SUCCESS.
+
+Also accepted: a one-line `def args = task.ext.args ?: ''` in `diamond/blastp`'s stub, which the
+PRE stub graph genuinely needs.
+
+Fix rounds used: 0 of 2 delegated. Codex never committed.
