@@ -28,9 +28,16 @@ workflow BENCHMARK_PROTEINFAMILIES {
             params.pre_sampled_metadata,
             params.pre_sampled_fasta_dir,
             params.match_threshold,
+            params.association_threshold,
             params.max_unmapped_fraction,
             params.max_ambiguous_fraction,
-            params.min_universe_coverage
+            params.min_intersection_size,
+            params.min_universe_coverage,
+            params.scorecard_weights,
+            // On the CLI `--skip_multiqc false` arrives as the String "false", and every
+            // non-empty String is truthy in Groovy -- so a bare `!params.skip_multiqc`
+            // would silently skip MultiQC exactly when the user asked for it.
+            params.skip_multiqc.toString().toLowerCase() == 'true'
         )
     }
 }

@@ -35,20 +35,40 @@ An example run command looks like this:
 
 ## post-proteinfamilies
 
-During the `post` `workflow_mode`, general statistics are caluclated regarding the coverage of the original families that was achieved by the generated families.
+During the `post` `workflow_mode`, generated full-family MSAs are compared with the sampled original families. POST metrics resolve tool IDs through the PRE `id_registry.tsv` and score set intersections on `universe_id`; `parent_id` coverage is reported only as auxiliary QC and is not part of the ranking.
 
-A configuration file with the following output paths from both `pre` mode of `benchamrk-proteinfamilies` and the `nf-core/proteinfamilies` run must be provided:
+POST is samplesheet-driven:
 
 ```
-path_to_db_fasta             = '/path/to/benchmark_proteinfamilies/output/pre/families/sampled/combined_db.fasta'
-path_to_decoys               = '/path/to/benchmark_proteinfamilies/output/pre/decoys/decoys.fasta'
-path_to_sampled_metadata     = '/path/to/benchmark_proteinfamilies/output/pre/families/sampled/updated_sampled_metadata.csv'
-path_to_sampled_fasta_folder = '/path/to/benchmark_proteinfamilies/output/pre/families/sampled/sampled_fasta'
-
-path_to_alignments       = '/path/to/proteinfamilies/use-case/output_1/full_msa/filtered/hhsuite_reformat/use_case'
-path_to_mmseqs_tsv       = '/path/to/proteinfamilies/use-case/output_1/mmseqs/initial_clustering/mmseqs_createtsv/use_case.tsv'
-path_to_generated_fasta  = '/path/to/proteinfamilies/use-case/output_1/fasta/non_redundant_family_filtered/use_case'
+sample,tool,msa_dir,clustering_tsv
+run_1,proteinfamilies,/path/to/full_msa/filtered/hhsuite_reformat/use_case,/path/to/mmseqs/use_case.tsv
+run_2,mgnifams,/path/to/full_msa,
 ```
+
+`clustering_tsv` is optional. When it is present, POST runs the clustering investigation and cross-checks cluster IDs; when it is absent, that process is skipped.
+
+A configuration file must provide the PRE outputs used to build the tool input:
+
+```
+workflow_mode          = 'post'
+post_samplesheet       = '/path/to/post_samplesheet.csv'
+pre_id_registry        = '/path/to/pre/families/sampled/id_registry.tsv'
+pre_universe_fasta     = '/path/to/pre/families/sampled/combined_decoy.faa'
+pre_universe_sha256    = '/path/to/pre/families/sampled/universe.sha256'
+pre_sampled_metadata   = '/path/to/pre/families/sampled/sampled_metadata.csv'
+pre_sampled_fasta_dir  = '/path/to/pre/families/sampled/sampled_fasta'
+association_threshold  = 0.1
+min_intersection_size  = 3
+scorecard_weights      = null
+skip_multiqc           = false
+```
+
+New POST outputs include:
+
+- `family_metrics.tsv`: one row for every generated/original pair with a non-empty `universe_id` intersection. `precision_denom=|G|`, `recall_denom=|O|`, `f1` is their harmonic mean, and `jaccard_denom=|G union O|`.
+- `split_merge_summary.tsv`: directional split/merge counts within each `db_layer`. Split associations use `precision(G,O)`; merge associations use `recall(G,O)`; both require `|G intersect O| >= min_intersection_size`.
+- `scorecard.tsv`: an **EXPLORATORY** composite per run using `mean_f1`, `family_coverage`, `sequence_coverage`, `1 - decoy_recruitment_rate`, and `1 - split_merge_rate`, all keyed on `universe_id`.
+- `post/comparison/benchmark_comparison.csv`: side-by-side run comparison. Rank 1 is the highest `composite_exploratory`; sorting is descending.
 
 An example run command looks like this:
 `nextflow run benchmark-proteinfamilies -c slurm_benchmark.config -profile singularity,slurm --workflow_mode post -resume`

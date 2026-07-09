@@ -359,3 +359,56 @@ because the spec says "large" without a number. Should become a param before rel
 
 Fix rounds used: 0 of 2 delegated — all three defects were mechanical, so Claude fixed them directly
 rather than ping-pong trivia through delegation. Codex never committed.
+
+## Act 3 — Build, slice 3 (Phases 6–7)
+
+Builder: codex-cli 0.142.5, gpt-5.5 @ xhigh. Thread `019f4706-cb7c-7cc1-9530-2699d8083a37`.
+
+Phase 5 turned out to be already satisfied by `bin/post_common.py` (format sniffed from the first
+non-blank line, all 8 D6 extensions), so this slice was Phase 6 + Phase 7.
+
+### Round 1 — Codex build
+
+`ext.when = { meta.has_clustering }` gating; `calculate_family_metrics.py` (P/R/F1 on universe_id);
+`analyze_splits_merges.py` (D5 directional, union-based, within-db_layer, + original-overlap
+baseline); `compute_scorecard.py`; `compare_benchmark_runs.py`; MultiQC; `tool_split`/`tool_merge`
+fixtures; `tests/test_splits_merges.py`.
+
+### Claude's verdict — the science is right; MultiQC had never run.
+
+The three hygiene traps from the previous slice (shebang, exec bit, `${PYTHONPATH:-}`) were all
+avoided this time because they were written into the spec. Verified independently:
+
+- `nextflow run . -profile test` → **42 processes, 0 failed**, 4 samples.
+- `ext.when` gating works: only the one row with a `clustering_tsv` ran INVESTIGATE.
+- Split/merge counts match the fixture design exactly: `tool_split` → `n_splits=1`,
+  `tool_merge` → `n_merges=1`, `clean`/`mangled` → 0/0.
+- The union rule is genuinely order-independent (each edge subtracts the union of **all others**,
+  not a greedy left-to-right accumulator). **Mutation test:** swapping in the greedy rule kills
+  `tests/test_splits_merges.py` (`AssertionError: '1' != '0'`).
+- Scorecard composite uses only the five `universe_id`-keyed components;
+  `parent_id_coverage_aux` is published but excluded from the composite and the ranking, per D1.
+- Composite + ranking labelled `EXPLORATORY` in the output header and the README.
+- `nextflow lint`: 0 errors / 34 files.
+
+**Two real bugs Codex could not have seen, because its proof never ran MultiQC** (the `test`
+profile sets `skip_multiqc = true`):
+
+- **MultiQC had never worked at all.** Every sample emits identically-named `*_mqc.csv`, so
+  collecting them across samples is an input filename collision:
+  `multiple input files for each of: split_merge_summary_mqc.csv, scorecard_mqc.csv, ...`
+  Fixed with the nf-core canonical `path multiqc_files, stageAs: "?/*"`.
+- **`--skip_multiqc false` silently SKIPPED MultiQC.** On the CLI the value arrives as the String
+  `"false"`, and every non-empty String is truthy in Groovy, so `!params.skip_multiqc` was `false`
+  exactly when the user asked for MultiQC. Verified with a scratch pipeline
+  (`params.skip = "false" (String); !params.skip -> false`). Now coerced in `main.nf`.
+  Confirmed both directions: `--skip_multiqc false` → MULTIQC runs (43 processes);
+  `--skip_multiqc true` → 0 MULTIQC lines.
+
+Also removed dead `benchmark_ids`/`post_common` inputs and a pointless `PYTHONPATH` export from the
+MultiQC module — its script is pure `multiqc`.
+
+Deviation accepted: D5 says "highly-overlapping" originals without a number; implemented as
+`--original_overlap_jaccard_threshold` (default 0.5), emitted into `split_merge_summary.tsv`.
+
+Fix rounds used: 0 of 2 delegated — all fixes were mechanical, done directly. Codex never committed.

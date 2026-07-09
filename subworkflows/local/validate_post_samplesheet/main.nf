@@ -30,7 +30,7 @@ workflow VALIDATE_POST_SAMPLESHEET {
                 }
 
                 tuple(
-                    [id: sample, tool: tool],
+                    [id: sample, tool: tool, has_clustering: clustering_tsv ? true : false],
                     file(msa_dir, checkIfExists: true),
                     clustering_tsv ? file(clustering_tsv, checkIfExists: true) : []
                 )

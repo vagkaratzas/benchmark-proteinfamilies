@@ -1,0 +1,51 @@
+title: benchmark-proteinfamilies POST
+custom_data:
+  family_metrics:
+    section_name: Family metrics
+    description: Per generated/original family metrics keyed on universe_id.
+    file_format: csv
+    plot_type: table
+    pconfig:
+      id: family_metrics
+      title: Family metrics
+    sp:
+      family_metrics:
+        fn: "family_metrics_mqc.csv"
+  split_merge_summary:
+    section_name: Split/merge summary
+    description: Directional split/merge topology keyed on universe_id.
+    file_format: csv
+    plot_type: table
+    pconfig:
+      id: split_merge_summary
+      title: Split/merge summary
+    sp:
+      split_merge_summary:
+        fn: "split_merge_summary_mqc.csv"
+  scorecard:
+    section_name: EXPLORATORY scorecard
+    description: Composite is exploratory until weights and association threshold are validated on real runs.
+    file_format: csv
+    plot_type: table
+    pconfig:
+      id: scorecard
+      title: EXPLORATORY scorecard
+    sp:
+      scorecard:
+        fn: "scorecard_mqc.csv"
+  benchmark_comparison:
+    section_name: EXPLORATORY benchmark comparison
+    description: Rank 1 is the highest composite_exploratory value.
+    file_format: csv
+    plot_type: table
+    pconfig:
+      id: benchmark_comparison
+      title: EXPLORATORY benchmark comparison
+    sp:
+      benchmark_comparison:
+        fn: "benchmark_comparison_mqc.csv"
+sp:
+  f1_jaccard_distribution:
+    fn: "f1_jaccard_distribution_mqc.png"
+  db_layer_coverage:
+    fn: "db_layer_coverage_mqc.png"

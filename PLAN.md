@@ -2,6 +2,31 @@
 
 _Locked via grill — by Claude + vagkaratzas (2026-07-09). Revised after Codex adversarial review round 1._
 
+## Status
+
+`nextflow run . -profile test` runs POST end to end, offline, over the committed synthetic
+fixtures: **42 processes, 0 failed**, 4 tool runs ranked in `post/comparison/`.
+
+| Phase | Title                                   | Status        | Landed in                                         |
+| ----- | --------------------------------------- | ------------- | ------------------------------------------------- |
+| 1     | Identity core + fixtures                | done          | `046f855`                                         |
+| 2     | PRE emits the registry                  | done          | `046f855`                                         |
+| 3     | POST samplesheet infrastructure         | done          | `97326af`                                         |
+| 4     | Dynamic DB-layer detection              | done          | `97326af`                                         |
+| 5     | Alignment format auto-detection         | done          | `97326af` (via `bin/post_common.py`)              |
+| 6     | Optional `clustering_tsv`               | done          | this commit                                       |
+| 7     | New metrics (D5)                        | done          | this commit                                       |
+| 8     | Performance                             | TODO          | —                                                 |
+| 9     | PRE cleanup (EXTRACT_DB_METADATA merge) | TODO          | —                                                 |
+| 10    | Reference database acquisition          | TODO          | —                                                 |
+| 11    | nf-core conformance                     | TODO          | —                                                 |
+| 12    | Verification                            | partial (2/7) | CI tier: self-check + canonicalisation regression |
+
+Remaining, in dependency order: **8** (perf: jaccard inverted index + multiprocessing) →
+**9** (merge the 4 `EXTRACT_*_METADATA` modules) → **11** (nf-schema, nf-test, stubs on the
+remaining PRE modules, version aggregation, container pinning) → **10** (DB downloads) →
+**12** (determinism test + the manual tier against the real proteinfamilies/mgnifams outputs).
+
 ## Goal
 
 Turn this two-mode Nextflow pipeline into a standardised, nf-core-conformant benchmarking
@@ -260,7 +285,7 @@ specific PRE run can be reproduced on demand. Do **not** default it to a fixed v
 
 ### Phase 1 — Identity core + fixtures (everything depends on this)
 
-- [ ] `bin/benchmark_ids.py` — importable helper (not a CLI):
+- [x] `bin/benchmark_ids.py` — importable helper (not a CLI):
   - `load_registry(tsv) -> Registry` — `universe_id -> row`, plus the **forward alias index**
     (`alias -> universe_id`, built from registry rows) and a `parent_id` index.
   - `resolve(raw_id, registry, seq=None) -> Resolution(universe_id | None, status ∈ {resolved,unmapped,ambiguous})`
@@ -272,43 +297,43 @@ specific PRE run can be reproduced on demand. Do **not** default it to a fixed v
     sequence), order sensitivity on mixed suffixes, a legitimate ID ending in `_n_n`, an
     alias collision onto two `universe_id`s, and **a decoy resolving via the forward alias index**
     (the bug that would otherwise mark every decoy unmapped).
-- [ ] **Import mechanism (container-safe, deterministic).** Nextflow puts `bin/` on `PATH`, not on
+- [x] **Import mechanism (container-safe, deterministic).** Nextflow puts `bin/` on `PATH`, not on
       `PYTHONPATH`, and `env.PYTHONPATH="${projectDir}/bin"` is a _host_ path that is not reliably
       mounted under Docker/Singularity. Therefore: each consuming module declares a staged input
       `path(benchmark_ids)` fed from `file("${projectDir}/bin/benchmark_ids.py")`, and its script block
       prefixes `export PYTHONPATH="$PWD:$PYTHONPATH"`. Apply uniformly; do not rely on `sys.path[0]`.
-- [ ] `tests/fixtures/universe/` — a tiny **synthetic** universe + registry + two fake tool output
+- [x] `tests/fixtures/universe/` — a tiny **synthetic** universe + registry + two fake tool output
       dirs (one clean, one with mangled/ambiguous IDs). Built by hand, committed. This unblocks all
       downstream work without running PRE or any external pipeline.
-- [ ] Params: `max_unmapped_fraction=0.05`, `max_ambiguous_fraction=0.01`,
+- [x] Params: `max_unmapped_fraction=0.05`, `max_ambiguous_fraction=0.01`,
       `min_intersection_size=3`, `min_universe_coverage=null`, `seed=null`.
 
 ### Phase 2 — PRE emits the registry (must precede POST consumers)
 
-- [ ] `PREPARE_BENCHMARK_FASTA` (merges `CONVERT_SAMPLED_TO_FASTA` + `COMBINE_DB_FASTA`) emits
+- [x] `PREPARE_BENCHMARK_FASTA` (merges `CONVERT_SAMPLED_TO_FASTA` + `COMBINE_DB_FASTA`) emits
       `sampled_fasta/`, `combined_db.faa`, `updated_sampled_metadata.csv`, **`id_registry.tsv`**,
       **`universe.sha256`**.
-- [ ] `COMBINE_DECOY_FASTA` appends decoy rows to the registry with `source_type=decoy`, then
+- [x] `COMBINE_DECOY_FASTA` appends decoy rows to the registry with `source_type=decoy`, then
       recomputes `universe.sha256` over the final `combined_decoy.faa`.
-- [ ] Assert family-parent ∩ decoy-parent = ∅; fail loudly.
-- [ ] Fix the latent dedupe bug in `convert_sampled_to_fasta.py`: `seen_ids` keys on the **raw**
+- [x] Assert family-parent ∩ decoy-parent = ∅; fail loudly.
+- [x] Fix the latent dedupe bug in `convert_sampled_to_fasta.py`: `seen_ids` keys on the **raw**
       `record.id` while the **cleaned** id is written, so `A.B` and `A|B` both emit `A_B` →
       duplicate universe IDs. Key the dedupe on `cleaned_id`.
-- [ ] Seed all stochastic sampling (D7).
-- [ ] `.faa` extension for PRE amino-acid outputs.
+- [x] Seed all stochastic sampling (D7).
+- [x] `.faa` extension for PRE amino-acid outputs.
 
 ### Phase 3 — POST samplesheet infrastructure
 
-- [ ] `assets/schema_post_samplesheet.json` (nf-schema), columns per D4.
-- [ ] `subworkflows/local/validate_post_samplesheet/main.nf` → `tuple(val(meta), path(msa_dir), path(clustering_tsv))`,
+- [x] `assets/schema_post_samplesheet.json` (nf-schema), columns per D4.
+- [x] `subworkflows/local/validate_post_samplesheet/main.nf` → `tuple(val(meta), path(msa_dir), path(clustering_tsv))`,
       `meta = [id:, tool:]`; optional file → `[]`.
-- [ ] `nextflow.config`: drop `path_to_alignments`, `path_to_mmseqs_tsv`, `path_to_generated_fasta`;
+- [x] `nextflow.config`: drop `path_to_alignments`, `path_to_mmseqs_tsv`, `path_to_generated_fasta`;
       add `post_samplesheet`, `pre_id_registry`, `pre_universe_fasta`; rename to `pre_db_fasta`,
       `pre_decoy_fasta`, `pre_sampled_metadata`, `pre_sampled_fasta_dir`; replace `'null'`
       **string** defaults with real `null`; rename `jaccard_similarity_threshold` → `match_threshold`.
-- [ ] `main.nf` / `workflows/post.nf`: samplesheet-driven, `meta` threaded through every module so
+- [x] `main.nf` / `workflows/post.nf`: samplesheet-driven, `meta` threaded through every module so
       `publishDir` keys on `${meta.id}`. Every POST module takes the registry as a staged input.
-- [ ] POST verifies `pre_universe_fasta`'s sha256 against `universe.sha256` and records it in the report.
+- [x] POST verifies `pre_universe_fasta`'s sha256 against `universe.sha256` and records it in the report.
 
 ### Phase 4 — Dynamic DB-layer detection
 
@@ -321,30 +346,30 @@ match `PF10`).
 
 ### Phase 5 — Alignment format auto-detection (D6)
 
-- [ ] `calculate_sequence_stats.py`: `--alignment_type auto`, per-file sniffing, mixed formats,
+- [x] `calculate_sequence_stats.py`: `--alignment_type auto`, per-file sniffing, mixed formats,
       generic `alignment_` output prefix.
-- [ ] One shared extension/basename helper used by `calculate_jaccard_similarity.py`,
+- [x] One shared extension/basename helper used by `calculate_jaccard_similarity.py`,
       `analyze_recruited_decoys.py`, `investigate_matched_originals.py`.
 
 ### Phase 6 — Optional `clustering_tsv`
 
-- [ ] `investigate_matched_originals.py`: drop `--generated_fasta` (D3); `--cluster_file` optional
+- [x] `investigate_matched_originals.py`: drop `--generated_fasta` (D3); `--cluster_file` optional
       (`cluster_count=0` when absent); membership + lengths from `msa_dir` + registry.
       Canonicalise **both** sides of the cluster lookup — the TSV carries the tool's ID format.
-- [ ] When present, cross-check resolved MSA members against resolved cluster members; warn on a
+- [x] When present, cross-check resolved MSA members against resolved cluster members; warn on a
       large missing fraction (the seed-MSA detector from D3).
-- [ ] Gate via `ext.when` in `conf/modules.config`, not an `if` in the workflow.
-- [ ] nf-test must cover **both** the absent and present `clustering_tsv` cases under a container
+- [x] Gate via `ext.when` in `conf/modules.config`, not an `if` in the workflow.
+- [x] nf-test must cover **both** the absent and present `clustering_tsv` cases under a container
       profile — optional-file staging is exactly where `val`-vs-`path` bugs hide.
 
 ### Phase 7 — New metrics (D5)
 
-- [ ] `bin/calculate_family_metrics.py` — per matched (G,O) pair: `tp, fp, fn, precision, recall,
+- [x] `bin/calculate_family_metrics.py` — per matched (G,O) pair: `tp, fp, fn, precision, recall,
 f1, jaccard` on `universe_id` sets.
-- [ ] `bin/analyze_splits_merges.py` — directional definitions, within-`db_layer`,
+- [x] `bin/analyze_splits_merges.py` — directional definitions, within-`db_layer`,
       `association_threshold`; emits `n_splits, n_merges, n_one_to_one, n_vanished, n_spurious,
 n_cross_db_matches`.
-- [ ] `bin/compute_scorecard.py` — one normalised composite per run + ranked cross-run table.
+- [x] `bin/compute_scorecard.py` — one normalised composite per run + ranked cross-run table.
       Components, **all keyed on `universe_id`**: mean F1 over matched originals; family coverage;
       sequence coverage; `1 − decoy_recruitment_rate`; `1 − split_merge_rate`.
       **`parent_id` coverage is published as auxiliary QC and is NOT a scorecard component** —
@@ -353,10 +378,10 @@ n_cross_db_matches`.
       `params.scorecard_weights` (default equal); all raw components published beside the composite.
       The composite and its ranking are labelled **EXPLORATORY** in the output header and README
       until the weights and `association_threshold` are validated against real runs (see Risks).
-- [ ] `modules/local/compare_benchmark_runs/` + `bin/compare_benchmark_runs.py` — cross-tool CSV,
+- [x] `modules/local/compare_benchmark_runs/` + `bin/compare_benchmark_runs.py` — cross-tool CSV,
       per-tool Jaccard/F1 violin plots, tool-grouped stacked barplot. Runs for `n >= 1` rows.
-- [ ] MultiQC (`modules/nf-core/multiqc`, `assets/multiqc_config.yml`); emit `*_mqc.csv` / `*_mqc.png`.
-- [ ] Decoys classified via registry `source_type`, **never** by ID shape or parent identity.
+- [x] MultiQC (`modules/nf-core/multiqc`, `assets/multiqc_config.yml`); emit `*_mqc.csv` / `*_mqc.png`.
+- [x] Decoys classified via registry `source_type`, **never** by ID shape or parent identity.
 
 ### Phase 8 — Performance
 
@@ -404,11 +429,11 @@ n_cross_db_matches`.
 
 **CI-reproducible tier (no external pipelines, no network):**
 
-- [ ] `benchmark_ids.py` self-check: the D1 worked examples + false attribution + order sensitivity + legitimate `_n_n` + ambiguous-hit cases.
+- [x] `benchmark_ids.py` self-check: the D1 worked examples + false attribution + order sensitivity + legitimate `_n_n` + ambiguous-hit cases.
 - [ ] nf-test module tests: `sample_interpro`, `calculate_jaccard_similarity`, `extract_db_metadata`,
       `prepare_benchmark_fasta` (registry shape + checksum).
 - [ ] `-stub` workflow tests for PRE and POST using `tests/fixtures/`.
-- [ ] **Canonicalisation regression:** the mangled-ID fixture must yield non-zero Jaccard and
+- [x] **Canonicalisation regression:** the mangled-ID fixture must yield non-zero Jaccard and
       `unmapped_fraction ≈ 0`. This test must _fail_ against the current `split("/")[0]` code —
       it is the specific bug D1 exists to prevent.
 - [ ] Determinism: two PRE runs at the same `seed` produce byte-identical `combined_decoy.faa`.
