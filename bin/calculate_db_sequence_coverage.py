@@ -1,109 +1,108 @@
 #!/usr/bin/env python3
 
-import os
-import csv
 import argparse
-from Bio import SeqIO
+import csv
+from collections import defaultdict
+from pathlib import Path
 
-
-def load_metadata(metadata_file):
-    db_to_ids = {"pfam": set(), "hamap": set(), "panther": set(), "ncbifam": set()}
-    with open(metadata_file, "r") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            db = row["db"].strip().lower()
-            dbkey = row["dbkey"].strip().split("/", 1)[0]
-            if db in db_to_ids:
-                db_to_ids[db].add(dbkey)
-    return db_to_ids
+from benchmark_ids import load_registry
+from post_common import (
+    family_files_from_metadata,
+    resolve_records,
+    verify_universe_checksum,
+)
 
 
 def load_original_hits(original_counts_file):
-    found_proteins = set()
-    with open(original_counts_file, "r") as f:
-        for line in f:
-            if line.strip() and not line.startswith("Original"):
-                parts = line.strip().split("\t")
-                if len(parts) == 2 and parts[1].isdigit() and int(parts[1]) > 0:
-                    found_proteins.add(parts[0])
-    return found_proteins
+    found = set()
+    with Path(original_counts_file).open() as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        for row in reader:
+            count = int(row.get("count", "0") or 0)
+            if count > 0:
+                found.add(row["universe_id"])
+    return found
 
 
-def extract_protein_ids_from_alignment(file_path):
-    protein_ids = set()
-    try:
-        for record in SeqIO.parse(file_path, "fasta"):
-            cleaned_name = record.id.split("/", 1)[0]
-            protein_ids.add(cleaned_name)
-    except Exception as e:
-        print(f"Warning: Couldn't parse {file_path}: {e}")
-    return protein_ids
-
-
-def compute_match_stats(db_to_ids, msa_paths, found_proteins, output_file):
-    with open(output_file, "w") as out:
-        out.write("db\tmatch_percentage\tmatched\ttotal\n")
-        for db, ids in db_to_ids.items():
-            msa_folder = msa_paths[db]
-            total_unique = set()
-            for family_id in ids:
-                for filename in os.listdir(msa_folder):
-                    if filename.startswith(family_id):
-                        full_path = os.path.join(msa_folder, filename)
-                        protein_ids = extract_protein_ids_from_alignment(full_path)
-                        total_unique.update(protein_ids)
-                        break  # only take the first match
-            if not total_unique:
-                print(f"{db.upper()}: No alignments found.")
-                continue
-
-            matched = total_unique.intersection(found_proteins)
-            matched_count = len(matched)
-            total_count = len(total_unique)
-            percentage = (matched_count / total_count) * 100 if total_count else 0
-            out.write(f"{db}\t{percentage:.1f}\t{matched_count}\t{total_count}\n")
+def compute_match_stats(metadata, msa_root, found_proteins, registry):
+    db_to_members = defaultdict(set)
+    for db, family, path, _row in family_files_from_metadata(msa_root, metadata):
+        members, _frags, _unmapped, _ambiguous, _n_raw = resolve_records(
+            path,
+            registry,
+            f"original:{db}/{family}",
+            fail_on_unresolved=True,
+        )
+        db_to_members[db].update(members)
+    rows = []
+    for db in sorted(db_to_members):
+        total_unique = db_to_members[db]
+        matched = total_unique.intersection(found_proteins)
+        total_count = len(total_unique)
+        matched_count = len(matched)
+        percentage = (matched_count / total_count) * 100 if total_count else 0
+        rows.append(
+            {
+                "db": db,
+                "match_percentage": f"{percentage:.1f}",
+                "matched": matched_count,
+                "total": total_count,
+            }
+        )
+    return rows
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Compute MSA match statistics from metadata and original hit counts."
+        description="Compute DB-level sequence coverage from metadata and original hit counts."
     )
+    parser.add_argument("--metadata", required=True, help="Path to metadata CSV")
     parser.add_argument(
-        "--metadata", required=True, help="Path to the metadata CSV file"
-    )
-    parser.add_argument(
-        "--original_counts", required=True, help="Path to the original counts file"
+        "--original_counts", required=True, help="Path to original count TSV"
     )
     parser.add_argument(
         "--msa_root",
         required=True,
-        help="Root directory containing pfam, panther, hamap, ncbifam subfolders",
+        help="Root directory containing sampled FASTA subfolders by DB layer",
     )
-    parser.add_argument(
-        "--output", required=True, help="Output file path to write results"
-    )
+    parser.add_argument("--id_registry", required=True)
+    parser.add_argument("--pre_universe_fasta", required=True)
+    parser.add_argument("--pre_universe_sha256", required=True)
+    parser.add_argument("--output", required=True, help="Output TSV path")
+    parser.add_argument("--sample", default="")
+    parser.add_argument("--tool", default="")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-
-    msa_paths = {
-        "pfam": os.path.join(args.msa_root, "pfam"),
-        "panther": os.path.join(args.msa_root, "panther"),
-        "ncbifam": os.path.join(args.msa_root, "ncbifam"),
-        "hamap": os.path.join(args.msa_root, "hamap"),
-    }
-
-    print("Loading metadata...")
-    db_to_ids = load_metadata(args.metadata)
-
-    print("Loading original hits...")
+    universe_sha256 = verify_universe_checksum(
+        args.pre_universe_fasta, args.pre_universe_sha256
+    )
+    registry = load_registry(args.id_registry, args.pre_universe_fasta)
     found_proteins = load_original_hits(args.original_counts)
+    rows = compute_match_stats(args.metadata, args.msa_root, found_proteins, registry)
 
-    print("Computing match statistics...")
-    compute_match_stats(db_to_ids, msa_paths, found_proteins, args.output)
-    print(f"Results written to: {args.output}")
+    with Path(args.output).open("w", newline="") as out:
+        writer = csv.DictWriter(
+            out,
+            fieldnames=[
+                "sample",
+                "tool",
+                "universe_sha256",
+                "db",
+                "match_percentage",
+                "matched",
+                "total",
+            ],
+            delimiter="\t",
+        )
+        writer.writeheader()
+        for row in rows:
+            row["sample"] = args.sample
+            row["tool"] = args.tool
+            row["universe_sha256"] = universe_sha256
+            writer.writerow(row)
 
 
 if __name__ == "__main__":

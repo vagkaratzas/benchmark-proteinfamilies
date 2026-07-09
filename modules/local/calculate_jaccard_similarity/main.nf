@@ -1,4 +1,5 @@
 process CALCULATE_JACCARD_SIMILARITY {
+    tag "$meta.id"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -7,29 +8,67 @@ process CALCULATE_JACCARD_SIMILARITY {
         'community.wave.seqera.io/library/biopython:1.84--3318633dad0031e7' }"
 
     input:
-    path aln_folder
+    tuple val(meta), path(aln_folder), path(clustering_tsv)
     path original_folder
+    path metadata
+    path id_registry
+    path pre_universe_fasta
+    path pre_universe_sha256
+    path benchmark_ids
+    path post_common
     val similarity_threshold
+    val max_unmapped_fraction
+    val max_ambiguous_fraction
+    val min_universe_coverage
 
     output:
-    path "jaccard_similarities.csv", emit: edgelist
-    path "versions.yml"            , emit: versions
+    tuple val(meta), path("jaccard_similarities.csv"), emit: edgelist
+    tuple val(meta), path("unmapped.tsv")            , emit: unmapped
+    tuple val(meta), path("ambiguous.tsv")           , emit: ambiguous
+    tuple val(meta), path("jaccard_qc.tsv")          , emit: qc
+    tuple val(meta), path("versions.yml")            , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
+    def minCoverageArg = min_universe_coverage ? "--min_universe_coverage ${min_universe_coverage}" : ''
+    def clusterArg = clustering_tsv ? "--cluster_file ${clustering_tsv}" : ''
     """
+    export PYTHONPATH="\$PWD:\${PYTHONPATH:-}"
     calculate_jaccard_similarity.py \\
         --use_case_dir ${aln_folder} \\
         --original_base_dir ${original_folder} \\
+        --metadata ${metadata} \\
+        --id_registry ${id_registry} \\
+        --pre_universe_fasta ${pre_universe_fasta} \\
+        --pre_universe_sha256 ${pre_universe_sha256} \\
         --output_file jaccard_similarities.csv \\
-        --similarity_threshold ${similarity_threshold}
+        --unmapped_file unmapped.tsv \\
+        --ambiguous_file ambiguous.tsv \\
+        --qc_file jaccard_qc.tsv \\
+        ${clusterArg} \\
+        --similarity_threshold ${similarity_threshold} \\
+        --max_unmapped_fraction ${max_unmapped_fraction} \\
+        --max_ambiguous_fraction ${max_ambiguous_fraction} \\
+        --sample '${meta.id}' \\
+        --tool '${meta.tool}' \\
+        ${minCoverageArg}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version 2>&1 | sed 's/Python //g')
         biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch jaccard_similarities.csv unmapped.tsv ambiguous.tsv jaccard_qc.tsv
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: stub
+        biopython: stub
     END_VERSIONS
     """
 }

@@ -1,48 +1,46 @@
 #!/usr/bin/env python3
 
-import pandas as pd
-import matplotlib.pyplot as plt
 import argparse
+
+import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def main(input_file, output_file):
-    # Load the data
     df = pd.read_csv(input_file, sep="\t")
-
-    # Define similarity thresholds
     thresholds = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    db_layers = ["hamap", "ncbifam", "panther", "pfam"]
 
-    # Count entries ≥ each threshold, grouped by db_layer
+    if df.empty:
+        fig, ax = plt.subplots()
+        ax.set_xlabel("Jaccard similarity score threshold")
+        ax.set_ylabel("Number of produced families that match original families")
+        ax.set_title("Entries by similarity threshold and database")
+        ax.text(0.5, 0.5, "No matches", ha="center", va="center")
+        ax.set_xticks([])
+        ax.set_yticks([])
+        plt.tight_layout()
+        plt.savefig(output_file, dpi=300)
+        return
+    else:
+        layers = sorted(df["db_layer"].dropna().unique())
+
     counts = {
         thr: df[df["similarity_score"] >= thr]["db_layer"].value_counts()
         for thr in thresholds
     }
+    plot_df = pd.DataFrame(counts).fillna(0).astype(int).reindex(layers, fill_value=0)
 
-    # Create a DataFrame for plotting
-    plot_df = pd.DataFrame(counts).fillna(0).astype(int)
-    plot_df = plot_df.reindex(db_layers)  # Ensure consistent db_layer order
+    cmap = plt.get_cmap("tab10")
+    colors = [cmap(index % cmap.N) for index, _layer in enumerate(layers)]
 
-    # Plotting
-    colors = {
-        "hamap": "#1f77b4",
-        "ncbifam": "#ff7f0e",
-        "panther": "#2ca02c",
-        "pfam": "#d62728",
-    }
-
-    plot_df.T.plot(kind="bar", stacked=True, color=[colors[db] for db in plot_df.index])
-
-    plt.xlabel("Jaccard similarity score threshold")
-    plt.ylabel("Number of produced families that match original families")
-    plt.title("Entries by similarity threshold and database")
-    plt.xticks(rotation=0)
-    plt.legend(title="DB")
+    ax = plot_df.T.plot(kind="bar", stacked=True, color=colors)
+    ax.set_xlabel("Jaccard similarity score threshold")
+    ax.set_ylabel("Number of produced families that match original families")
+    ax.set_title("Entries by similarity threshold and database")
+    ax.set_xticklabels([str(thr) for thr in thresholds], rotation=0)
+    ax.legend(title="DB")
     plt.tight_layout()
-
-    # Save to PNG
     plt.savefig(output_file, dpi=300)
-    print(f"Plot saved to {output_file}")
 
 
 if __name__ == "__main__":

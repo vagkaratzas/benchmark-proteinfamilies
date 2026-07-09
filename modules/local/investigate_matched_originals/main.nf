@@ -1,4 +1,5 @@
 process INVESTIGATE_MATCHED_ORIGINALS {
+    tag "$meta.id"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -7,35 +8,56 @@ process INVESTIGATE_MATCHED_ORIGINALS {
         'community.wave.seqera.io/library/biopython:1.84--3318633dad0031e7' }"
 
     input:
+    tuple val(meta), path(msa_dir), path(clustering_tsv)
     path sampled_fasta
-    path clustering
     path metadata
-    path generated_fasta
+    path id_registry
+    path pre_universe_fasta
+    path pre_universe_sha256
+    path benchmark_ids
+    path post_common
 
     output:
-    path "metadata.csv"    , emit: metadat
-    path "all_clusters.txt", emit: clusters
-    path "all_matches.txt" , emit: matches
-    path "versions.yml"    , emit: versions
+    tuple val(meta), path("metadata.tsv")    , emit: metadata
+    tuple val(meta), path("all_clusters.txt"), emit: clusters
+    tuple val(meta), path("all_matches.txt") , emit: matches
+    tuple val(meta), path("versions.yml")    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
+    def clusterArg = clustering_tsv ? "--cluster_file ${clustering_tsv}" : ''
     """
+    export PYTHONPATH="\$PWD:\${PYTHONPATH:-}"
     investigate_matched_originals.py \\
         --db_folder ${sampled_fasta} \\
-        --cluster_file ${clustering} \\
+        --msa_dir ${msa_dir} \\
+        ${clusterArg} \\
         --metadata ${metadata} \\
-        --generated_fasta ${generated_fasta} \\
-        --output metadata.csv \\
+        --id_registry ${id_registry} \\
+        --pre_universe_fasta ${pre_universe_fasta} \\
+        --pre_universe_sha256 ${pre_universe_sha256} \\
+        --output metadata.tsv \\
         --cluster_log all_clusters.txt \\
-        --match_log all_matches.txt
+        --match_log all_matches.txt \\
+        --sample '${meta.id}' \\
+        --tool '${meta.tool}'
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version 2>&1 | sed 's/Python //g')
         biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch metadata.tsv all_clusters.txt all_matches.txt
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: stub
+        biopython: stub
     END_VERSIONS
     """
 }

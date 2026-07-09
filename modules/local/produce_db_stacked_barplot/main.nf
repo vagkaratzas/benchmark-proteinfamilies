@@ -1,4 +1,5 @@
 process PRODUCE_DB_STACKED_BARPLOT {
+    tag "$meta.id"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -7,11 +8,11 @@ process PRODUCE_DB_STACKED_BARPLOT {
         'community.wave.seqera.io/library/matplotlib_pandas_python:894947e54c3969d1' }"
 
     input:
-    path jaccard_edgelist
+    tuple val(meta), path(jaccard_edgelist)
 
     output:
-    path "stacked_barplot.png", emit: barplot
-    path "versions.yml"       , emit: versions
+    tuple val(meta), path("stacked_barplot.png"), emit: barplot
+    tuple val(meta), path("versions.yml")       , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -27,6 +28,17 @@ process PRODUCE_DB_STACKED_BARPLOT {
         python: \$(python --version 2>&1 | sed 's/Python //g')
         matplotlib: \$(python -c "import importlib.metadata; print(importlib.metadata.version('matplotlib'))")
         pandas: \$(python -c "import importlib.metadata; print(importlib.metadata.version('pandas'))")
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch stacked_barplot.png
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: stub
+        matplotlib: stub
+        pandas: stub
     END_VERSIONS
     """
 }

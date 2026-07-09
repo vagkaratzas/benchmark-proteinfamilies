@@ -297,3 +297,65 @@ Re-verified independently, not taken on report:
 - No stale references to the deleted modules/scripts.
 
 Fix rounds used: 1 of 2. Codex never committed.
+
+## Act 3 — Build, slice 2 (Phases 3–4)
+
+Builder: codex-cli 0.142.5, gpt-5.5 @ xhigh. Thread `019f46ce-e0fd-7812-ba5c-0c8ec1c76bf6`.
+
+### Round 1 — Codex build
+
+POST samplesheet subworkflow + schema, `meta` threaded through every POST module, per-`${meta.id}`
+publishDir, universe checksum verification, `bin/post_common.py` (checksum, format sniffing, exact
+metadata→file mapping, registry resolution), canonicalisation wired into 6 POST scripts, dynamic
+db_layer discovery, `unmapped.tsv`/`ambiguous.tsv`/QC artifacts, stubs + tags, extended fixtures.
+
+### Claude's verdict — Codex's proof was not a proof. 3 real defects it never saw.
+
+Codex reported `[SUCCESS] completed=16` for a `-stub` run and a direct Python invocation. **A `-stub`
+run never executes the script block, and a direct Python call bypasses Nextflow entirely.** Running the
+pipeline for real found three failures that both "proofs" were structurally incapable of catching:
+
+- **`PYTHONPATH: unbound variable` in all 7 POST modules.** Nextflow's `.command.sh` runs under
+  `#!/bin/bash -ue`, so `export PYTHONPATH="$PWD:$PYTHONPATH"` aborts when the var is unset — the
+  normal case. This broke the exact container-safe import mechanism Phase 1 specified. 8/16 processes
+  failed. Fixed to `${PYTHONPATH:-}`.
+- **Executable bit dropped on 7 rewritten `bin/*.py`** (git index still 100755, worktree 644) → exit
+  126 `Permission denied`. Fixed.
+- **Shebang deleted from `bin/get_size_distributions.py`** → the kernel ran it under `sh`,
+  `import: command not found`. Fixed.
+
+Only after all three did the real pipeline reach `[SUCCESS] completed=16 failed=0`.
+
+- **Fixture integrity.** Codex modified a _committed_ fixture (`family_mangled.faa`, `MQQQ`→`MKKK`).
+  Reviewed on the merits rather than reverted reflexively: `MQQQ` was never legitimate — a tool's MSA
+  can only contain sequences it was fed, and `MQQQ` is not in the universe. `MKKK` hash-matches
+  `COLLIDE/1-10` and exercises sequence disambiguation, which is D1's intent. Registry, universe and
+  checksum were untouched. Accepted.
+- **Hollow green.** The fixture gave every original exactly one member while each tool emitted one
+  family spanning several originals, capping Jaccard at 1/3 — below the default `match_threshold=0.5`.
+  So `jaccard_similarities.csv` was header-only and every edgelist-driven module ran on empty input.
+  Restructured the tool fixtures into per-family files. The default-threshold path is now real.
+- **`test` profile wired to the fixtures.** It previously set only cpus/memory, so `-profile test`
+  died on `file(null)`. `nextflow run . -profile test` now runs POST offline end to end.
+
+### Claude's verdict — accepted, after fixes
+
+Verified by running the real pipeline, not by reading a report:
+
+- `nextflow run . -profile test` → `[SUCCESS] completed=16 failed=0` (16 processes, 2 samples).
+- **The D1 payoff, measured:** the mangled sample scores Jaccard **1.000** against `PF00001` and
+  `PF00004` on IDs (`1814953751/178-297`, `2632373804_177_299/1-122`) that the old `split("/")[0]`
+  code scored **0.0**. `unmapped_fraction = 0.000000` for both samples.
+- `universe_sha256` stamped into every per-run table; `membership_source = MSA` recorded.
+- `ambiguous.tsv` contains only cluster-derived ambiguities (no sequence available to disambiguate)
+  and correctly does not fail the run.
+- Dynamic db_layer discovery: `pfam` + `panther` found with no hardcoded list; mangled hits 3/3 pfam.
+- Decoys classified from registry `source_type`, never ID shape.
+- Mutation test: restoring `split("/")[0]` in `post_common.resolve_records` still kills
+  `tests/test_post_canonicalisation.py`. `nextflow lint`: 0 errors / 29 files.
+
+Deviation accepted: the clustering-vs-MSA "large missing fraction" warning uses a literal `0.25`
+because the spec says "large" without a number. Should become a param before release.
+
+Fix rounds used: 0 of 2 delegated — all three defects were mechanical, so Claude fixed them directly
+rather than ping-pong trivia through delegation. Codex never committed.

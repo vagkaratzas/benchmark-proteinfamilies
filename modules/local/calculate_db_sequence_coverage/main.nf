@@ -1,4 +1,5 @@
 process CALCULATE_DB_SEQUENCE_COVERAGE {
+    tag "$meta.id"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -7,29 +8,50 @@ process CALCULATE_DB_SEQUENCE_COVERAGE {
         'community.wave.seqera.io/library/biopython:1.84--3318633dad0031e7' }"
 
     input:
+    tuple val(meta), path(original_counts)
     path metadata
-    path original_counts
     path msa_root
+    path id_registry
+    path pre_universe_fasta
+    path pre_universe_sha256
+    path benchmark_ids
+    path post_common
 
     output:
-    path "sequence_coverage.txt", emit: coverage
-    path "versions.yml"         , emit: versions
+    tuple val(meta), path("sequence_coverage.txt"), emit: coverage
+    tuple val(meta), path("versions.yml")         , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     """
+    export PYTHONPATH="\$PWD:\${PYTHONPATH:-}"
     calculate_db_sequence_coverage.py \\
         --metadata ${metadata} \\
         --original_counts ${original_counts} \\
         --msa_root ${msa_root} \\
-        --output sequence_coverage.txt
+        --id_registry ${id_registry} \\
+        --pre_universe_fasta ${pre_universe_fasta} \\
+        --pre_universe_sha256 ${pre_universe_sha256} \\
+        --output sequence_coverage.txt \\
+        --sample '${meta.id}' \\
+        --tool '${meta.tool}'
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version 2>&1 | sed 's/Python //g')
         biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch sequence_coverage.txt
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: stub
+        biopython: stub
     END_VERSIONS
     """
 }

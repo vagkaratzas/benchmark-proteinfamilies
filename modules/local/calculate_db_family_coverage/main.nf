@@ -1,4 +1,5 @@
 process CALCULATE_DB_FAMILY_COVERAGE {
+    tag "$meta.id"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -7,26 +8,46 @@ process CALCULATE_DB_FAMILY_COVERAGE {
         'community.wave.seqera.io/library/python:b1b4b1f458c605bb' }"
 
     input:
-    path jaccard_scores
+    tuple val(meta), path(jaccard_scores)
     path fasta_folder
+    path metadata
+    path pre_universe_fasta
+    path pre_universe_sha256
+    path benchmark_ids
+    path post_common
 
     output:
-    path "family_coverage.csv", emit: coverage
-    path "versions.yml"       , emit: versions
+    tuple val(meta), path("family_coverage.csv"), emit: coverage
+    tuple val(meta), path("versions.yml")       , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     """
+    export PYTHONPATH="\$PWD:\${PYTHONPATH:-}"
     calculate_db_family_coverage.py \\
         --similarity_results ${jaccard_scores} \\
         --original_families_dir ${fasta_folder} \\
-        --output_file family_coverage.csv
+        --metadata ${metadata} \\
+        --pre_universe_fasta ${pre_universe_fasta} \\
+        --pre_universe_sha256 ${pre_universe_sha256} \\
+        --output_file family_coverage.csv \\
+        --sample '${meta.id}' \\
+        --tool '${meta.tool}'
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version 2>&1 | sed 's/Python //g')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch family_coverage.csv
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: stub
     END_VERSIONS
     """
 }

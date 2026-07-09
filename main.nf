@@ -20,9 +20,17 @@ workflow BENCHMARK_PROTEINFAMILIES {
     // WORKFLOW: Run post pipeline
     //
     else if (workflow_mode == "post") {
-        POST( params.path_to_alignments, params.path_to_db_fasta, params.path_to_decoys, \
-            params.path_to_sampled_metadata, params.path_to_sampled_fasta_folder, params.jaccard_similarity_threshold, \
-            params.path_to_mmseqs_tsv, params.path_to_generated_fasta
+        POST(
+            params.post_samplesheet,
+            params.pre_id_registry,
+            params.pre_universe_fasta,
+            params.pre_universe_sha256,
+            params.pre_sampled_metadata,
+            params.pre_sampled_fasta_dir,
+            params.match_threshold,
+            params.max_unmapped_fraction,
+            params.max_ambiguous_fraction,
+            params.min_universe_coverage
         )
     }
 }

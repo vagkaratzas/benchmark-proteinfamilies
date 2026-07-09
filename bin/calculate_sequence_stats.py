@@ -1,142 +1,163 @@
 #!/usr/bin/env python3
 
-import os
-import gzip
 import argparse
+import csv
 from collections import defaultdict
-from Bio import SeqIO
-from Bio import AlignIO
+from pathlib import Path
+
+from benchmark_ids import load_registry, resolve
+from post_common import (
+    discover_alignment_files,
+    verify_universe_checksum,
+    write_rejected,
+    iter_alignment_records,
+)
 
 
-def load_fasta_names(fasta_path):
-    names = set()
-    with (
-        gzip.open(fasta_path, "rt") if fasta_path.endswith(".gz") else open(fasta_path)
-    ) as handle:
-        for record in SeqIO.parse(handle, "fasta"):
-            names.add(record.id.split("/", 1)[0])
-    return names
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Parse alignment files and count original and decoy sequence matches."
+    )
+    parser.add_argument("--alignment_folder", required=True)
+    parser.add_argument("--id_registry", required=True)
+    parser.add_argument("--pre_universe_fasta", required=True)
+    parser.add_argument("--pre_universe_sha256", required=True)
+    parser.add_argument("--output_prefix", default="sequence")
+    parser.add_argument("--sample", default="")
+    parser.add_argument("--tool", default="")
+    return parser.parse_args()
 
 
-def parse_alignment_folder(folder_path, original_set, decoy_set, file_type):
-    original_count = defaultdict(int)
-    decoy_count = defaultdict(int)
-    unknown_proteins = set()
-
-    for name in original_set:
-        original_count[name] = 0
-    for name in decoy_set:
-        decoy_count[name] = 0
-
-    for file in os.listdir(folder_path):
-        if not file.endswith(f".{file_type}"):
-            continue
-
-        filepath = os.path.join(folder_path, file)
-
-        if file_type == "sto":
-            try:
-                alignment = AlignIO.read(filepath, "stockholm")
-                for record in alignment:
-                    cleaned_name = record.id.split("/", 1)[0]
-                    if cleaned_name in original_count:
-                        original_count[cleaned_name] += 1
-                    elif cleaned_name in decoy_count:
-                        decoy_count[cleaned_name] += 1
-                    else:
-                        unknown_proteins.add(cleaned_name)
-            except Exception as e:
-                print(f"Warning: Failed to parse {filepath} as Stockholm. Error: {e}")
-
-        elif file_type in ("aln", "fas.gz"):
-            open_func = gzip.open if file_type == "fas.gz" else open
-            mode = "rt" if file_type == "fas.gz" else "r"
-            try:
-                with open_func(filepath, mode) as handle:
-                    for record in SeqIO.parse(handle, "fasta"):
-                        cleaned_name = record.id.split("/", 1)[0]
-                        if cleaned_name in original_count:
-                            original_count[cleaned_name] += 1
-                        elif cleaned_name in decoy_count:
-                            decoy_count[cleaned_name] += 1
-                        else:
-                            unknown_proteins.add(cleaned_name)
-            except Exception as e:
-                print(f"Warning: Failed to parse {filepath}. Error: {e}")
-
-    return original_count, decoy_count, unknown_proteins
+def write_counts_file(path, counts, universe_sha256, sample, tool):
+    with Path(path).open("w", newline="") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=["sample", "tool", "universe_sha256", "universe_id", "count"],
+            delimiter="\t",
+        )
+        writer.writeheader()
+        for universe_id, count in sorted(
+            counts.items(), key=lambda item: (-item[1], item[0])
+        ):
+            writer.writerow(
+                {
+                    "sample": sample,
+                    "tool": tool,
+                    "universe_sha256": universe_sha256,
+                    "universe_id": universe_id,
+                    "count": count,
+                }
+            )
 
 
-def write_counts_file(counts_dict, output_path, label):
-    sorted_counts = sorted(counts_dict.items(), key=lambda x: -x[1])
-    with open(output_path, "w") as f:
-        f.write(f"{label} Proteins (sorted by count):\n")
-        for name, count in sorted_counts:
-            f.write(f"{name}\t{count}\n")
-
-
-def write_summary(original_count, decoy_count, unknown_proteins, summary_file):
-    unique_original_found = sum(1 for count in original_count.values() if count > 0)
-    unique_decoy_found = sum(1 for count in decoy_count.values() if count > 0)
+def write_summary(
+    path,
+    original_count,
+    decoy_count,
+    unknown,
+    universe_sha256,
+    sample,
+    tool,
+):
+    original_found = sum(1 for count in original_count.values() if count > 0)
+    decoy_found = sum(1 for count in decoy_count.values() if count > 0)
     total_original_matches = sum(original_count.values())
     total_decoy_matches = sum(decoy_count.values())
-    total_unknowns = len(unknown_proteins)
 
-    summary = (
-        f"Total original matches in alignment files: {total_original_matches}\n"
-        f"Total decoy matches in alignment files: {total_decoy_matches}\n"
-        f"Total unknown sequences in alignment files: {total_unknowns}\n\n"
-        f"Unique original proteins found: {unique_original_found} / {len(original_count)}\n"
-        f"Unique decoy proteins found: {unique_decoy_found} / {len(decoy_count)}\n"
-    )
-
-    print(summary)
-    with open(summary_file, "w") as f:
-        f.write(summary)
+    with Path(path).open("w", newline="") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "sample",
+                "tool",
+                "universe_sha256",
+                "total_original_matches",
+                "total_decoy_matches",
+                "total_unknown_sequences",
+                "unique_original_found",
+                "unique_original_total",
+                "unique_decoy_found",
+                "unique_decoy_total",
+            ],
+            delimiter="\t",
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "sample": sample,
+                "tool": tool,
+                "universe_sha256": universe_sha256,
+                "total_original_matches": total_original_matches,
+                "total_decoy_matches": total_decoy_matches,
+                "total_unknown_sequences": len(unknown),
+                "unique_original_found": original_found,
+                "unique_original_total": len(original_count),
+                "unique_decoy_found": decoy_found,
+                "unique_decoy_total": len(decoy_count),
+            }
+        )
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Parse alignment files and count matches for original and decoy proteins."
+    args = parse_args()
+    universe_sha256 = verify_universe_checksum(
+        args.pre_universe_fasta, args.pre_universe_sha256
     )
-    parser.add_argument("--original_fasta", help="Path to the original FASTA file")
-    parser.add_argument("--decoy_fasta", help="Path to the decoy FASTA file")
-    parser.add_argument("--alignment_folder", help="Folder containing alignment files")
-    parser.add_argument(
-        "--alignment_type",
-        choices=["sto", "aln", "fas.gz"],
-        help="Type of alignment files: 'sto', 'aln', or 'fas.gz'",
+    registry = load_registry(args.id_registry, args.pre_universe_fasta)
+
+    original_count = defaultdict(int)
+    decoy_count = defaultdict(int)
+    for universe_id, row in registry.rows.items():
+        if row.get("source_type") == "family":
+            original_count[universe_id] = 0
+        elif row.get("source_type") == "decoy":
+            decoy_count[universe_id] = 0
+
+    unknown = []
+    for path in discover_alignment_files(args.alignment_folder):
+        for record in iter_alignment_records(path):
+            resolution = resolve(record.id, registry, str(record.seq))
+            if resolution.status != "resolved" or resolution.universe_id is None:
+                unknown.append(
+                    {
+                        "raw_id": record.id,
+                        "candidates": ",".join(sorted(resolution.candidates)),
+                        "reason": f"{path.name}:{resolution.status}",
+                    }
+                )
+                continue
+
+            source_type = registry.rows[resolution.universe_id].get("source_type")
+            if source_type == "family":
+                original_count[resolution.universe_id] += 1
+            elif source_type == "decoy":
+                decoy_count[resolution.universe_id] += 1
+
+    prefix = args.output_prefix
+    write_counts_file(
+        f"{prefix}_original_counts.txt",
+        original_count,
+        universe_sha256,
+        args.sample,
+        args.tool,
     )
-
-    args = parser.parse_args()
-
-    prefix = f"{args.alignment_type}_"
-
-    print("Loading original FASTA...")
-    original_set = load_fasta_names(args.original_fasta)
-    print(f"Loaded {len(original_set)} unique original proteins.")
-
-    print("Loading decoy FASTA...")
-    decoy_set = load_fasta_names(args.decoy_fasta)
-    print(f"Loaded {len(decoy_set)} unique decoy proteins.")
-
-    print(f"Parsing .{args.alignment_type} files...")
-    original_count, decoy_count, unknown_proteins = parse_alignment_folder(
-        args.alignment_folder, original_set, decoy_set, args.alignment_type
+    write_counts_file(
+        f"{prefix}_decoy_counts.txt",
+        decoy_count,
+        universe_sha256,
+        args.sample,
+        args.tool,
     )
-
-    print("Writing output files...")
-    write_counts_file(original_count, f"{prefix}original_counts.txt", "Original")
-    write_counts_file(decoy_count, f"{prefix}decoy_counts.txt", "Decoy")
-    write_summary(original_count, decoy_count, unknown_proteins, f"{prefix}summary.txt")
-
-    unknown_file = f"{prefix}unknown_sequences.txt"
-    with open(unknown_file, "w") as f:
-        for name in sorted(unknown_proteins):
-            f.write(f"{name}\n")
-
-    print(f"Found {len(unknown_proteins)} unknown sequences. Written to {unknown_file}")
-    print("Done.")
+    write_summary(
+        f"{prefix}_summary.txt",
+        original_count,
+        decoy_count,
+        unknown,
+        universe_sha256,
+        args.sample,
+        args.tool,
+    )
+    write_rejected(f"{prefix}_unknown_sequences.txt", unknown)
 
 
 if __name__ == "__main__":

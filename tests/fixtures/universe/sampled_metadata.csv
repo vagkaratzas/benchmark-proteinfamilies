@@ -1,0 +1,5 @@
+interpro_id,db,dbkey,num_members
+IPR000001,pfam,PF00001,1
+IPR000004,pfam,PF00004,1
+IPR000005,pfam,PF00005,1
+IPR999001,panther,PTHR00001,1

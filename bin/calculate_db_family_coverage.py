@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
-import glob
 import csv
+from collections import defaultdict
+from pathlib import Path
+
+from post_common import family_files_from_metadata, verify_universe_checksum
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Count hits of original families per database based on similarity results."
+        description="Count hit original families per database based on similarity results."
     )
     parser.add_argument(
         "--similarity_results",
@@ -21,54 +23,83 @@ def parse_args():
         help="Base directory containing original family FASTA files organized by database.",
     )
     parser.add_argument(
-        "--output_file", required=True, help="Output CSV file for the summary report."
+        "--metadata", required=True, help="Sampled metadata CSV with db/dbkey columns."
     )
+    parser.add_argument("--pre_universe_fasta", required=True)
+    parser.add_argument("--pre_universe_sha256", required=True)
+    parser.add_argument(
+        "--output_file", required=True, help="Output TSV file for the summary report."
+    )
+    parser.add_argument("--sample", default="")
+    parser.add_argument("--tool", default="")
     return parser.parse_args()
 
 
 def extract_hit_families(similarity_results_path):
-    """Extract unique original_basename entries from the similarity results."""
-    hit_families = set()
-    with open(similarity_results_path) as f:
-        next(f)  # Skip header
-        for line in f:
-            parts = line.strip().split("\t")
-            if len(parts) >= 2:
-                hit_families.add(parts[1])
+    hit_families = defaultdict(set)
+    with Path(similarity_results_path).open() as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        for row in reader:
+            db = row.get("db_layer", "").strip().lower()
+            family = row.get("original_basename", "").strip()
+            if db and family:
+                hit_families[db].add(family)
     return hit_families
 
 
-def count_hits_per_database(original_base_dir, hit_families):
-    """Count how many original family FASTA files are in the hit set per database."""
-    db_layers = ["hamap", "ncbifam", "panther", "pfam"]
-    hits_summary = {}
+def count_hits_per_database(original_base_dir, metadata, hit_families):
+    totals = defaultdict(set)
+    for db, family, _path, _row in family_files_from_metadata(
+        original_base_dir, metadata
+    ):
+        totals[db].add(family)
 
-    for db in db_layers:
-        db_path = os.path.join(original_base_dir, db)
-        fasta_files = glob.glob(os.path.join(db_path, "*.fasta"))
-        base_filenames = {os.path.splitext(os.path.basename(f))[0] for f in fasta_files}
-
-        hits = len(base_filenames & hit_families)
-        hits_summary[db.upper()] = hits  # Uppercase as in output example
-
-    return hits_summary
-
-
-def write_summary(output_file, hits_summary):
-    """Write the summary to a CSV file."""
-    with open(output_file, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["database", "hits"])
-        for db, count in hits_summary.items():
-            writer.writerow([db, count])
+    rows = []
+    for db in sorted(totals):
+        total = len(totals[db])
+        hits = len(totals[db] & hit_families.get(db, set()))
+        coverage = hits / total if total else 0.0
+        rows.append(
+            {
+                "database": db,
+                "hits": hits,
+                "total": total,
+                "coverage_fraction": f"{coverage:.6f}",
+            }
+        )
+    return rows
 
 
 def main():
     args = parse_args()
-
+    universe_sha256 = verify_universe_checksum(
+        args.pre_universe_fasta, args.pre_universe_sha256
+    )
     hit_families = extract_hit_families(args.similarity_results)
-    hits_summary = count_hits_per_database(args.original_families_dir, hit_families)
-    write_summary(args.output_file, hits_summary)
+    rows = count_hits_per_database(
+        args.original_families_dir, args.metadata, hit_families
+    )
+
+    with Path(args.output_file).open("w", newline="") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "sample",
+                "tool",
+                "universe_sha256",
+                "database",
+                "hits",
+                "total",
+                "coverage_fraction",
+            ],
+            delimiter="\t",
+        )
+        writer.writeheader()
+        for row in rows:
+            row["sample"] = args.sample
+            row["tool"] = args.tool
+            row["universe_sha256"] = universe_sha256
+            writer.writerow(row)
 
 
 if __name__ == "__main__":

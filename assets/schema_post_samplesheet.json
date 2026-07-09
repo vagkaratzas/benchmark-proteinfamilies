@@ -1,0 +1,28 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "POST samplesheet schema",
+    "description": "Samplesheet for POST benchmarking runs. The msa_dir column MUST be the full-family MSA directory, for example proteinfamilies full_msa/filtered/... or mgnifams families/full_msa/. Do not point msa_dir at a seed MSA directory.",
+    "type": "object",
+    "primaryKey": "sample",
+    "properties": {
+        "sample": {
+            "type": "string",
+            "description": "Required unique run identifier and primary key.",
+            "unique": true
+        },
+        "tool": {
+            "type": "string",
+            "description": "Required tool or parameter label used for grouping."
+        },
+        "msa_dir": {
+            "type": "string",
+            "description": "Required path to the full-family MSA directory. This is the sole membership source."
+        },
+        "clustering_tsv": {
+            "type": "string",
+            "description": "Optional 2-column rep-to-member clustering TSV."
+        }
+    },
+    "required": ["sample", "tool", "msa_dir"],
+    "additionalProperties": false
+}
