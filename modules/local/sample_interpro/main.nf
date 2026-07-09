@@ -11,6 +11,7 @@ process SAMPLE_INTERPRO {
     path hierarchy
     val min_membership
     val num_per_db
+    val seed
 
     output:
     path "log.txt"             , emit: log
@@ -21,6 +22,7 @@ process SAMPLE_INTERPRO {
     task.ext.when == null || task.ext.when
 
     script:
+    def seed_arg = seed == null ? '' : "--seed ${seed}"
     """
     sample_interpro.py \\
         --interpro_file ${metadata} \\
@@ -28,7 +30,8 @@ process SAMPLE_INTERPRO {
         --min_membership ${min_membership} \\
         --num_per_db ${num_per_db} \\
         --logfile log.txt \\
-        --output sampled_metadata.csv
+        --output sampled_metadata.csv \\
+        ${seed_arg}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

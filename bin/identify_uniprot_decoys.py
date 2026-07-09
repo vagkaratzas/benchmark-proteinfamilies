@@ -26,6 +26,12 @@ def parse_args():
         default=10000,
         help="Number of decoys to sample (default: 10000)",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Optional random seed for reproducible decoy sampling",
+    )
     return parser.parse_args()
 
 
@@ -67,6 +73,9 @@ def sample_decoys(decoy_pool, sample_size, output_file):
 
 def main():
     args = parse_args()
+
+    if args.seed is not None:
+        random.seed(args.seed)
 
     decoys = get_non_hit_sequences(args.hits_file, args.fasta_file)
     print(f"[INFO] Found {len(decoys)} non-hit sequences.")

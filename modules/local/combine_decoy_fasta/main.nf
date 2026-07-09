@@ -1,4 +1,5 @@
 process COMBINE_DECOY_FASTA {
+    tag "pre"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -9,10 +10,13 @@ process COMBINE_DECOY_FASTA {
     input:
     path db_fasta
     path decoy
+    path id_registry
 
     output:
     path "combined_decoy_log.txt", emit: log
-    path "combined_decoy.fasta"  , emit: fasta
+    path "combined_decoy.faa"    , emit: fasta
+    path "id_registry.tsv"       , emit: registry
+    path "universe.sha256"       , emit: universe_sha256
     path "versions.yml"          , emit: versions
 
     when:
@@ -20,11 +24,27 @@ process COMBINE_DECOY_FASTA {
 
     script:
     """
+    cp ${id_registry} family_id_registry.tsv
+
     combine_decoy_fasta.py \\
         --families_fasta ${db_fasta} \\
         --decoys_fasta ${decoy} \\
-        --combined_fasta combined_decoy.fasta \\
+        --combined_fasta combined_decoy.faa \\
+        --id_registry family_id_registry.tsv \\
+        --output_registry id_registry.tsv \\
+        --universe_sha256 universe.sha256 \\
         --log_file combined_decoy_log.txt
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version 2>&1 | sed 's/Python //g')
+        biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch combined_decoy_log.txt combined_decoy.faa id_registry.tsv universe.sha256
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -239,3 +239,61 @@ Converged in 3 rounds. What the two acts changed, in order of impact:
 Codex was rejected on 4 points (membership_dir ×2, hard coverage gate, over-triggering exact-hit
 ambiguity), each with a logged reason. Round 1's `params.seed=42` was later superseded by user input.
 ````
+
+## Act 3 — Build (roles flipped: Codex builds, Claude reviews)
+
+Scope: Phases 1–2 only (identity core + PRE registry + fixtures). Phases 3–12 not started.
+Builder: codex-cli 0.142.5, gpt-5.5 @ xhigh. Thread `019f46a7-1884-7762-827d-717e2226a1dc`.
+
+### Round 1 — Codex build
+
+Created `bin/benchmark_ids.py`, `bin/prepare_benchmark_fasta.py`,
+`modules/local/prepare_benchmark_fasta/`, `tests/fixtures/universe/`.
+Merged CONVERT_SAMPLED_TO_FASTA + COMBINE_DB_FASTA; rewrote `combine_decoy_fasta.py`;
+threaded optional `params.seed`. Deleted the two superseded modules and scripts.
+
+### Claude's verdict — 3 defects, 1 footgun, 1 nit. NOT accepted as-is.
+
+Verified by reading the full diff and running the proof independently. `benchmark_ids.py`
+passed **mutation testing** — dropping `_pipe_aliases`, greedy-picking on ambiguity, and
+disabling the coordinate lattice each killed the self-check, so the tests are load-bearing
+rather than decorative.
+
+- **F1 (spec violation).** `prepare_benchmark_fasta.registry_row()` derived `parent_id`/`coords`
+  by regex, stripping both `/n-n` and `_n_n`. D1 says PRE must record identity, "not by regex
+  guessing", and names `_n_n` as a pathology. Proven: `LEGIT_12_34 -> parent=LEGIT`,
+  `A1B2_3_4/10-20 -> parent=A1B2, coords=3-4,10-20`. The regex the registry exists to abolish
+  had been reintroduced on the PRE side.
+- **F2 (correctness).** `combine_decoy_fasta` dropped ANY duplicate-sequence record, including
+  legitimate _family_ members. Two curated members sharing a sequence — routine across DBs, per
+  D5 — lost one from both the universe and the registry while `sampled_fasta/` still listed it.
+  POST would resolve that original to `unmapped` and trip the 0.05 hard-fail gate. The original
+  code's own comment shows the sequence-dedupe targeted DECOYS leaking past DIAMOND's 25-hit cap.
+  Reproduced: `PTHR2_B/1-10` silently vanished.
+- **F3 (footgun).** PREPARE emitted `universe.sha256` containing the checksum of `combined_db.faa`,
+  colliding by name with COMBINE_DECOY's real universe checksum.
+- **F4.** COMBINE_DECOY_FASTA gained two required outputs but had no `tag`/`stub:` — `-stub` broke.
+- **F5.** `demo()` printed a hardcoded "6" while running 8 checks.
+
+### Round 2 — Codex fix
+
+All five fixed. PRE now strips only one trailing `/start-end`; `benchmark_ids.py` keeps BOTH
+patterns for resolving tool output. That asymmetry is the design: **PRE records truth, POST
+resolves drift.** Families dedupe by name only; decoys drop on name or sequence (leakage guard,
+logged). PREPARE emits `combined_db.sha256`; only COMBINE_DECOY emits `universe.sha256`.
+
+### Claude's verdict — accepted
+
+Re-verified independently, not taken on report:
+
+- `python3 bin/benchmark_ids.py` exits 0 (8 worked examples + 5 pathology checks).
+- F1 re-tested: `LEGIT_12_34 -> ("LEGIT_12_34","-")`, `A1B2_3_4/10-20 -> ("A1B2_3_4","10-20")`.
+- F2 re-tested on the original repro: duplicate-seq family member survives universe AND registry;
+  leaking decoy dropped; clean decoy kept; `universe.sha256` matches `sha256sum` of the file.
+- Mutation tests on the NEW regression checks: reverting F1 and reverting F2 both kill the suite.
+  (My first F2 mutant survived, but it was inert — it inserted the guard _after_ the record was
+  already added. Re-probed correctly: killed. The test was never weak; the probe was.)
+- `nextflow lint`: 0 errors across 28 files (15 pre-existing `Channel`→`channel` warnings).
+- No stale references to the deleted modules/scripts.
+
+Fix rounds used: 1 of 2. Codex never committed.

@@ -84,7 +84,7 @@ def log_selection(logfile, picked, removed):
         f.write("\n")
 
 
-def sample_entries(df, tree_nodes, num_per_db, logfile):
+def sample_entries(df, tree_nodes, num_per_db, logfile, seed=None):
     selected = set()
     excluded = set()
 
@@ -98,7 +98,7 @@ def sample_entries(df, tree_nodes, num_per_db, logfile):
             if available.empty:
                 continue
 
-            picked_row = available.sample(n=1).iloc[0]
+            picked_row = available.sample(n=1, random_state=seed).iloc[0]
             ipr = picked_row["interpro_id"]
             samples_per_db[db].append(picked_row)
             selected.add(ipr)
@@ -135,6 +135,12 @@ def main():
     parser.add_argument("--num_per_db", type=int, default=50)
     parser.add_argument("--logfile", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Optional random seed for reproducible family sampling",
+    )
     args = parser.parse_args()
 
     df = pd.read_csv(args.interpro_file, sep="\t")
@@ -144,7 +150,7 @@ def main():
     _, nodes = build_tree_from_text(tree_text)
 
     Path(args.logfile).write_text("")  # Clear logfile
-    sampled = sample_entries(df, nodes, args.num_per_db, args.logfile)
+    sampled = sample_entries(df, nodes, args.num_per_db, args.logfile, args.seed)
     sampled.to_csv(args.output, index=False)
 
 

@@ -1,4 +1,5 @@
-process CONVERT_SAMPLED_TO_FASTA {
+process PREPARE_BENCHMARK_FASTA {
+    tag "prepare_benchmark_fasta"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -12,25 +13,49 @@ process CONVERT_SAMPLED_TO_FASTA {
     path ncbifam
     path panther
     path pfam
+    val seed
 
     output:
     path "sampled_fasta"               , emit: fasta_folder
     path "updated_sampled_metadata.csv", emit: metadata
+    path "combined_db.faa"             , emit: fasta
+    path "id_registry.tsv"             , emit: registry
+    path "combined_db.sha256"          , emit: combined_db_sha256
+    path "log.txt"                     , emit: log
     path "versions.yml"                , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
+    def seed_arg = seed == null ? '' : "--seed ${seed}"
     """
-    convert_sampled_to_fasta.py \\
+    prepare_benchmark_fasta.py \\
         --metadata_file ${sampled_metadata} \\
         --hamap ${hamap} \\
         --ncbifam ${ncbifam} \\
         --panther ${panther} \\
         --pfam ${pfam} \\
         --output_folder sampled_fasta \\
-        --updated_metadata_file updated_sampled_metadata.csv
+        --updated_metadata_file updated_sampled_metadata.csv \\
+        --combined_fasta combined_db.faa \\
+        --id_registry id_registry.tsv \\
+        --combined_db_sha256 combined_db.sha256 \\
+        --log_file log.txt \\
+        ${seed_arg}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version 2>&1 | sed 's/Python //g')
+        biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    mkdir -p sampled_fasta
+    touch sampled_fasta/.stub
+    touch updated_sampled_metadata.csv combined_db.faa id_registry.tsv combined_db.sha256 log.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

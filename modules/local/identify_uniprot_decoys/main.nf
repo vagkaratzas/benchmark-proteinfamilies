@@ -10,6 +10,7 @@ process IDENTIFY_UNIPROT_DECOYS {
     tuple val(meta) , path(hits)
     tuple val(meta2), path(sp_fasta)
     val num_decoys
+    val seed
 
     output:
     path "decoys.fasta", emit: decoys
@@ -19,12 +20,14 @@ process IDENTIFY_UNIPROT_DECOYS {
     task.ext.when == null || task.ext.when
 
     script:
+    def seed_arg = seed == null ? '' : "--seed ${seed}"
     """
     identify_uniprot_decoys.py \\
         --hits_file ${hits} \\
         --fasta_file ${sp_fasta} \\
         --output_file decoys.fasta \\
-        --num_decoys ${num_decoys}
+        --num_decoys ${num_decoys} \\
+        ${seed_arg}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

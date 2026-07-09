@@ -13,7 +13,7 @@ workflow BENCHMARK_PROTEINFAMILIES {
     if (workflow_mode == "pre") {
         PRE( params.interpro_hierarchy_file, params.id_mapping_file, \
             params.path_to_hamap, params.path_to_ncbifam, params.path_to_panther, params.path_to_pfam, \
-            params.path_to_swissprot, params.min_membership, params.num_per_db, params.num_decoys
+            params.path_to_swissprot, params.min_membership, params.num_per_db, params.num_decoys, params.seed
         )
     }
     //
