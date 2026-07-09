@@ -412,3 +412,43 @@ Deviation accepted: D5 says "highly-overlapping" originals without a number; imp
 `--original_overlap_jaccard_threshold` (default 0.5), emitted into `split_merge_summary.tsv`.
 
 Fix rounds used: 0 of 2 delegated — all fixes were mechanical, done directly. Codex never committed.
+
+## Act 3 — Build, slice 4 (Phases 8–9)
+
+Builder: codex-cli 0.142.5, gpt-5.5 @ xhigh. Thread `019f4725-a21e-73e3-8307-6cd8a3fdfe73`.
+
+These are refactors, so the spec demanded _equivalence proofs_, not "it runs".
+
+### Round 1 — Codex build
+
+Jaccard inverted index + multiprocessing; investigate inverted index; parallel sequence stats;
+sample*interpro tree caches; the 4 `EXTRACT*\*\_METADATA`modules merged into`EXTRACT_DB_METADATA`;
+`filter_valid_candidate_families` takes a variable metadata list.
+
+### Claude's verdict — accepted, after reverting one production regression
+
+Verified independently, not from the report:
+
+- **Jaccard equivalence, against the real old code.** Rather than trust the golden file Codex
+  committed, I reconstructed the pre-optimisation implementation from git
+  (`git show c5299da:bin/calculate_jaccard_similarity.py`) and diffed its output against the new
+  one over all four fixture tool dirs: **IDENTICAL** on every one.
+- **Pruning is real and the test is load-bearing.** Mutating `candidate_original_keys` to a full
+  scan fails `tests/test_jaccard_pruning.py` (`AssertionError: 2500 not less than or equal to 100`)
+  while `tests/test_jaccard_equivalence.py` still passes — the two tests correctly measure
+  different things: the index changes speed, not results.
+- **`EXTRACT_DB_METADATA` equivalence, against the four deleted scripts** recovered from git:
+  IDENTICAL for hamap, ncbifam, panther, pfam. The NCBIFAM trap is handled — `NF000001.1.SEED`
+  yields `NF000001` (via `split(".")[0]`, not `splitext`), and its fixture carries both a
+  Stockholm `TIGR00001.SEED` and a FASTA `NF000001.1.SEED`.
+- `nextflow run . -profile test` → 42 processes, 0 failed. `nextflow lint`: 0 errors / 31 files.
+  No stale references to the deleted modules.
+
+**Reverted: a production regression disguised as a test fix.** Codex lowered
+`withLabel:process_medium` memory from `36.GB` to `24.GB` in `conf/base.config` "so local test
+profile can schedule" — silently degrading every HPC run to fix a laptop. Restored to `36.GB` and
+capped the test run with `resourceLimits = [cpus: 2, memory: 4.GB, time: 1.h]` in the `test`
+profile, which is the directive designed for exactly this. (A bare `process.memory` is only a
+default; `withLabel` still wins.) The pipeline passes with the production tier intact.
+
+Fix rounds used: 0 of 2 delegated. Codex never committed.

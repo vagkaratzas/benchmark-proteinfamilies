@@ -1,6 +1,6 @@
 process CALCULATE_JACCARD_SIMILARITY {
     tag "$meta.id"
-    label 'process_single'
+    label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -51,6 +51,7 @@ process CALCULATE_JACCARD_SIMILARITY {
         --similarity_threshold ${similarity_threshold} \\
         --max_unmapped_fraction ${max_unmapped_fraction} \\
         --max_ambiguous_fraction ${max_ambiguous_fraction} \\
+        --num_workers ${task.cpus} \\
         --sample '${meta.id}' \\
         --tool '${meta.tool}' \\
         ${minCoverageArg}

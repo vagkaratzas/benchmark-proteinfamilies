@@ -2,7 +2,9 @@
 
 import argparse
 import csv
+import os
 from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 from benchmark_ids import load_registry, resolve
@@ -25,7 +27,48 @@ def parse_args():
     parser.add_argument("--output_prefix", default="sequence")
     parser.add_argument("--sample", default="")
     parser.add_argument("--tool", default="")
+    parser.add_argument(
+        "--num_workers",
+        type=int,
+        default=os.cpu_count() or 1,
+        help="Number of worker processes for alignment parsing.",
+    )
     return parser.parse_args()
+
+
+_WORKER_REGISTRY = None
+
+
+def init_worker(registry):
+    global _WORKER_REGISTRY
+    _WORKER_REGISTRY = registry
+
+
+def process_alignment_file(path):
+    original_count = defaultdict(int)
+    decoy_count = defaultdict(int)
+    unknown = []
+    path = Path(path)
+
+    for record in iter_alignment_records(path):
+        resolution = resolve(record.id, _WORKER_REGISTRY, str(record.seq))
+        if resolution.status != "resolved" or resolution.universe_id is None:
+            unknown.append(
+                {
+                    "raw_id": record.id,
+                    "candidates": ",".join(sorted(resolution.candidates)),
+                    "reason": f"{path.name}:{resolution.status}",
+                }
+            )
+            continue
+
+        source_type = _WORKER_REGISTRY.rows[resolution.universe_id].get("source_type")
+        if source_type == "family":
+            original_count[resolution.universe_id] += 1
+        elif source_type == "decoy":
+            decoy_count[resolution.universe_id] += 1
+
+    return original_count, decoy_count, unknown
 
 
 def write_counts_file(path, counts, universe_sha256, sample, tool):
@@ -113,25 +156,26 @@ def main():
         elif row.get("source_type") == "decoy":
             decoy_count[universe_id] = 0
 
-    unknown = []
-    for path in discover_alignment_files(args.alignment_folder):
-        for record in iter_alignment_records(path):
-            resolution = resolve(record.id, registry, str(record.seq))
-            if resolution.status != "resolved" or resolution.universe_id is None:
-                unknown.append(
-                    {
-                        "raw_id": record.id,
-                        "candidates": ",".join(sorted(resolution.candidates)),
-                        "reason": f"{path.name}:{resolution.status}",
-                    }
-                )
-                continue
+    alignment_files = discover_alignment_files(args.alignment_folder)
+    num_workers = max(1, args.num_workers)
+    if num_workers == 1 or len(alignment_files) <= 1:
+        init_worker(registry)
+        worker_results = [process_alignment_file(path) for path in alignment_files]
+    else:
+        with ProcessPoolExecutor(
+            max_workers=num_workers,
+            initializer=init_worker,
+            initargs=(registry,),
+        ) as executor:
+            worker_results = list(executor.map(process_alignment_file, alignment_files))
 
-            source_type = registry.rows[resolution.universe_id].get("source_type")
-            if source_type == "family":
-                original_count[resolution.universe_id] += 1
-            elif source_type == "decoy":
-                decoy_count[resolution.universe_id] += 1
+    unknown = []
+    for original_delta, decoy_delta, file_unknown in worker_results:
+        for universe_id, count in original_delta.items():
+            original_count[universe_id] += count
+        for universe_id, count in decoy_delta.items():
+            decoy_count[universe_id] += count
+        unknown.extend(file_unknown)
 
     prefix = args.output_prefix
     write_counts_file(

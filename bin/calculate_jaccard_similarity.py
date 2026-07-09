@@ -2,6 +2,8 @@
 
 import argparse
 import csv
+import multiprocessing as mp
+import os
 import statistics
 import sys
 from pathlib import Path
@@ -76,6 +78,12 @@ def parse_args():
     parser.add_argument("--max_unmapped_fraction", type=float, default=0.05)
     parser.add_argument("--max_ambiguous_fraction", type=float, default=0.01)
     parser.add_argument("--min_universe_coverage", type=float, default=None)
+    parser.add_argument(
+        "--num_workers",
+        type=int,
+        default=os.cpu_count() or 1,
+        help="Number of worker processes for use-case family parsing.",
+    )
     return parser.parse_args()
 
 
@@ -86,7 +94,8 @@ def jaccard_similarity(set1, set2):
 
 
 def load_original_families(original_base_dir, metadata, registry):
-    originals = []
+    originals = {}
+    original_index = {}
     for db_layer, family, path, _row in family_files_from_metadata(
         original_base_dir, metadata
     ):
@@ -98,15 +107,108 @@ def load_original_families(original_base_dir, metadata, registry):
         )
         if unmapped or ambiguous:
             raise ValueError(f"Unresolved original IDs in {path}")
-        originals.append(
-            {
-                "db_layer": db_layer,
-                "family": family,
-                "path": path,
-                "members": members,
-            }
+        key = (db_layer, family)
+        originals[key] = {
+            "db_layer": db_layer,
+            "family": family,
+            "path": path,
+            "members": members,
+        }
+        for universe_id in members:
+            original_index.setdefault(universe_id, set()).add(key)
+    return originals, original_index
+
+
+_WORKER_REGISTRY = None
+_WORKER_ORIGINALS = None
+_WORKER_ORIGINAL_INDEX = None
+_WORKER_THRESHOLD = None
+_WORKER_SAMPLE = None
+_WORKER_TOOL = None
+_WORKER_UNIVERSE_SHA256 = None
+
+
+def init_worker(
+    registry,
+    originals,
+    original_index,
+    similarity_threshold,
+    sample,
+    tool,
+    universe_sha256,
+):
+    global _WORKER_REGISTRY
+    global _WORKER_ORIGINALS
+    global _WORKER_ORIGINAL_INDEX
+    global _WORKER_THRESHOLD
+    global _WORKER_SAMPLE
+    global _WORKER_TOOL
+    global _WORKER_UNIVERSE_SHA256
+
+    _WORKER_REGISTRY = registry
+    _WORKER_ORIGINALS = originals
+    _WORKER_ORIGINAL_INDEX = original_index
+    _WORKER_THRESHOLD = similarity_threshold
+    _WORKER_SAMPLE = sample
+    _WORKER_TOOL = tool
+    _WORKER_UNIVERSE_SHA256 = universe_sha256
+
+
+def candidate_original_keys(members, originals, original_index, similarity_threshold):
+    if similarity_threshold <= 0:
+        return set(originals)
+
+    candidates = set()
+    for universe_id in members:
+        candidates.update(original_index.get(universe_id, set()))
+    return candidates
+
+
+def process_use_case_file(use_case_fasta):
+    use_case_fasta = Path(use_case_fasta)
+    use_case_basename = strip_known_extension(use_case_fasta.name)
+    members, fragments, unmapped, ambiguous, n_raw = resolve_records(
+        use_case_fasta,
+        _WORKER_REGISTRY,
+        f"use_case:{use_case_basename}",
+    )
+
+    rows = []
+    for key in candidate_original_keys(
+        members, _WORKER_ORIGINALS, _WORKER_ORIGINAL_INDEX, _WORKER_THRESHOLD
+    ):
+        original = _WORKER_ORIGINALS[key]
+        similarity = jaccard_similarity(members, original["members"])
+        if similarity >= _WORKER_THRESHOLD:
+            rows.append(
+                {
+                    "sample": _WORKER_SAMPLE,
+                    "tool": _WORKER_TOOL,
+                    "universe_sha256": _WORKER_UNIVERSE_SHA256,
+                    "use_case_basename": use_case_basename,
+                    "original_basename": original["family"],
+                    "similarity_score": f"{similarity:.3f}",
+                    "use_case_layer": "use_case",
+                    "db_layer": original["db_layer"],
+                }
+            )
+
+    rows.sort(
+        key=lambda row: (
+            row["use_case_basename"],
+            row["db_layer"],
+            row["original_basename"],
+            row["similarity_score"],
         )
-    return originals
+    )
+    return {
+        "members": members,
+        "fragments": fragments,
+        "unmapped": unmapped,
+        "ambiguous": ambiguous,
+        "n_raw": n_raw,
+        "rows": rows,
+    }
 
 
 def resolve_cluster_observations(cluster_file, registry):
@@ -240,13 +342,55 @@ def main():
         args.pre_universe_fasta, args.pre_universe_sha256
     )
     registry = load_registry(args.id_registry, args.pre_universe_fasta)
-    originals = load_original_families(args.original_base_dir, args.metadata, registry)
+    originals, original_index = load_original_families(
+        args.original_base_dir, args.metadata, registry
+    )
 
     all_members = set()
     all_fragments = {}
     all_unmapped = []
     all_ambiguous = []
     n_raw_total = 0
+    use_case_files = discover_alignment_files(args.use_case_dir)
+    num_workers = max(1, args.num_workers)
+
+    worker_args = (
+        registry,
+        originals,
+        original_index,
+        args.similarity_threshold,
+        args.sample,
+        args.tool,
+        universe_sha256,
+    )
+
+    if num_workers == 1 or len(use_case_files) <= 1:
+        init_worker(*worker_args)
+        use_case_results = [process_use_case_file(path) for path in use_case_files]
+    else:
+        with mp.Pool(
+            processes=num_workers, initializer=init_worker, initargs=worker_args
+        ) as pool:
+            use_case_results = pool.map(process_use_case_file, use_case_files)
+
+    output_rows = []
+    for result in use_case_results:
+        n_raw_total += result["n_raw"]
+        all_members.update(result["members"])
+        all_unmapped.extend(result["unmapped"])
+        all_ambiguous.extend(result["ambiguous"])
+        for universe_id, count in result["fragments"].items():
+            all_fragments[universe_id] = max(all_fragments.get(universe_id, 0), count)
+        output_rows.extend(result["rows"])
+
+    output_rows.sort(
+        key=lambda row: (
+            row["use_case_basename"],
+            row["db_layer"],
+            row["original_basename"],
+            row["similarity_score"],
+        )
+    )
 
     with open(args.output_file, "w", newline="") as out_f:
         writer = csv.DictWriter(
@@ -264,39 +408,7 @@ def main():
             delimiter="\t",
         )
         writer.writeheader()
-
-        for use_case_fasta in discover_alignment_files(args.use_case_dir):
-            print(f"Processing {use_case_fasta}")
-            use_case_basename = strip_known_extension(use_case_fasta.name)
-            members, fragments, unmapped, ambiguous, n_raw = resolve_records(
-                use_case_fasta,
-                registry,
-                f"use_case:{use_case_basename}",
-            )
-            n_raw_total += n_raw
-            all_members.update(members)
-            all_unmapped.extend(unmapped)
-            all_ambiguous.extend(ambiguous)
-            for universe_id, count in fragments.items():
-                all_fragments[universe_id] = max(
-                    all_fragments.get(universe_id, 0), count
-                )
-
-            for original in originals:
-                similarity = jaccard_similarity(members, original["members"])
-                if similarity >= args.similarity_threshold:
-                    writer.writerow(
-                        {
-                            "sample": args.sample,
-                            "tool": args.tool,
-                            "universe_sha256": universe_sha256,
-                            "use_case_basename": use_case_basename,
-                            "original_basename": original["family"],
-                            "similarity_score": f"{similarity:.3f}",
-                            "use_case_layer": "use_case",
-                            "db_layer": original["db_layer"],
-                        }
-                    )
+        writer.writerows(output_rows)
 
     cluster_unmapped, cluster_ambiguous = resolve_cluster_observations(
         args.cluster_file, registry

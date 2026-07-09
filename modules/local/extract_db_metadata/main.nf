@@ -1,4 +1,5 @@
-process EXTRACT_NCBIFAM_METADATA {
+process EXTRACT_DB_METADATA {
+    tag "$meta.id"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -7,24 +8,37 @@ process EXTRACT_NCBIFAM_METADATA {
         'community.wave.seqera.io/library/biopython:1.84--3318633dad0031e7' }"
 
     input:
-    path alignments
+    tuple val(meta), path(alignments)
 
     output:
-    path "ncbifam_metadata.tsv", emit: metadata
-    path "versions.yml"      , emit: versions
+    tuple val(meta), path("*_metadata.tsv"), emit: metadata
+    tuple val(meta), path("versions.yml")  , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
+    def dbType = meta.db_type ?: meta.id
     """
-    extract_ncbifam_metadata.py \\
-        ${alignments} ncbifam_metadata.tsv
+    extract_db_metadata.py \\
+        --db_type ${dbType} \\
+        ${alignments} ${dbType}_metadata.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version 2>&1 | sed 's/Python //g')
         biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
+    END_VERSIONS
+    """
+
+    stub:
+    def dbType = meta.db_type ?: meta.id
+    """
+    touch ${dbType}_metadata.tsv
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: stub
+        biopython: stub
     END_VERSIONS
     """
 }

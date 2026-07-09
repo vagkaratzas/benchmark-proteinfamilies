@@ -13,6 +13,10 @@ class Node:
         self.parent = None
         self.children = []
         self.depth = 0
+        self.descendants = set()
+        self.siblings = set()
+        self.ancestors = set()
+        self.relationships_cached = False
 
     def add_child(self, child_node):
         self.children.append(child_node)
@@ -20,29 +24,63 @@ class Node:
         child_node.depth = self.depth + 1
 
     def get_descendants(self):
-        descendants = set()
-        stack = self.children[:]
-        while stack:
-            node = stack.pop()
-            descendants.add(node.ipr_id)
-            stack.extend(node.children)
-        return descendants
+        if not self.relationships_cached:
+            descendants = set()
+            stack = self.children[:]
+            while stack:
+                node = stack.pop()
+                descendants.add(node.ipr_id)
+                stack.extend(node.children)
+            return descendants
+        return set(self.descendants)
 
     def get_siblings(self):
-        if not self.parent:
-            return set()
-        return {sibling.ipr_id for sibling in self.parent.children if sibling != self}
+        if not self.relationships_cached:
+            if not self.parent:
+                return set()
+            return {
+                sibling.ipr_id for sibling in self.parent.children if sibling != self
+            }
+        return set(self.siblings)
 
     def get_direct_parent(self):
         return self.parent.ipr_id if self.parent else None
 
     def get_ancestors(self):
+        if not self.relationships_cached:
+            ancestors = set()
+            current = self.parent
+            while current:
+                ancestors.add(current.ipr_id)
+                current = current.parent
+            return ancestors
+        return set(self.ancestors)
+
+
+def populate_relationship_caches(nodes):
+    for node in nodes.values():
+        node.siblings = (
+            {sibling.ipr_id for sibling in node.parent.children if sibling != node}
+            if node.parent
+            else set()
+        )
+
         ancestors = set()
-        current = self.parent
+        current = node.parent
         while current:
             ancestors.add(current.ipr_id)
             current = current.parent
-        return ancestors
+        node.ancestors = ancestors
+
+    for node in sorted(nodes.values(), key=lambda item: item.depth, reverse=True):
+        descendants = set()
+        for child in node.children:
+            descendants.add(child.ipr_id)
+            descendants.update(child.descendants)
+        node.descendants = descendants
+
+    for node in nodes.values():
+        node.relationships_cached = True
 
 
 def build_tree_from_text(tree_text):
@@ -69,6 +107,7 @@ def build_tree_from_text(tree_text):
             stack.append(node)
         else:
             stack[depth] = node
+    populate_relationship_caches(nodes)
     return root, nodes
 
 

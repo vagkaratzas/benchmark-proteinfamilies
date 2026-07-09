@@ -69,6 +69,7 @@ def load_interpro_csv(path):
 
 def load_use_case_data(folder, registry):
     use_case_sets = {}
+    use_case_index = defaultdict(set)
     all_members = set()
     unresolved = []
     for path in discover_alignment_files(folder):
@@ -77,11 +78,14 @@ def load_use_case_data(folder, registry):
             registry,
             f"use_case:{strip_known_extension(path.name)}",
         )
-        use_case_sets[strip_known_extension(path.name)] = members
+        use_case_name = strip_known_extension(path.name)
+        use_case_sets[use_case_name] = members
+        for universe_id in members:
+            use_case_index[universe_id].add(use_case_name)
         all_members.update(members)
         unresolved.extend(unmapped)
         unresolved.extend(ambiguous)
-    return use_case_sets, all_members, unresolved
+    return use_case_sets, use_case_index, all_members, unresolved
 
 
 def resolve_cluster_id(raw_id, registry):
@@ -141,6 +145,7 @@ def analyze_family(
     member_to_cluster,
     cluster_sizes,
     use_case_sets,
+    use_case_index,
     cluster_log,
     match_log,
 ):
@@ -173,15 +178,21 @@ def analyze_family(
             )
         handle.write("\n")
 
+    candidate_use_cases = set()
+    for universe_id in seq_set:
+        candidate_use_cases.update(use_case_index.get(universe_id, set()))
+
     common_count_by_file = {}
-    for uc_file, uc_set in use_case_sets.items():
+    for uc_file in candidate_use_cases:
+        uc_set = use_case_sets[uc_file]
         common = seq_set & uc_set
         if common:
             common_count_by_file[uc_file] = len(common)
 
     total_matched = sum(common_count_by_file.values())
     matched_seqs = set()
-    for uc_set in use_case_sets.values():
+    for uc_file in candidate_use_cases:
+        uc_set = use_case_sets[uc_file]
         matched_seqs.update(seq_set & uc_set)
     unmatched_seqs = seq_set - matched_seqs
 
@@ -222,7 +233,7 @@ def main():
     )
     registry = load_registry(args.id_registry, args.pre_universe_fasta)
     interpro_map = load_interpro_csv(args.metadata)
-    use_case_sets, msa_members, msa_unresolved = load_use_case_data(
+    use_case_sets, use_case_index, msa_members, msa_unresolved = load_use_case_data(
         args.msa_dir, registry
     )
     member_to_cluster, cluster_sizes, cluster_unresolved = load_cluster_file(
@@ -258,6 +269,7 @@ def main():
             member_to_cluster,
             cluster_sizes,
             use_case_sets,
+            use_case_index,
             args.cluster_log,
             args.match_log,
         )

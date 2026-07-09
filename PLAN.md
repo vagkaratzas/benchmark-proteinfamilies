@@ -16,16 +16,15 @@ fixtures: **42 processes, 0 failed**, 4 tool runs ranked in `post/comparison/`.
 | 5     | Alignment format auto-detection         | done          | `97326af` (via `bin/post_common.py`)              |
 | 6     | Optional `clustering_tsv`               | done          | this commit                                       |
 | 7     | New metrics (D5)                        | done          | this commit                                       |
-| 8     | Performance                             | TODO          | —                                                 |
-| 9     | PRE cleanup (EXTRACT_DB_METADATA merge) | TODO          | —                                                 |
+| 8     | Performance                             | done          | this commit                                       |
+| 9     | PRE cleanup (EXTRACT_DB_METADATA merge) | done          | this commit                                       |
 | 10    | Reference database acquisition          | TODO          | —                                                 |
 | 11    | nf-core conformance                     | TODO          | —                                                 |
 | 12    | Verification                            | partial (2/7) | CI tier: self-check + canonicalisation regression |
 
-Remaining, in dependency order: **8** (perf: jaccard inverted index + multiprocessing) →
-**9** (merge the 4 `EXTRACT_*_METADATA` modules) → **11** (nf-schema, nf-test, stubs on the
-remaining PRE modules, version aggregation, container pinning) → **10** (DB downloads) →
-**12** (determinism test + the manual tier against the real proteinfamilies/mgnifams outputs).
+Remaining, in dependency order: **11** (nf-schema, nf-test, stubs on the remaining PRE
+modules, version aggregation, container pinning) → **10** (DB downloads) → **12** (determinism
+test + the manual tier against the real proteinfamilies/mgnifams outputs).
 
 ## Goal
 
@@ -385,24 +384,24 @@ n_cross_db_matches`.
 
 ### Phase 8 — Performance
 
-- [ ] `calculate_jaccard_similarity.py` — **critical**: currently O(U × O), re-parsing every
+- [x] `calculate_jaccard_similarity.py` — **critical**: currently O(U × O), re-parsing every
       original FASTA inside the inner loop (line 109). Pre-parse originals once; build an inverted
       index `universe_id -> {(db_layer, family)}`; score only candidates. `multiprocessing.Pool`,
       `--num_workers` (default `os.cpu_count()`). Label → `process_medium`.
-- [ ] `investigate_matched_originals.py` — same inverted-index treatment for the triple-nested loop.
-- [ ] `calculate_sequence_stats.py` — `ProcessPoolExecutor`. Label → `process_low`.
-- [ ] `combine_decoy_fasta.py` — `seq in unique_sequences.values()` is a linear scan inside a
+- [x] `investigate_matched_originals.py` — same inverted-index treatment for the triple-nested loop.
+- [x] `calculate_sequence_stats.py` — `ProcessPoolExecutor`. Label → `process_low`.
+- [x] `combine_decoy_fasta.py` — `seq in unique_sequences.values()` is a linear scan inside a
       per-record loop → **O(n²)** over ~10⁵ sequences. Invert to a `seq -> name` dict.
-- [ ] `sample_interpro.py` — pre-compute ancestry/descendant/sibling caches at tree build.
-- [ ] `conf/base.config` — update labels.
+- [x] `sample_interpro.py` — pre-compute ancestry/descendant/sibling caches at tree build.
+- [x] `conf/base.config` — update labels.
 
 ### Phase 9 — PRE cleanup
 
-- [ ] Merge the 4 `EXTRACT_*_METADATA` modules into `EXTRACT_DB_METADATA` (`--db_type`).
+- [x] Merge the 4 `EXTRACT_*_METADATA` modules into `EXTRACT_DB_METADATA` (`--db_type`).
       **Preserve NCBIFAM's dual `TIGRxxxxx`/`NFxxxxxx` formats and differing alignment layouts —
       the one place a naive merge regresses.**
-- [ ] `filter_valid_candidate_families.py` accepts a collected, variable-length metadata list.
-- [ ] Delete superseded modules and scripts.
+- [x] `filter_valid_candidate_families.py` accepts a collected, variable-length metadata list.
+- [x] Delete superseded modules and scripts.
 
 ### Phase 10 — Reference database acquisition
 

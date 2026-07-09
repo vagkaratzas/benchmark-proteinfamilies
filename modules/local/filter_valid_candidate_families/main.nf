@@ -8,10 +8,7 @@ process FILTER_VALID_CANDIDATE_FAMILIES {
 
     input:
     path interpro
-    path hamap
-    path ncbifam
-    path panther
-    path pfam
+    path metadata
 
     output:
     path "filtered_metadata.tsv", emit: metadata
@@ -23,8 +20,8 @@ process FILTER_VALID_CANDIDATE_FAMILIES {
     script:
     """
     filter_valid_candidate_families.py \\
-        ${interpro} ${hamap} ${ncbifam} \\
-        ${panther} ${pfam} filtered_metadata.tsv
+        ${interpro} filtered_metadata.tsv \\
+        --metadata ${metadata}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -1,6 +1,6 @@
 process CALCULATE_SEQUENCE_STATS {
     tag "$meta.id"
-    label 'process_single'
+    label 'process_low'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -34,6 +34,7 @@ process CALCULATE_SEQUENCE_STATS {
         --pre_universe_fasta ${pre_universe_fasta} \\
         --pre_universe_sha256 ${pre_universe_sha256} \\
         --output_prefix sequence \\
+        --num_workers ${task.cpus} \\
         --sample '${meta.id}' \\
         --tool '${meta.tool}'
 

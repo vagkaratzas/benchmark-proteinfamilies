@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
+from pathlib import Path
 import pandas as pd
+
+
+KNOWN_DBS = ("HAMAP", "NCBIFAM", "PANTHER", "PFAM")
 
 
 def load_metadata(path):
@@ -10,14 +14,32 @@ def load_metadata(path):
     return df["num_proteins"].to_dict()
 
 
-def main(interpro_path, hamap_path, ncbifam_path, panther_path, pfam_path, output_path):
-    # Load metadata into lookup dicts
-    metadata = {
-        "HAMAP": load_metadata(hamap_path),
-        "NCBIFAM": load_metadata(ncbifam_path),
-        "PANTHER": load_metadata(panther_path),
-        "PFAM": load_metadata(pfam_path),
-    }
+def infer_db_from_path(path):
+    name = Path(path).name.lower()
+    for db in KNOWN_DBS:
+        if name.startswith(db.lower()):
+            return db
+    raise ValueError(
+        f"Cannot infer database type from metadata filename {path!r}; "
+        "use DB=path syntax"
+    )
+
+
+def load_metadata_files(paths):
+    metadata = {}
+    for item in paths:
+        if "=" in item:
+            db, path = item.split("=", 1)
+            db = db.upper()
+        else:
+            path = item
+            db = infer_db_from_path(path)
+        metadata[db] = load_metadata(path)
+    return metadata
+
+
+def main(interpro_path, metadata_paths, output_path):
+    metadata = load_metadata_files(metadata_paths)
 
     # Load InterPro TSV
     interpro = pd.read_csv(interpro_path, sep="\t", dtype=str)
@@ -41,11 +63,13 @@ if __name__ == "__main__":
         description="Filter InterPro entries based on metadata and update protein_count"
     )
     parser.add_argument("interpro", help="Path to InterPro TSV file")
-    parser.add_argument("hamap", help="HAMAP metadata TSV")
-    parser.add_argument("ncbifam", help="NCBIFAM metadata TSV")
-    parser.add_argument("panther", help="PANTHER metadata TSV")
-    parser.add_argument("pfam", help="PFAM metadata TSV")
     parser.add_argument("output", help="Output filtered InterPro TSV")
+    parser.add_argument(
+        "--metadata",
+        nargs="+",
+        required=True,
+        help="Metadata TSVs, either named like hamap_metadata.tsv or passed as DB=path.",
+    )
     args = parser.parse_args()
 
-    main(args.interpro, args.hamap, args.ncbifam, args.panther, args.pfam, args.output)
+    main(args.interpro, args.metadata, args.output)
