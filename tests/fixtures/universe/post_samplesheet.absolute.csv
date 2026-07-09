@@ -1,5 +1,0 @@
-sample,tool,msa_dir,clustering_tsv
-clean,tool_clean,/home/vangelis/Desktop/Projects/benchmark-proteinfamilies/benchmark-proteinfamilies/tests/fixtures/universe/tool_clean,
-mangled,tool_mangled_ambiguous,/home/vangelis/Desktop/Projects/benchmark-proteinfamilies/benchmark-proteinfamilies/tests/fixtures/universe/tool_mangled_ambiguous,/home/vangelis/Desktop/Projects/benchmark-proteinfamilies/benchmark-proteinfamilies/tests/fixtures/universe/tool_mangled_ambiguous/clustering.tsv
-split,tool_split,/home/vangelis/Desktop/Projects/benchmark-proteinfamilies/benchmark-proteinfamilies/tests/fixtures/universe/tool_split,
-merge,tool_merge,/home/vangelis/Desktop/Projects/benchmark-proteinfamilies/benchmark-proteinfamilies/tests/fixtures/universe/tool_merge,

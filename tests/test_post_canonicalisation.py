@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 REPO = Path(__file__).resolve().parents[1]
-FIXTURE = REPO / "tests" / "fixtures" / "universe"
+FIXTURE = REPO / "assets" / "fixtures" / "universe"
 
 
 class PostCanonicalisationTest(unittest.TestCase):

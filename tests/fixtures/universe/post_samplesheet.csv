@@ -1,5 +1,0 @@
-sample,tool,msa_dir,clustering_tsv
-clean,tool_clean,tests/fixtures/universe/tool_clean,
-mangled,tool_mangled_ambiguous,tests/fixtures/universe/tool_mangled_ambiguous,tests/fixtures/universe/tool_mangled_ambiguous/clustering.tsv
-split,tool_split,tests/fixtures/universe/tool_split,
-merge,tool_merge,tests/fixtures/universe/tool_merge,

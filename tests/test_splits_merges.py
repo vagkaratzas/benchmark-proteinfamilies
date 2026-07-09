@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURES = ROOT / "tests" / "fixtures" / "universe"
+FIXTURES = ROOT / "assets" / "fixtures" / "universe"
 SCRIPT = ROOT / "bin" / "analyze_splits_merges.py"
 
 

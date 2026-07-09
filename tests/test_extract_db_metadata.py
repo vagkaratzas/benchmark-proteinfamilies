@@ -9,8 +9,8 @@ from pathlib import Path
 
 
 REPO = Path(__file__).resolve().parents[1]
-FIXTURE = REPO / "tests" / "fixtures" / "db_metadata"
-EXPECTED = REPO / "tests" / "fixtures" / "expected"
+FIXTURE = REPO / "assets" / "fixtures" / "db_metadata"
+EXPECTED = REPO / "assets" / "fixtures" / "expected"
 SCRIPT = REPO / "bin" / "extract_db_metadata.py"
 
 

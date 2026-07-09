@@ -10,8 +10,8 @@ from pathlib import Path
 
 
 REPO = Path(__file__).resolve().parents[1]
-FIXTURE = REPO / "tests" / "fixtures" / "universe"
-EXPECTED = REPO / "tests" / "fixtures" / "expected" / "jaccard_edges.sorted.tsv"
+FIXTURE = REPO / "assets" / "fixtures" / "universe"
+EXPECTED = REPO / "assets" / "fixtures" / "expected" / "jaccard_edges.sorted.tsv"
 SCRIPT = REPO / "bin" / "calculate_jaccard_similarity.py"
 
 
