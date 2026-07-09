@@ -1,6 +1,12 @@
-# benchamrk-proteinfamilies
+# benchmark-proteinfamilies
 
-Sample InterPro families (`pre` workflow) and test how well they can be reconstructed via nf-core/proteinfamilies (`post` workflow).
+Sample manually curated InterPro families (`pre` workflow) and measure how well **any** protein-family
+generation tool reconstructs them (`post` workflow). It answers: _which tool / parameter combinations
+match the quality of manual curation?_
+
+- **[REPORT.md](REPORT.md)** — top findings, and copy-pasteable commands for all three stages.
+- **[AGENTS.md](AGENTS.md)** — architecture, invariants, and conventions for contributors and agents.
+- **[PLAN.md](PLAN.md)** — the frozen spec and its open risks.
 
 ## pre-proteinfamilies
 
@@ -33,7 +39,7 @@ An example run command looks like this:
 
 ## nf-core/proteinfamilies
 
-The generated output file named `combined_decoy.fasta` must be given as input to `nf-core/proteinfamilies` by placing its path in the `samplesheet.csv` input file.
+The generated output file named `combined_decoy.faa` must be given as input to `nf-core/proteinfamilies` by placing its path in the `samplesheet.csv` input file. PRE also emits `id_registry.tsv` and `universe.sha256` beside it; POST needs all three.
 
 An example run command looks like this:
 `nextflow run proteinfamilies -c slurm.config -profile singularity,slurm --input samplesheet.csv --outdir /path/to/proteinfamilies/use-case/output_1 --clustering_tool cluster --cluster_size_threshold 3 --cluster_seq_identity 0.5 --hmmsearch_family_length_threshold 1 --remove_sequence_redundancy false --save_non_redundant_fams_fasta true -with-tower -resume`
@@ -93,6 +99,29 @@ PFAM    37.2    https://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam37.2/Pfam-
 ```
 
 NCBIFAM has two types of families; TIGRxxxxx and NFxxxxxx.
+
+> **These URLs have not been exercised.** The `DOWNLOAD_*` modules are verified by `-stub` runs only,
+> so the conditional wiring and the `storeDir` cache are proven but the network is never contacted.
+> The HAMAP URL above in particular looks wrong. The download modules also ship without a SHA-pinned
+> container: use `-profile conda`, or supply the database paths yourself.
+
+## Testing
+
+The whole POST graph runs offline in about ten seconds over the committed synthetic fixtures in
+`assets/fixtures/`, and the whole PRE graph runs as a stub:
+
+```bash
+nextflow run . -profile test          --outdir /tmp/post_test  # 43 processes
+nextflow run . -stub -profile test_pre --outdir /tmp/pre_stub  # 15 processes
+
+python3 bin/benchmark_ids.py                          # identity-core self-check
+python3 -m unittest discover -s tests -p 'test_*.py'  # 10 tests
+nf-test test                                          # 6 tests
+nextflow lint .
+```
+
+Tests here are expected to be **load-bearing**: each regression test fails when its bug is
+reintroduced. If you add one, check that it can fail.
 
 ## Linting
 
