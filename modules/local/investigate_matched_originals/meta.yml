@@ -1,0 +1,131 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "investigate_matched_originals"
+description: "Per-cluster diagnostics for curated families a tool matched. Gated on a clustering TSV being supplied."
+keywords:
+  - diagnostics
+  - cluster
+  - benchmark
+tools:
+  - "investigate_matched_originals":
+      description: "Per-cluster diagnostics for curated families a tool matched. Gated on a clustering TSV being supplied."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/investigate_matched_originals/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/investigate_matched_originals/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/investigate_matched_originals/"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+    - msa_dir:
+        type: directory
+        description: "Full-family MSA directory emitted by the benchmarked tool; the sole membership source."
+    - clustering_tsv:
+        type: file
+        description: "Optional tool clustering TSV; drives `cluster_count` and cross-checks MSA completeness."
+        pattern: "*.tsv"
+  - - sampled_fasta:
+        type: directory
+        description: "PRE `sampled_fasta/`: per-database curated original family FASTA files."
+  - - metadata:
+        type: file
+        description: "Sampled family metadata CSV emitted by PRE."
+        pattern: "*.{csv,tsv}"
+  - - id_registry:
+        type: file
+        description: "PRE `id_registry.tsv`: the authoritative universe_id -> parent_id / source_type / db_layer map."
+        pattern: "*.tsv"
+  - - pre_universe_fasta:
+        type: file
+        description: "PRE `combined_decoy.faa`: the exact FASTA the benchmarked tool was fed."
+        pattern: "*.{faa,fasta}"
+  - - pre_universe_sha256:
+        type: file
+        description: "PRE `universe.sha256`: checksum pinning results to the universe they were scored against."
+        pattern: "*.sha256"
+  - - benchmark_ids:
+        type: file
+        description: "`bin/benchmark_ids.py`, staged as a library (Nextflow puts bin/ on PATH, not PYTHONPATH)."
+        pattern: "*.py"
+  - - post_common:
+        type: file
+        description: "`bin/post_common.py`, staged as a library (Nextflow puts bin/ on PATH, not PYTHONPATH)."
+        pattern: "*.py"
+output:
+  metadata:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "metadata.tsv":
+          type: file
+          description: "Matched-original diagnostics."
+          pattern: "metadata.tsv"
+  clusters:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "all_clusters.txt":
+          type: file
+          description: "All clusters seen."
+          pattern: "all_clusters.txt"
+  matches:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "all_matches.txt":
+          type: file
+          description: "All matches seen."
+          pattern: "all_matches.txt"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_biopython:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - biopython:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - biopython:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

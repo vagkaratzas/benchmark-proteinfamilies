@@ -1,0 +1,75 @@
+nextflow_process {
+
+    name "Test Process COMPUTE_SCORECARD"
+    script "../main.nf"
+    process "COMPUTE_SCORECARD"
+
+    test("universe_fixture - metrics and topology - weighted scorecard") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'clean', tool:'tool_clean' ],
+                    file(params.fixture_dir + "/universe/tool_clean", checkIfExists: true),
+                    [],
+                    file(params.fixture_dir + "/post/family_metrics.tsv", checkIfExists: true),
+                    file(params.fixture_dir + "/post/split_merge_summary.tsv", checkIfExists: true)
+                ]
+                input[1] = file(params.fixture_dir + "/universe/sampled_fasta", checkIfExists: true)
+                input[2] = file(params.fixture_dir + "/universe/sampled_metadata.csv", checkIfExists: true)
+                input[3] = file(params.fixture_dir + "/universe/id_registry.tsv", checkIfExists: true)
+                input[4] = file(params.fixture_dir + "/universe/combined_decoy.faa", checkIfExists: true)
+                input[5] = file(params.fixture_dir + "/universe/universe.sha256", checkIfExists: true)
+                input[6] = file(params.repo_dir + "/bin/benchmark_ids.py", checkIfExists: true)
+                input[7] = file(params.repo_dir + "/bin/post_common.py", checkIfExists: true)
+                input[8] = ''
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("universe_fixture - metrics and topology - weighted scorecard - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'clean', tool:'tool_clean' ],
+                    file(params.fixture_dir + "/universe/tool_clean", checkIfExists: true),
+                    [],
+                    file(params.fixture_dir + "/post/family_metrics.tsv", checkIfExists: true),
+                    file(params.fixture_dir + "/post/split_merge_summary.tsv", checkIfExists: true)
+                ]
+                input[1] = file(params.fixture_dir + "/universe/sampled_fasta", checkIfExists: true)
+                input[2] = file(params.fixture_dir + "/universe/sampled_metadata.csv", checkIfExists: true)
+                input[3] = file(params.fixture_dir + "/universe/id_registry.tsv", checkIfExists: true)
+                input[4] = file(params.fixture_dir + "/universe/combined_decoy.faa", checkIfExists: true)
+                input[5] = file(params.fixture_dir + "/universe/universe.sha256", checkIfExists: true)
+                input[6] = file(params.repo_dir + "/bin/benchmark_ids.py", checkIfExists: true)
+                input[7] = file(params.repo_dir + "/bin/post_common.py", checkIfExists: true)
+                input[8] = ''
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

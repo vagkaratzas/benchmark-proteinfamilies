@@ -1,0 +1,154 @@
+{
+    "universe_fixture - per run scorecards - ranked cross run comparison": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "comparison",
+                        "tool": "comparison"
+                    },
+                    "benchmark_comparison.csv:md5,d09d2b69bb1dbf1fc8460ef95f929e53"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "comparison",
+                        "tool": "comparison"
+                    },
+                    "benchmark_comparison_mqc.csv:md5,ca396dd32a408d26ee71e56febacc28f"
+                ]
+            ]
+        ],
+        "timestamp": "2026-07-11T09:01:34.531506594",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "universe_fixture - per run scorecards - ranked cross run comparison - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "comparison",
+                            "tool": "comparison"
+                        },
+                        "benchmark_comparison.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "comparison",
+                            "tool": "comparison"
+                        },
+                        "benchmark_comparison_mqc.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "comparison",
+                            "tool": "comparison"
+                        },
+                        "f1_jaccard_distribution_mqc.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "comparison",
+                            "tool": "comparison"
+                        },
+                        "db_layer_coverage_mqc.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
+                    [
+                        "COMPARE_BENCHMARK_RUNS",
+                        "python",
+                        "3.13.3"
+                    ]
+                ],
+                "5": [
+                    [
+                        "COMPARE_BENCHMARK_RUNS",
+                        "matplotlib",
+                        "3.10.3"
+                    ]
+                ],
+                "6": [
+                    [
+                        "COMPARE_BENCHMARK_RUNS",
+                        "pandas",
+                        "2.2.3"
+                    ]
+                ],
+                "comparison": [
+                    [
+                        {
+                            "id": "comparison",
+                            "tool": "comparison"
+                        },
+                        "benchmark_comparison.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "mqc_csv": [
+                    [
+                        {
+                            "id": "comparison",
+                            "tool": "comparison"
+                        },
+                        "benchmark_comparison_mqc.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "mqc_db_plot": [
+                    [
+                        {
+                            "id": "comparison",
+                            "tool": "comparison"
+                        },
+                        "db_layer_coverage_mqc.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "mqc_f1_plot": [
+                    [
+                        {
+                            "id": "comparison",
+                            "tool": "comparison"
+                        },
+                        "f1_jaccard_distribution_mqc.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_matplotlib": [
+                    [
+                        "COMPARE_BENCHMARK_RUNS",
+                        "matplotlib",
+                        "3.10.3"
+                    ]
+                ],
+                "versions_pandas": [
+                    [
+                        "COMPARE_BENCHMARK_RUNS",
+                        "pandas",
+                        "2.2.3"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "COMPARE_BENCHMARK_RUNS",
+                        "python",
+                        "3.13.3"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:01:40.994879325",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

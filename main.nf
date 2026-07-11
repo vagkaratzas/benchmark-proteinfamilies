@@ -3,23 +3,40 @@ include { POST } from './workflows/post'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/pipeline_initialisation'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/pipeline_completion'
 
+//
+// Benchmark any protein-family generation tool against manually curated InterPro families.
+//
+// The two modes are separate runs, not two halves of one DAG, because the step between them
+// happens outside this pipeline: PRE emits a universe FASTA, the user runs their tool on it
+// however they like, and POST scores whatever came back. Wiring them into a single workflow
+// would mean owning the tool invocation, which is exactly what a tool-agnostic benchmark cannot do.
+//
 workflow BENCHMARK_PROTEINFAMILIES {
 
     take:
-    workflow_mode // channel: samplesheet read in from --input
+    workflow_mode
 
     main:
     //
-    // WORKFLOW: Run pre pipeline
+    // WORKFLOW: Build the benchmark universe (runs once, feeds the external tool).
     //
     if (workflow_mode == "pre") {
-        PRE( params.interpro_hierarchy_file, params.id_mapping_file, \
-            params.path_to_hamap, params.path_to_ncbifam, params.path_to_panther, params.path_to_pfam, \
-            params.path_to_swissprot, params.min_membership, params.num_per_db, params.num_decoys, params.seed
+        PRE(
+            params.interpro_hierarchy_file,
+            params.id_mapping_file,
+            params.path_to_hamap,
+            params.path_to_ncbifam,
+            params.path_to_panther,
+            params.path_to_pfam,
+            params.path_to_swissprot,
+            params.min_membership,
+            params.num_per_db,
+            params.num_decoys,
+            params.seed
         )
     }
     //
-    // WORKFLOW: Run post pipeline
+    // WORKFLOW: Score the tool runs listed in the samplesheet against that universe.
     //
     else if (workflow_mode == "post") {
         POST(
@@ -48,12 +65,13 @@ workflow {
 
     main:
     PIPELINE_INITIALISATION()
-    //
-    // WORKFLOW: Run main workflow
-    //
-    BENCHMARK_PROTEINFAMILIES (
+
+    BENCHMARK_PROTEINFAMILIES(
         params.workflow_mode
     )
+
+    // Also drains the global `versions` topic into pipeline_info/software_versions.yml, so it
+    // must run in both modes -- not only on the POST reporting path.
     PIPELINE_COMPLETION()
 
 }

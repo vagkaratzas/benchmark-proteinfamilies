@@ -1,0 +1,65 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "download_ncbifam"
+description: "Download the NCBIFAM curated family SEED alignments."
+keywords:
+  - download
+  - ncbifam
+  - database
+tools:
+  - "download_ncbifam":
+      description: "Download the NCBIFAM curated family SEED alignments."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/download_ncbifam/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/download_ncbifam/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/download_ncbifam/"
+      licence: ["MIT"]
+      identifier: ""
+output:
+  alignments:
+    - - "ncbifam":
+          type: directory
+          description: "NCBIFAM `.SEED` alignments (Stockholm or FASTA)."
+  versions_curl:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - curl:
+          type: string
+          description: The tool name
+      - curl --version | head -n 1 | sed 's/curl //; s/ .*//':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_tar:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - tar:
+          type: string
+          description: The tool name
+      - tar --version | head -n 1 | sed 's/.* //':
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - curl:
+          type: string
+          description: The tool name
+      - curl --version | head -n 1 | sed 's/curl //; s/ .*//':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - tar:
+          type: string
+          description: The tool name
+      - tar --version | head -n 1 | sed 's/.* //':
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

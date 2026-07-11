@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Split the single Pfam-A.seed Stockholm stream into one file per family.
+
+Pfam ships every family concatenated in one (gzipped) file; the rest of the pipeline expects one
+alignment file per family, like the other three databases. Streams rather than loading the file,
+which is several GB uncompressed.
+"""
 
 import argparse
 import gzip

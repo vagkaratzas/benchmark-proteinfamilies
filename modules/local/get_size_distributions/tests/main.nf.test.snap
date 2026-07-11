@@ -1,0 +1,188 @@
+{
+    "universe_fixture - jaccard edgelist - matched and unmatched size distributions": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "size_distributions.txt:md5,b8dbc2a9be7d2f28e6fdbe56a05e6167"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "matched_metadata.tsv:md5,69781d2780d641d4dc4e81d4add85b22"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "unmatched_metadata.tsv:md5,1e964466da9f60a2fad4431d0332e2e7"
+                    ]
+                ],
+                "3": [
+                    [
+                        "GET_SIZE_DISTRIBUTIONS",
+                        "python",
+                        "3.10.6"
+                    ]
+                ],
+                "4": [
+                    [
+                        "GET_SIZE_DISTRIBUTIONS",
+                        "pandas",
+                        "1.4.3"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "size_distributions.txt:md5,b8dbc2a9be7d2f28e6fdbe56a05e6167"
+                    ]
+                ],
+                "matched": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "matched_metadata.tsv:md5,69781d2780d641d4dc4e81d4add85b22"
+                    ]
+                ],
+                "unmatched": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "unmatched_metadata.tsv:md5,1e964466da9f60a2fad4431d0332e2e7"
+                    ]
+                ],
+                "versions_pandas": [
+                    [
+                        "GET_SIZE_DISTRIBUTIONS",
+                        "pandas",
+                        "1.4.3"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "GET_SIZE_DISTRIBUTIONS",
+                        "python",
+                        "3.10.6"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:03:24.319441591",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "universe_fixture - jaccard edgelist - matched and unmatched size distributions - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "size_distributions.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "matched_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "unmatched_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        "GET_SIZE_DISTRIBUTIONS",
+                        "python",
+                        "3.10.6"
+                    ]
+                ],
+                "4": [
+                    [
+                        "GET_SIZE_DISTRIBUTIONS",
+                        "pandas",
+                        "1.4.3"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "size_distributions.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "matched": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "matched_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "unmatched": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "unmatched_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_pandas": [
+                    [
+                        "GET_SIZE_DISTRIBUTIONS",
+                        "pandas",
+                        "1.4.3"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "GET_SIZE_DISTRIBUTIONS",
+                        "python",
+                        "3.10.6"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:03:30.225061103",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

@@ -1,0 +1,116 @@
+{
+    "universe_fixture - original counts - sequence coverage - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_coverage.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        "CALCULATE_DB_SEQUENCE_COVERAGE",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "2": [
+                    [
+                        "CALCULATE_DB_SEQUENCE_COVERAGE",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "coverage": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_coverage.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "CALCULATE_DB_SEQUENCE_COVERAGE",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "CALCULATE_DB_SEQUENCE_COVERAGE",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:00:38.926968437",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "universe_fixture - original counts - sequence coverage": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_coverage.txt:md5,e1f07f865351f27deb2659535eda4ade"
+                    ]
+                ],
+                "1": [
+                    [
+                        "CALCULATE_DB_SEQUENCE_COVERAGE",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "2": [
+                    [
+                        "CALCULATE_DB_SEQUENCE_COVERAGE",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "coverage": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_coverage.txt:md5,e1f07f865351f27deb2659535eda4ade"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "CALCULATE_DB_SEQUENCE_COVERAGE",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "CALCULATE_DB_SEQUENCE_COVERAGE",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:00:33.43661778",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

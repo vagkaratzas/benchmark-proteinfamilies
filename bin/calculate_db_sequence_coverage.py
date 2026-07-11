@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""Fraction of curated sequences, per database layer, that a tool recovered.
+
+The denominator is the curated originals actually present in the universe (from the registry), not
+the size of the source database -- PRE only sampled part of it.
+"""
 
 import argparse
 import csv

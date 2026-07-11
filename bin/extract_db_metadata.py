@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""Count family membership in one curated database, emitting `id<TAB>num_proteins`.
+
+One script serves all four databases; `--db_type` selects the rules. The counts drive the
+`min_membership` filter, so a miscount silently changes which families are eligible for sampling.
+"""
 
 import argparse
 import os
@@ -7,6 +12,13 @@ from pathlib import Path
 from Bio import AlignIO
 
 
+# Each database names its family after the file, but not by the same rule.
+#
+# NCBIFAM is the exception that will bite you: its files are `TIGR00001.SEED` *and*
+# `NF000001.1.SEED`, so `splitext` on the latter yields `NF000001.1` -- a family id that matches
+# nothing. Splitting on the first `.` gives `NF000001`, which is correct for both forms. The other
+# three databases have no dots in their accessions, so `splitext` is right for them.
+# tests/test_extract_db_metadata.py pins this.
 DB_RULES = {
     "hamap": {
         "extension": ".msa",

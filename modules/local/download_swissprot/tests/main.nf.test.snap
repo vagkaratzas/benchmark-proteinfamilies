@@ -1,0 +1,19 @@
+{
+    "no input - remote database - swissprot fasta - stub": {
+        "content": [
+            {
+                "0": [
+                    "uniprot_sprot.fasta:md5,ce0b6d1241fe9e99fcd15f6a93b82313"
+                ],
+                "fasta": [
+                    "uniprot_sprot.fasta:md5,ce0b6d1241fe9e99fcd15f6a93b82313"
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:16:21.527978232",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

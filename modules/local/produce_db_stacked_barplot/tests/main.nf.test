@@ -1,0 +1,54 @@
+nextflow_process {
+
+    name "Test Process PRODUCE_DB_STACKED_BARPLOT"
+    script "../main.nf"
+    process "PRODUCE_DB_STACKED_BARPLOT"
+
+    test("universe_fixture - jaccard edgelist - stacked barplot") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'clean', tool:'tool_clean' ],
+                    file(params.fixture_dir + "/post/jaccard_similarities.csv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.barplot[0][1]).exists() },
+                { assert path(process.out.barplot[0][1]).size() > 0 }
+            )
+        }
+
+    }
+
+    test("universe_fixture - jaccard edgelist - stacked barplot - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'clean', tool:'tool_clean' ],
+                    file(params.fixture_dir + "/post/jaccard_similarities.csv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

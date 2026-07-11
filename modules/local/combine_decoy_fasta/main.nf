@@ -17,7 +17,9 @@ process COMBINE_DECOY_FASTA {
     path "combined_decoy.faa"    , emit: fasta
     path "id_registry.tsv"       , emit: registry
     path "universe.sha256"       , emit: universe_sha256
-    path "versions.yml"          , emit: versions
+
+    tuple val("${task.process}"), val('python'), eval("python --version 2>&1 | sed 's/Python //g'"), emit: versions_python, topic: versions
+    tuple val("${task.process}"), val('biopython'), eval("python -c \"import importlib.metadata; print(importlib.metadata.version('biopython'))\""), emit: versions_biopython, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -34,22 +36,10 @@ process COMBINE_DECOY_FASTA {
         --output_registry id_registry.tsv \\
         --universe_sha256 universe.sha256 \\
         --log_file combined_decoy_log.txt
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-        biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
-    END_VERSIONS
     """
 
     stub:
     """
     touch combined_decoy_log.txt combined_decoy.faa id_registry.tsv universe.sha256
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-        biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
-    END_VERSIONS
     """
 }

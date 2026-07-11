@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""Map valid InterPro accessions onto the member-database families that implement them.
+
+One InterPro entry can name families in several member databases, so the output has one row per
+(interpro_id, db, dbkey) pair rather than one per InterPro entry.
+"""
 
 import argparse
 import gzip

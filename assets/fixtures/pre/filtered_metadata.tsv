@@ -1,0 +1,5 @@
+interpro_id	protein_count	short_name	db	dbkey	name
+IPR000002	2	TinyFam	PFAM	PF00001	Tiny PFAM family
+IPR000002	3	TinyFam	PANTHER	PTHR00001	Tiny PANTHER family
+IPR000002	2	TinyFam	NCBIFAM	NF000001	Tiny NCBIFAM family
+IPR000002	2	TinyFam	HAMAP	MF_00001	Tiny HAMAP family

@@ -20,7 +20,9 @@ process CALCULATE_SEQUENCE_STATS {
     tuple val(meta), path("sequence_original_counts.txt")  , emit: original_count
     tuple val(meta), path("sequence_summary.txt")          , emit: summary
     tuple val(meta), path("sequence_unknown_sequences.txt"), emit: unknown
-    tuple val(meta), path("versions.yml")                  , emit: versions
+
+    tuple val("${task.process}"), val('python'), eval("python --version 2>&1 | sed 's/Python //g'"), emit: versions_python, topic: versions
+    tuple val("${task.process}"), val('biopython'), eval("python -c \"import importlib.metadata; print(importlib.metadata.version('biopython'))\""), emit: versions_biopython, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -37,21 +39,10 @@ process CALCULATE_SEQUENCE_STATS {
         --num_workers ${task.cpus} \\
         --sample '${meta.id}' \\
         --tool '${meta.tool}'
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-        biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
-    END_VERSIONS
     """
 
     stub:
     """
     touch sequence_decoy_counts.txt sequence_original_counts.txt sequence_summary.txt sequence_unknown_sequences.txt
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: stub
-        biopython: stub
-    END_VERSIONS
     """
 }

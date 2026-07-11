@@ -18,6 +18,7 @@ process MULTIQC {
     tuple val(meta), path("multiqc_report.html"), emit: report
     tuple val(meta), path("multiqc_data")       , emit: data
     tuple val(meta), path("versions.yml")       , emit: versions
+    tuple val("${task.process}"), val('multiqc'), eval("multiqc --version | sed 's/multiqc, version //'"), emit: versions_multiqc, topic: versions
 
     when:
     task.ext.when == null || task.ext.when

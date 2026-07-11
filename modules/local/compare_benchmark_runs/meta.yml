@@ -1,0 +1,150 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "compare_benchmark_runs"
+description: "Rank every tool run against the others and plot the cross-run comparison."
+keywords:
+  - comparison
+  - report
+  - benchmark
+tools:
+  - "compare_benchmark_runs":
+      description: "Rank every tool run against the others and plot the cross-run comparison."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/compare_benchmark_runs/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/compare_benchmark_runs/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/compare_benchmark_runs/"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+  - - scorecards:
+        type: file
+        description: "Per-run scorecards."
+        pattern: "*.tsv"
+  - - family_metrics:
+        type: file
+        description: "Per-run family metrics."
+        pattern: "*.tsv"
+  - - split_merge_summaries:
+        type: file
+        description: "Per-run split/merge summaries."
+        pattern: "*.tsv"
+  - - db_coverage_files:
+        type: file
+        description: "Per-run db-layer sequence coverage."
+        pattern: "*.txt"
+  - - benchmark_ids:
+        type: file
+        description: "`bin/benchmark_ids.py`, staged as a library (Nextflow puts bin/ on PATH, not PYTHONPATH)."
+        pattern: "*.py"
+  - - post_common:
+        type: file
+        description: "`bin/post_common.py`, staged as a library (Nextflow puts bin/ on PATH, not PYTHONPATH)."
+        pattern: "*.py"
+output:
+  comparison:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "benchmark_comparison.csv":
+          type: file
+          description: "Ranked cross-run comparison table."
+          pattern: "benchmark_comparison.csv"
+  mqc_csv:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "benchmark_comparison_mqc.csv":
+          type: file
+          description: "MultiQC-ready comparison CSV."
+          pattern: "benchmark_comparison_mqc.csv"
+  mqc_f1_plot:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "f1_jaccard_distribution_mqc.png":
+          type: file
+          description: "F1 / Jaccard distribution plot."
+          pattern: "f1_jaccard_distribution_mqc.png"
+  mqc_db_plot:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "db_layer_coverage_mqc.png":
+          type: file
+          description: "Per-db-layer coverage plot."
+          pattern: "db_layer_coverage_mqc.png"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_matplotlib:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - matplotlib:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('matplotlib'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_pandas:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - pandas:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('pandas'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - matplotlib:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('matplotlib'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - pandas:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('pandas'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

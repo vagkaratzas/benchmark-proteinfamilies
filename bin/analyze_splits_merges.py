@@ -18,6 +18,23 @@ union of all other associated originals.
 Both contribution checks compare against the union of all other associated
 families, not against previous rows, making the result independent of input
 file order. All sets are keyed on universe_id.
+
+Why the two rules are shaped this way:
+
+- Union-based, not greedy. A greedy left-to-right rule ("does this G add anything the *previous*
+  Gs did not?") gives a different answer depending on which file the OS happened to list first.
+  Comparing against the union of all *other* associated families removes that dependence, so the
+  same run scores the same on every machine.
+
+- Within a db_layer, never across. Curated families genuinely overlap between databases -- the same
+  protein is in a Pfam family and a PANTHER family. A generated family matching both is database
+  redundancy, not a tool merging two things that should have stayed apart. Counting across layers
+  would report every tool as merging, constantly. The original-overlap baseline emitted alongside
+  quantifies the redundancy that curation itself introduces, so tool-caused merges can be separated
+  from curation-caused ones.
+
+This is the metric Jaccard cannot provide: Jaccard is symmetric and one-to-one, so it scores a
+1-into-5 split and a 5-into-1 merge identically.
 """
 
 import argparse
@@ -183,6 +200,12 @@ def build_edges(generated, originals, association_threshold, min_intersection_si
 
 
 def unique_split_contributors(edges):
+    """Keep the edges that cover part of the original no *other* edge covers.
+
+    `other_union` is built from every other edge, not from the ones already accepted, which is what
+    makes the result independent of the order `edges` arrives in. Accepting greedily instead would
+    let the first edge seen absorb the shared members and starve an equally valid later one.
+    """
     contributors = []
     for edge in edges:
         other_union = set()

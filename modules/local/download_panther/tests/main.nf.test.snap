@@ -1,0 +1,23 @@
+{
+    "no input - remote database - panther family fasta - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "PTHR00001.fasta:md5,7a36274e92393119ad1361880a255ebe"
+                    ]
+                ],
+                "alignments": [
+                    [
+                        "PTHR00001.fasta:md5,7a36274e92393119ad1361880a255ebe"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:16:08.392194727",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

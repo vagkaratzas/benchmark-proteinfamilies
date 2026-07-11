@@ -1,0 +1,65 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "download_hamap"
+description: "Download the HAMAP curated family alignments."
+keywords:
+  - download
+  - hamap
+  - database
+tools:
+  - "download_hamap":
+      description: "Download the HAMAP curated family alignments."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/download_hamap/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/download_hamap/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/download_hamap/"
+      licence: ["MIT"]
+      identifier: ""
+output:
+  alignments:
+    - - "hamap_alignments":
+          type: directory
+          description: "HAMAP `.msa` alignments."
+  versions_curl:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - curl:
+          type: string
+          description: The tool name
+      - curl --version | head -n 1 | sed 's/curl //; s/ .*//':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_tar:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - tar:
+          type: string
+          description: The tool name
+      - tar --version | head -n 1 | sed 's/.* //':
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - curl:
+          type: string
+          description: The tool name
+      - curl --version | head -n 1 | sed 's/curl //; s/ .*//':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - tar:
+          type: string
+          description: The tool name
+      - tar --version | head -n 1 | sed 's/.* //':
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

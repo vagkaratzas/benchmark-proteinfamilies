@@ -6,7 +6,7 @@ nextflow_workflow {
 
     test("test - stub - succeeds") {
 
-        options "-stub -profile test --outdir /tmp/nf-test-post"
+        options "-stub --outdir /tmp/nf-test-post"
 
         when {
             workflow {

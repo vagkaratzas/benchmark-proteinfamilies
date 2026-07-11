@@ -88,14 +88,22 @@ and `pipeline_completion`.
 
 ### Layout
 
-- `modules/local/` — 28 modules, each with `main.nf` + `environment.yml`, a `tag`, a `label` and a
-  `stub:` block. `modules/nf-core/` — DIAMOND (`makedb`, `blastp`) and MultiQC.
-- `subworkflows/local/` — 3: `pipeline_initialisation`, `pipeline_completion`,
-  `validate_post_samplesheet`.
+- `modules/local/` — 27 modules, each with `main.nf` + `environment.yml` + `meta.yml` + `tests/`, a
+  `tag`, a `label` and a `stub:` block. `modules/nf-core/` — DIAMOND (`makedb`, `blastp`), MultiQC.
+- `subworkflows/local/` — 7: `pipeline_initialisation`, `pipeline_completion`,
+  `validate_post_samplesheet`, `download_dbs`, `generate_decoys` (PRE), `score_samples`,
+  `report_benchmark` (POST).
 - `bin/` — 23 Python scripts. `benchmark_ids.py` and `post_common.py` are **libraries**, not CLIs.
-- `assets/fixtures/` — committed synthetic fixtures (universe, PRE, db_metadata, expected goldens).
-- `tests/` — 6 Python tests + 6 nf-tests. `conf/` — `base.config` (resource labels),
-  `modules.config` (publishing, `ext.when`).
+- `assets/fixtures/` — committed fixtures (universe, PRE, POST, db_metadata, expected goldens). The
+  module tests reuse these; no module ships its own copy of test data.
+- `tests/` — 6 Python test files (10 tests) + the 2 workflow nf-tests. Module nf-tests live beside
+  their module, not here. `conf/` — `base.config` (resource labels), `modules.config` (publishing,
+  `ext.when`).
+
+**Versions** are collected on the global `versions` topic: every module emits
+`tuple val("${task.process}"), val('<tool>'), eval("<cmd>"), topic: versions`, and
+`PIPELINE_COMPLETION` drains the topic into `pipeline_info/software_versions.yml` for both modes.
+There is no `versions.yml` and no collector process.
 
 ### Conventions that will bite you
 
@@ -114,6 +122,15 @@ and `pipeline_completion`.
 - **`conf/base.config` holds production resource tiers.** Never lower a tier to make a test schedule;
   cap the test with `resourceLimits` in the profile.
 - Never pass an empty `--outdir`: Nextflow publishes into a directory literally named `true`.
+- **Never run `nextflow lint -format`.** The formatter deletes comments that sit inside a process
+  `input:` / `output:` block — measured: 187 comment lines in, 163 out, `-harshil-alignment` or not.
+  That is precisely where the modules explain their non-obvious emits (e.g. why the `DOWNLOAD_*`
+  processes emit no versions at all). `nextflow lint .` (check only) is what runs in pre-commit and
+  is what must stay clean.
+- **A `storeDir` process cannot emit `topic: versions`.** A topic emit is a `tuple` output and
+  Nextflow permits only `val`/`path` outputs alongside `storeDir`, so the six `DOWNLOAD_*` modules
+  emit no versions by design. Adding one back trades the persistent database cache for a `curl`
+  version string.
 
 ## Key Parameters
 
@@ -177,9 +194,21 @@ files are Stockholm _or_ FASTA, and its family id is derived with `fname.split("
 ```bash
 python3 bin/benchmark_ids.py                        # identity-core self-check
 python3 -m unittest discover -s tests -p 'test_*.py'
-nf-test test
-nextflow lint .
+
+# 50 nf-tests: 2 per local module (real + stub) plus the 2 workflow stubs.
+# The `+` APPENDS the container profile to the base `test` profile from nf-test.config, which
+# supplies resourceLimits. Without the `+` it REPLACES it, and process_medium then asks for 36.GB
+# and never schedules.
+export NXF_SINGULARITY_CACHEDIR=<your path>
+nf-test test --profile +singularity
+
+nextflow lint .                                     # check only -- never -format, see above
 ```
+
+Testing the modules against a container profile rather than host Python matters: two container
+bugs (a pandas image pinned with both a tag and a digest, which Singularity refuses; and a
+biopython import forced onto two modules whose images do not ship it) were invisible for as long
+as the tests ran on the host interpreter.
 
 Tests are expected to be **load-bearing**: each regression test here fails when its bug is
 reintroduced (verified by mutation). If you add one, check it can fail.

@@ -1,0 +1,57 @@
+nextflow_process {
+
+    name "Test Process EXTRACT_DB_METADATA"
+    script "../main.nf"
+    process "EXTRACT_DB_METADATA"
+
+    test("tiny_db_metadata - four db types - metadata tsv") {
+
+        when {
+            process {
+                """
+                input[0] = channel.of(
+                    [ [ id:'hamap',   db_type:'hamap'   ], file(params.fixture_dir + "/db_metadata/hamap", checkIfExists: true) ],
+                    [ [ id:'ncbifam', db_type:'ncbifam' ], file(params.fixture_dir + "/db_metadata/ncbifam", checkIfExists: true) ],
+                    [ [ id:'panther', db_type:'panther' ], file(params.fixture_dir + "/db_metadata/panther", checkIfExists: true) ],
+                    [ [ id:'pfam',    db_type:'pfam'    ], file(params.fixture_dir + "/db_metadata/pfam", checkIfExists: true) ]
+                )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("tiny_db_metadata - four db types - metadata tsv - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = channel.of(
+                    [ [ id:'hamap',   db_type:'hamap'   ], file(params.fixture_dir + "/db_metadata/hamap", checkIfExists: true) ],
+                    [ [ id:'ncbifam', db_type:'ncbifam' ], file(params.fixture_dir + "/db_metadata/ncbifam", checkIfExists: true) ],
+                    [ [ id:'panther', db_type:'panther' ], file(params.fixture_dir + "/db_metadata/panther", checkIfExists: true) ],
+                    [ [ id:'pfam',    db_type:'pfam'    ], file(params.fixture_dir + "/db_metadata/pfam", checkIfExists: true) ]
+                )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

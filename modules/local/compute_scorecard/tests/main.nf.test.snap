@@ -1,0 +1,152 @@
+{
+    "universe_fixture - metrics and topology - weighted scorecard - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "scorecard.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "scorecard_mqc.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        "COMPUTE_SCORECARD",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "3": [
+                    [
+                        "COMPUTE_SCORECARD",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "mqc": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "scorecard_mqc.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "scorecard": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "scorecard.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "COMPUTE_SCORECARD",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "COMPUTE_SCORECARD",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:01:53.969723541",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "universe_fixture - metrics and topology - weighted scorecard": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "scorecard.tsv:md5,cd7bdc468aa1cf1ff7f99d6f4a689ed2"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "scorecard_mqc.csv:md5,ced407af6913b15d56eaedc64691cca6"
+                    ]
+                ],
+                "2": [
+                    [
+                        "COMPUTE_SCORECARD",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "3": [
+                    [
+                        "COMPUTE_SCORECARD",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "mqc": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "scorecard_mqc.csv:md5,ced407af6913b15d56eaedc64691cca6"
+                    ]
+                ],
+                "scorecard": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "scorecard.tsv:md5,cd7bdc468aa1cf1ff7f99d6f4a689ed2"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "COMPUTE_SCORECARD",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "COMPUTE_SCORECARD",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:01:48.040888728",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

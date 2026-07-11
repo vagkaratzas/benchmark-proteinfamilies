@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Stacked barplot of matched vs unmatched curated families per database layer."""
 
 import argparse
 

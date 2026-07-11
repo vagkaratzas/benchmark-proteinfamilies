@@ -1,0 +1,89 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "sample_interpro"
+description: "Sample curated families per database, respecting the InterPro tree structure."
+keywords:
+  - sampling
+  - interpro
+  - benchmark
+tools:
+  - "sample_interpro":
+      description: "Sample curated families per database, respecting the InterPro tree structure."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/sample_interpro/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/sample_interpro/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/sample_interpro/"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - metadata:
+        type: file
+        description: "Sampled family metadata CSV emitted by PRE."
+        pattern: "*.{csv,tsv}"
+  - - hierarchy:
+        type: file
+        description: "InterPro `ParentChildTreeFile.txt` hierarchy."
+        pattern: "*.txt"
+  - - min_membership:
+        type: integer
+        description: "Minimum proteins per family to be eligible."
+  - - num_per_db:
+        type: integer
+        description: "Families to sample per database."
+  - - seed:
+        type: integer
+        description: "Random seed. `null` leaves sampling nondeterministic, which is the design."
+output:
+  log:
+    - - "log.txt":
+          type: file
+          description: "Sampling log."
+          pattern: "log.txt"
+  metadata:
+    - - "sampled_metadata.csv":
+          type: file
+          description: "The sampled families."
+          pattern: "sampled_metadata.csv"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_pandas:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - pandas:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('pandas'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - pandas:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('pandas'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

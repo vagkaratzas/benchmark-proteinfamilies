@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Split a tool's sequences into curated originals, decoys, and unknowns.
+
+Classification comes from the PRE registry's `source_type`, so "unknown" means genuinely
+unresolvable -- a sequence the tool emitted that maps to nothing PRE put in the universe. A
+non-zero unknown count is a signal that ID resolution is drifting, not a routine outcome.
+"""
 
 import argparse
 import csv

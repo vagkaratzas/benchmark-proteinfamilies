@@ -17,7 +17,9 @@ process ANALYZE_RECRUITED_DECOYS {
 
     output:
     tuple val(meta), path("decoy_stats.csv"), emit: stats
-    tuple val(meta), path("versions.yml")   , emit: versions
+
+    tuple val("${task.process}"), val('python'), eval("python --version 2>&1 | sed 's/Python //g'"), emit: versions_python, topic: versions
+    tuple val("${task.process}"), val('biopython'), eval("python -c \"import importlib.metadata; print(importlib.metadata.version('biopython'))\""), emit: versions_biopython, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -33,21 +35,10 @@ process ANALYZE_RECRUITED_DECOYS {
         --output_csv decoy_stats.csv \\
         --sample '${meta.id}' \\
         --tool '${meta.tool}'
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-        biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
-    END_VERSIONS
     """
 
     stub:
     """
     touch decoy_stats.csv
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: stub
-        biopython: stub
-    END_VERSIONS
     """
 }

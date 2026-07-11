@@ -1,0 +1,92 @@
+{
+    "swissprot_fixture - diamond hits - non hit decoys - stub": {
+        "content": [
+            {
+                "0": [
+                    "decoys.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    [
+                        "IDENTIFY_UNIPROT_DECOYS",
+                        "python",
+                        "3.13.2"
+                    ]
+                ],
+                "2": [
+                    [
+                        "IDENTIFY_UNIPROT_DECOYS",
+                        "pyfastx",
+                        "2.2.0"
+                    ]
+                ],
+                "decoys": [
+                    "decoys.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "versions_pyfastx": [
+                    [
+                        "IDENTIFY_UNIPROT_DECOYS",
+                        "pyfastx",
+                        "2.2.0"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "IDENTIFY_UNIPROT_DECOYS",
+                        "python",
+                        "3.13.2"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:03:42.544690494",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "swissprot_fixture - diamond hits - non hit decoys": {
+        "content": [
+            {
+                "0": [
+                    "decoys.fasta:md5,440f0af6da77cd8660ae5cd21db70e7d"
+                ],
+                "1": [
+                    [
+                        "IDENTIFY_UNIPROT_DECOYS",
+                        "python",
+                        "3.13.2"
+                    ]
+                ],
+                "2": [
+                    [
+                        "IDENTIFY_UNIPROT_DECOYS",
+                        "pyfastx",
+                        "2.2.0"
+                    ]
+                ],
+                "decoys": [
+                    "decoys.fasta:md5,440f0af6da77cd8660ae5cd21db70e7d"
+                ],
+                "versions_pyfastx": [
+                    [
+                        "IDENTIFY_UNIPROT_DECOYS",
+                        "pyfastx",
+                        "2.2.0"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "IDENTIFY_UNIPROT_DECOYS",
+                        "python",
+                        "3.13.2"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:03:36.5395173",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

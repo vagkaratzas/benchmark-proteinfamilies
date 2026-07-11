@@ -1,5 +1,12 @@
 include { validateParameters } from 'plugin/nf-schema'
 
+//
+// Validate params and print the run header.
+//
+// nf-schema's validateParameters() checks types against nextflow_schema.json; the assertions
+// below cover what the schema deliberately cannot. Everything here fails fast, before a single
+// task is submitted -- a bad param that surfaces mid-run wastes an entire benchmark.
+//
 workflow PIPELINE_INITIALISATION {
 
     main:
@@ -9,10 +16,20 @@ workflow PIPELINE_INITIALISATION {
         error "Invalid --workflow_mode '${params.workflow_mode}'. Allowed values: pre, post."
     }
 
+    // Nextflow publishes into a directory literally named `true` when --outdir is passed with no
+    // value, so an empty outdir is rejected rather than silently honoured.
     if (!params.outdir) {
         error "Missing required parameter --outdir."
     }
 
+    //
+    // Coerce and bound-check the numeric params.
+    //
+    // On Nextflow 26 a value from the CLI arrives as a String while the same param defaulted in
+    // config stays an Integer. nextflow_schema.json therefore accepts ["integer","string"] with a
+    // numeric pattern, and the real "> 0" contract is enforced here, on the coerced value. Do not
+    // "tighten" the schema back to integer-only: that rejects every CLI override.
+    //
     [
         min_membership       : params.min_membership,
         num_per_db           : params.num_per_db,

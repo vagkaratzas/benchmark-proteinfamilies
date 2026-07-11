@@ -1,0 +1,91 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "identify_uniprot_decoys"
+description: "Pick SwissProt proteins with no DIAMOND hit against the curated families to serve as decoys."
+keywords:
+  - decoy
+  - swissprot
+  - diamond
+tools:
+  - "identify_uniprot_decoys":
+      description: "Pick SwissProt proteins with no DIAMOND hit against the curated families to serve as decoys."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/identify_uniprot_decoys/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/identify_uniprot_decoys/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/identify_uniprot_decoys/"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+    - hits:
+        type: file
+        description: "DIAMOND BLASTP tabular hits against the curated families."
+        pattern: "*.txt"
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+    - sp_fasta:
+        type: file
+        description: "SwissProt FASTA."
+        pattern: "*.fasta"
+  - - num_decoys:
+        type: integer
+        description: "Number of decoys to select."
+  - - seed:
+        type: integer
+        description: "Random seed. `null` leaves sampling nondeterministic, which is the design."
+output:
+  decoys:
+    - - "decoys.fasta":
+          type: file
+          description: "Decoy sequences."
+          pattern: "decoys.fasta"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_pyfastx:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - pyfastx:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('pyfastx'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - pyfastx:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('pyfastx'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

@@ -12,7 +12,8 @@ process EXTRACT_VALID_INTERPRO_IDS {
 
     output:
     path "intepro_valid_ids.txt", emit: output
-    path "versions.yml"         , emit: versions
+
+    tuple val("${task.process}"), val('sed'), eval("sed --version 2>&1 | sed -n 1p | sed 's/sed (GNU sed) //'"), emit: versions_sed, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -20,20 +21,10 @@ process EXTRACT_VALID_INTERPRO_IDS {
     script:
     """
     grep -o 'IPR[0-9]\\{6\\}' ${hierarchy} > intepro_valid_ids.txt
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        sed: \$(sed --version 2>&1 | sed -n 1p | sed 's/sed (GNU sed) //')
-    END_VERSIONS
     """
 
     stub:
     """
     touch intepro_valid_ids.txt
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        sed: stub
-    END_VERSIONS
     """
 }

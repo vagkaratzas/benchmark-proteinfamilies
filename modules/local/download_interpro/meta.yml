@@ -1,0 +1,52 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "download_interpro"
+description: "Download the InterPro hierarchy and the member-database ID mapping."
+keywords:
+  - download
+  - interpro
+  - database
+tools:
+  - "download_interpro":
+      description: "Download the InterPro hierarchy and the member-database ID mapping."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/download_interpro/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/download_interpro/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/download_interpro/"
+      licence: ["MIT"]
+      identifier: ""
+output:
+  hierarchy:
+    - - "ParentChildTreeFile.txt":
+          type: file
+          description: "`ParentChildTreeFile.txt`."
+          pattern: "ParentChildTreeFile.txt"
+  mapping:
+    - - "interpro.xml.gz":
+          type: file
+          description: "`interpro.xml.gz` member-database mapping."
+          pattern: "interpro.xml.gz"
+  versions_curl:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - curl:
+          type: string
+          description: The tool name
+      - curl --version | head -n 1 | sed 's/curl //; s/ .*//':
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - curl:
+          type: string
+          description: The tool name
+      - curl --version | head -n 1 | sed 's/curl //; s/ .*//':
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

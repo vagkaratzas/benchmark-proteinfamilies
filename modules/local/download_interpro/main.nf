@@ -12,7 +12,10 @@ process DOWNLOAD_INTERPRO {
     output:
     path "ParentChildTreeFile.txt", emit: hierarchy
     path "interpro.xml.gz"       , emit: mapping
-    path "versions.yml"          , emit: versions
+
+    // No version emit here, deliberately: a topic-channel emit is a `tuple` output, and
+    // Nextflow allows only `val`/`path` outputs on a process with `storeDir`. The persistent
+    // database cache is worth more than a curl/tar version string, so the cache wins.
 
     when:
     task.ext.when == null || task.ext.when
@@ -25,11 +28,6 @@ process DOWNLOAD_INTERPRO {
     curl -fL --retry 3 -o interpro.xml.gz ${baseUrl}/interpro.xml.gz
     test -s ParentChildTreeFile.txt
     test -s interpro.xml.gz
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        curl: \$(curl --version | head -n 1 | sed 's/curl //; s/ .*//')
-    END_VERSIONS
     """
 
     stub:
@@ -49,10 +47,5 @@ process DOWNLOAD_INTERPRO {
     </interprodb>
     EOF
     gzip -c interpro.xml > interpro.xml.gz
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        curl: stub
-    END_VERSIONS
     """
 }

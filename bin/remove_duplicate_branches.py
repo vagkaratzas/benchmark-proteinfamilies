@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Deduplicate the InterPro hierarchy so no family is reachable by two branches.
+
+InterPro is a DAG, not a tree: a family can appear under more than one parent. Left in, it would be
+sampled twice and then scored as its own duplicate -- inflating both the family count and any
+apparent merge.
+"""
 
 import argparse
 import re

@@ -1,0 +1,188 @@
+{
+    "universe_fixture - tool msa dir with clustering - matched original diagnostics": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "metadata.tsv:md5,ef5f586fb3ace39024b3b1f9f2c7fe0d"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "all_clusters.txt:md5,deaa311ff24cc5c65b8a81f78004d02e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "all_matches.txt:md5,bd3e3796ea9655e887322d08902a020f"
+                    ]
+                ],
+                "3": [
+                    [
+                        "INVESTIGATE_MATCHED_ORIGINALS",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "4": [
+                    [
+                        "INVESTIGATE_MATCHED_ORIGINALS",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "clusters": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "all_clusters.txt:md5,deaa311ff24cc5c65b8a81f78004d02e"
+                    ]
+                ],
+                "matches": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "all_matches.txt:md5,bd3e3796ea9655e887322d08902a020f"
+                    ]
+                ],
+                "metadata": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "metadata.tsv:md5,ef5f586fb3ace39024b3b1f9f2c7fe0d"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "INVESTIGATE_MATCHED_ORIGINALS",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "INVESTIGATE_MATCHED_ORIGINALS",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:03:49.781494011",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "universe_fixture - tool msa dir with clustering - matched original diagnostics - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "all_clusters.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "all_matches.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        "INVESTIGATE_MATCHED_ORIGINALS",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "4": [
+                    [
+                        "INVESTIGATE_MATCHED_ORIGINALS",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "clusters": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "all_clusters.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "matches": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "all_matches.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "metadata": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "INVESTIGATE_MATCHED_ORIGINALS",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "INVESTIGATE_MATCHED_ORIGINALS",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:03:56.275669745",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

@@ -1,0 +1,85 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "calculate_db_family_coverage"
+description: "Fraction of curated families per database layer matched by at least one generated family."
+keywords:
+  - coverage
+  - family
+  - benchmark
+tools:
+  - "calculate_db_family_coverage":
+      description: "Fraction of curated families per database layer matched by at least one generated family."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/calculate_db_family_coverage/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/calculate_db_family_coverage/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/calculate_db_family_coverage/"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+    - jaccard_scores:
+        type: file
+        description: "Jaccard edgelist from CALCULATE_JACCARD_SIMILARITY."
+        pattern: "*.csv"
+  - - fasta_folder:
+        type: directory
+        description: "PRE `sampled_fasta/`: per-database curated original family FASTA files."
+  - - metadata:
+        type: file
+        description: "Sampled family metadata CSV emitted by PRE."
+        pattern: "*.{csv,tsv}"
+  - - pre_universe_fasta:
+        type: file
+        description: "PRE `combined_decoy.faa`: the exact FASTA the benchmarked tool was fed."
+        pattern: "*.{faa,fasta}"
+  - - pre_universe_sha256:
+        type: file
+        description: "PRE `universe.sha256`: checksum pinning results to the universe they were scored against."
+        pattern: "*.sha256"
+  - - benchmark_ids:
+        type: file
+        description: "`bin/benchmark_ids.py`, staged as a library (Nextflow puts bin/ on PATH, not PYTHONPATH)."
+        pattern: "*.py"
+  - - post_common:
+        type: file
+        description: "`bin/post_common.py`, staged as a library (Nextflow puts bin/ on PATH, not PYTHONPATH)."
+        pattern: "*.py"
+output:
+  coverage:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "family_coverage.csv":
+          type: file
+          description: "Per-db-layer family coverage."
+          pattern: "family_coverage.csv"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

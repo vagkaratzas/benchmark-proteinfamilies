@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Count the SwissProt decoys a tool pulled into its families.
+
+Decoys are proteins PRE established have no curated family, so every decoy inside a generated
+family is a false positive. Decoy membership is read from the registry's `source_type` column --
+never inferred from the shape of an ID, which would misclassify any tool that rewrites headers.
+"""
 
 import argparse
 import csv

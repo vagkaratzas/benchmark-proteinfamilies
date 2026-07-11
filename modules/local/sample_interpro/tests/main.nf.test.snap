@@ -1,0 +1,104 @@
+{
+    "interpro_fixture - filtered metadata and hierarchy - sampled families - stub": {
+        "content": [
+            {
+                "0": [
+                    "log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    "sampled_metadata.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "2": [
+                    [
+                        "SAMPLE_INTERPRO",
+                        "python",
+                        "3.10.6"
+                    ]
+                ],
+                "3": [
+                    [
+                        "SAMPLE_INTERPRO",
+                        "pandas",
+                        "1.4.3"
+                    ]
+                ],
+                "log": [
+                    "log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "metadata": [
+                    "sampled_metadata.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "versions_pandas": [
+                    [
+                        "SAMPLE_INTERPRO",
+                        "pandas",
+                        "1.4.3"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "SAMPLE_INTERPRO",
+                        "python",
+                        "3.10.6"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:04:49.748292627",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "interpro_fixture - filtered metadata and hierarchy - sampled families": {
+        "content": [
+            {
+                "0": [
+                    "log.txt:md5,ddcbbf6fa731595ea2b1aee3e04dc455"
+                ],
+                "1": [
+                    "sampled_metadata.csv:md5,cf3bbacf74bfe7bbe6916fabc292b510"
+                ],
+                "2": [
+                    [
+                        "SAMPLE_INTERPRO",
+                        "python",
+                        "3.10.6"
+                    ]
+                ],
+                "3": [
+                    [
+                        "SAMPLE_INTERPRO",
+                        "pandas",
+                        "1.4.3"
+                    ]
+                ],
+                "log": [
+                    "log.txt:md5,ddcbbf6fa731595ea2b1aee3e04dc455"
+                ],
+                "metadata": [
+                    "sampled_metadata.csv:md5,cf3bbacf74bfe7bbe6916fabc292b510"
+                ],
+                "versions_pandas": [
+                    [
+                        "SAMPLE_INTERPRO",
+                        "pandas",
+                        "1.4.3"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "SAMPLE_INTERPRO",
+                        "python",
+                        "3.10.6"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:04:43.939806061",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

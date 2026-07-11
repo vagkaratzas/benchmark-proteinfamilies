@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""Per-cluster diagnostics for the curated families a tool matched.
+
+Diagnostic output only: nothing here feeds a score. Requires a clustering TSV, so the module is
+gated on `meta.has_clustering` in conf/modules.config.
+"""
 
 import argparse
 import csv

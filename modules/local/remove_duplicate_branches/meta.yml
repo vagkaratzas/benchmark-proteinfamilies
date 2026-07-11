@@ -1,0 +1,52 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "remove_duplicate_branches"
+description: "Deduplicate the InterPro hierarchy so a family is not sampled twice via two branches."
+keywords:
+  - interpro
+  - hierarchy
+  - deduplication
+tools:
+  - "remove_duplicate_branches":
+      description: "Deduplicate the InterPro hierarchy so a family is not sampled twice via two branches."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/remove_duplicate_branches/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/remove_duplicate_branches/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/remove_duplicate_branches/"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - hierarchy:
+        type: file
+        description: "InterPro `ParentChildTreeFile.txt` hierarchy."
+        pattern: "*.txt"
+output:
+  hierarchy:
+    - - "parsed_hierarchy.txt":
+          type: file
+          description: "Deduplicated hierarchy."
+          pattern: "parsed_hierarchy.txt"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

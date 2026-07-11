@@ -1,0 +1,224 @@
+{
+    "universe_fixture - tool msa dir with clustering - jaccard edgelist and qc": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "jaccard_similarities.csv:md5,b299b712bf240cad4967f4deb594f391"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "unmapped.tsv:md5,80112e98d0795721009ad5b4f48bec7b"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "ambiguous.tsv:md5,02a9338de05cf407127eb9dc7536059a"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "jaccard_qc.tsv:md5,d7e29f753ec4adc8faaa6dc516c43989"
+                    ]
+                ],
+                "4": [
+                    [
+                        "CALCULATE_JACCARD_SIMILARITY",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "5": [
+                    [
+                        "CALCULATE_JACCARD_SIMILARITY",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "ambiguous": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "ambiguous.tsv:md5,02a9338de05cf407127eb9dc7536059a"
+                    ]
+                ],
+                "edgelist": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "jaccard_similarities.csv:md5,b299b712bf240cad4967f4deb594f391"
+                    ]
+                ],
+                "qc": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "jaccard_qc.tsv:md5,d7e29f753ec4adc8faaa6dc516c43989"
+                    ]
+                ],
+                "unmapped": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "unmapped.tsv:md5,80112e98d0795721009ad5b4f48bec7b"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "CALCULATE_JACCARD_SIMILARITY",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "CALCULATE_JACCARD_SIMILARITY",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:00:55.880438099",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "universe_fixture - tool msa dir with clustering - jaccard edgelist and qc - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "jaccard_similarities.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "unmapped.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "ambiguous.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "jaccard_qc.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
+                    [
+                        "CALCULATE_JACCARD_SIMILARITY",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "5": [
+                    [
+                        "CALCULATE_JACCARD_SIMILARITY",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "ambiguous": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "ambiguous.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "edgelist": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "jaccard_similarities.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "qc": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "jaccard_qc.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "unmapped": [
+                    [
+                        {
+                            "id": "fixture",
+                            "tool": "tool_mangled_ambiguous"
+                        },
+                        "unmapped.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "CALCULATE_JACCARD_SIMILARITY",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "CALCULATE_JACCARD_SIMILARITY",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:01:02.298615633",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

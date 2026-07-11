@@ -1,4 +1,28 @@
 #!/usr/bin/env python3
+"""Resolve the sequence IDs a tool emitted back to the IDs PRE put into the universe.
+
+This is a library, not a CLI. `python3 bin/benchmark_ids.py` runs a self-check.
+
+Why this exists: tools do not round-trip sequence IDs. Fed the same protein, mgnifams writes
+`1814953751/178-297`, proteinfamilies writes `2632373804_177_299/1-122`, and the curated original
+is keyed `Q9X1J3/1-250`. Every metric in POST is a set intersection on ID strings, so an ID that
+fails to resolve does not raise -- it silently shrinks a set. A naive `record.id.split("/")[0]`
+dropped 80.45% of real mgnifams sequences, leaving Jaccard at 0.0 against every family, and that
+zero was reported as a legitimate score.
+
+The contract:
+
+- `universe_id` is the exact header PRE wrote into combined_decoy.faa. It is the only comparison
+  key. `parent_id` (the protein accession) is for reporting and must never key a metric:
+  collapsing to the protein merges two unrelated curated domains of the same protein into one
+  set and inflates every score.
+- Ambiguity is a first-class outcome. When several universe_ids remain plausible, `resolve`
+  returns status "ambiguous" rather than picking one. POST gates on the ambiguous and unmapped
+  fractions and fails loudly, because the failure mode this whole module guards against is silence.
+
+Resolution proceeds by alias lookup, then -- only if that leaves more than one candidate -- by
+comparing the observed *sequence* against the registry.
+"""
 
 import csv
 import hashlib
@@ -9,9 +33,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
-from Bio import SeqIO
 
-
+# The two coordinate suffixes seen in the wild: `/178-297` (Stockholm/curated convention) and
+# `_177_299` (what a tool produces after sanitising `/` out of a header).
+#
+# Note the deliberate asymmetry with PRE: prepare_benchmark_fasta strips only a trailing
+# `/start-end`, because curated alignments use no other form. Here both are stripped, because a
+# tool may have rewritten one into the other. PRE records truth; POST resolves drift. Do not
+# "unify" the two.
 COORD_PATTERNS = (
     re.compile(r"/\d+-\d+$"),
     re.compile(r"_\d+_\d+$"),
@@ -35,6 +64,12 @@ class Resolution:
 
 
 def ungap(seq: str) -> str:
+    """Reduce an aligned sequence to its bare residues, for comparing across alignments.
+
+    Drops gap characters and lowercase letters: in Stockholm, lowercase marks an insert column
+    relative to the model, so the same protein aligned into two families differs in case alone.
+    Comparing raw alignment strings would make those two look like different sequences.
+    """
     return "".join(
         char for char in str(seq) if char not in "-." and not char.islower()
     ).upper()
@@ -45,6 +80,12 @@ def sha1_of(seq: str) -> str:
 
 
 def clean_id(seq_id: str) -> str:
+    """Apply the same header sanitisation tools apply, so a mangled ID can be matched back.
+
+    Tools routinely rewrite `.`, `|` and `=` to `_` to keep headers filename-safe. Registering
+    both the original and the sanitised form as aliases is what lets `sp|Q9X1J3|NAME` be found
+    again once a tool has written it as `sp_Q9X1J3_NAME`.
+    """
     return seq_id.translate(str.maketrans(".|=", "___"))
 
 
@@ -57,6 +98,13 @@ def _strip_once(seq_id: str) -> Set[str]:
 
 
 def coordinate_lattice(seq_id: str) -> Set[str]:
+    """Every ID reachable by stripping coordinate suffixes in any order.
+
+    A tool can stack suffixes (`2632373804_177_299/1-122`: the tool's own coordinates over the
+    ones it inherited), so stripping is applied repeatedly and in no fixed order -- hence a
+    lattice rather than a single strip. Order-dependent stripping resolves the same ID to
+    different answers depending on which pattern is tried first.
+    """
     candidates = {seq_id}
     stack = [seq_id]
     while stack:
@@ -78,6 +126,12 @@ def to_parent_id(universe_id: str) -> str:
 
 
 def _add_alias(registry: Registry, alias: str, universe_id: str) -> None:
+    """Index one alias, demoting it to ambiguous if two universe_ids both claim it.
+
+    A collision is never resolved by first-writer-wins: the alias is *removed* from the lookup
+    index and recorded as ambiguous, so a later lookup reports ambiguity instead of silently
+    returning whichever row happened to be read first.
+    """
     if not alias:
         return
 
@@ -166,6 +220,10 @@ def load_registry(
             _add_alias(registry, alias, universe_id)
 
     if universe_fasta is not None:
+        # Imported here rather than at module scope: only sequence-level disambiguation needs
+        # biopython, so modules that merely resolve IDs can run in a biopython-free container.
+        from Bio import SeqIO
+
         for record in SeqIO.parse(str(universe_fasta), "fasta"):
             registry.sequences[record.id] = ungap(str(record.seq))
 
@@ -183,6 +241,13 @@ def _lookup_alias(alias: str, registry: Registry) -> Set[str]:
 def _sequence_disambiguation(
     candidates: Set[str], registry: Registry, seq: Optional[str]
 ) -> Optional[str]:
+    """Break an alias tie using the observed residues. Returns None if still ambiguous.
+
+    Tried in order of strength: an exact ungapped-sequence hash, then substring containment (a
+    tool may have emitted a sub-range of the curated domain, so its residues are contained in,
+    but not equal to, the registry sequence). Each step must land on exactly one candidate --
+    two matches is still ambiguous, and saying so is the point.
+    """
     if seq is None:
         return None
 
@@ -209,6 +274,14 @@ def _sequence_disambiguation(
 
 
 def resolve(raw_id: str, registry: Registry, seq: Optional[str] = None) -> Resolution:
+    """Map one observed ID to its universe_id.
+
+    Returns a Resolution whose status is "resolved", "unmapped" (no alias matched) or "ambiguous"
+    (several matched and the sequence could not separate them). Passing `seq` enables the
+    sequence fallback; without it an ambiguous alias stays ambiguous.
+
+    Never guesses. A caller that wants a single answer must handle the other two statuses.
+    """
     candidates = set()
 
     candidates.update(_lookup_alias(raw_id, registry))
@@ -472,6 +545,8 @@ def demo() -> None:
             universe_sha256,
             log_file,
         )
+
+        from Bio import SeqIO
 
         fasta_ids = {record.id for record in SeqIO.parse(combined_fasta, "fasta")}
         registry = load_registry(output_registry, combined_fasta)

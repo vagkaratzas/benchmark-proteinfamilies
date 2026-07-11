@@ -21,7 +21,9 @@ process COMPUTE_SCORECARD {
     output:
     tuple val(meta), path("scorecard.tsv")    , emit: scorecard
     tuple val(meta), path("scorecard_mqc.csv"), emit: mqc
-    tuple val(meta), path("versions.yml")     , emit: versions
+
+    tuple val("${task.process}"), val('python'), eval("python --version 2>&1 | sed 's/Python //g'"), emit: versions_python, topic: versions
+    tuple val("${task.process}"), val('biopython'), eval("python -c \"import importlib.metadata; print(importlib.metadata.version('biopython'))\""), emit: versions_biopython, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -44,21 +46,10 @@ process COMPUTE_SCORECARD {
         --sample '${meta.id}' \\
         --tool '${meta.tool}' \\
         ${weightsArg}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-        biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
-    END_VERSIONS
     """
 
     stub:
     """
     touch scorecard.tsv scorecard_mqc.csv
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: stub
-        biopython: stub
-    END_VERSIONS
     """
 }

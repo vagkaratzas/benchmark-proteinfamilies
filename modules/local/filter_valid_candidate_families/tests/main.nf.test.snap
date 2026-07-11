@@ -1,0 +1,92 @@
+{
+    "interpro_fixture - candidates and db metadata - filtered candidates - stub": {
+        "content": [
+            {
+                "0": [
+                    "filtered_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    [
+                        "FILTER_VALID_CANDIDATE_FAMILIES",
+                        "python",
+                        "3.10.6"
+                    ]
+                ],
+                "2": [
+                    [
+                        "FILTER_VALID_CANDIDATE_FAMILIES",
+                        "pandas",
+                        "1.4.3"
+                    ]
+                ],
+                "metadata": [
+                    "filtered_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "versions_pandas": [
+                    [
+                        "FILTER_VALID_CANDIDATE_FAMILIES",
+                        "pandas",
+                        "1.4.3"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "FILTER_VALID_CANDIDATE_FAMILIES",
+                        "python",
+                        "3.10.6"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:03:17.591531964",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "interpro_fixture - candidates and db metadata - filtered candidates": {
+        "content": [
+            {
+                "0": [
+                    "filtered_metadata.tsv:md5,03b3544ef5eee943c0a795262656c4f9"
+                ],
+                "1": [
+                    [
+                        "FILTER_VALID_CANDIDATE_FAMILIES",
+                        "python",
+                        "3.10.6"
+                    ]
+                ],
+                "2": [
+                    [
+                        "FILTER_VALID_CANDIDATE_FAMILIES",
+                        "pandas",
+                        "1.4.3"
+                    ]
+                ],
+                "metadata": [
+                    "filtered_metadata.tsv:md5,03b3544ef5eee943c0a795262656c4f9"
+                ],
+                "versions_pandas": [
+                    [
+                        "FILTER_VALID_CANDIDATE_FAMILIES",
+                        "pandas",
+                        "1.4.3"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "FILTER_VALID_CANDIDATE_FAMILIES",
+                        "python",
+                        "3.10.6"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:03:11.055592306",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

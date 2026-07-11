@@ -1,0 +1,23 @@
+nextflow_process {
+
+    name "Test Process DOWNLOAD_NCBIFAM"
+    script "../main.nf"
+    process "DOWNLOAD_NCBIFAM"
+
+    // Stub only: the script block downloads a remote reference database.
+    // Running it for real would fetch tens of GB on every test run.
+
+    test("no input - remote database - ncbifam seed alignments - stub") {
+
+        options "-stub"
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

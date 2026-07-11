@@ -1,0 +1,99 @@
+{
+    "universe_fixture - curated families and decoys - benchmark universe - stub": {
+        "content": [
+            {
+                "0": [
+                    "combined_decoy_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    "combined_decoy.faa:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "2": [
+                    "id_registry.tsv:md5,20139359582faa6a0e90d67c43ec4c88"
+                ],
+                "3": [
+                    "universe.sha256:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "4": [
+                    [
+                        "COMBINE_DECOY_FASTA",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "5": [
+                    [
+                        "COMBINE_DECOY_FASTA",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "fasta": [
+                    "combined_decoy.faa:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "log": [
+                    "combined_decoy_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "registry": [
+                    "id_registry.tsv:md5,20139359582faa6a0e90d67c43ec4c88"
+                ],
+                "universe_sha256": [
+                    "universe.sha256:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "versions_biopython": [
+                    [
+                        "COMBINE_DECOY_FASTA",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "COMBINE_DECOY_FASTA",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:20:27.651568726",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "universe_fixture - curated families and decoys - benchmark universe": {
+        "content": [
+            [
+                "combined_decoy.faa:md5,ce7d62434b4231575b897a3897de69c3"
+            ],
+            [
+                "id_registry.tsv:md5,20139359582faa6a0e90d67c43ec4c88"
+            ],
+            [
+                "universe.sha256:md5,4b7c086bed35dbf79e9db48521942100"
+            ],
+            {
+                "versions_biopython": [
+                    [
+                        "COMBINE_DECOY_FASTA",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "COMBINE_DECOY_FASTA",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:20:20.649123799",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

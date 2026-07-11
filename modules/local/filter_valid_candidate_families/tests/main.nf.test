@@ -1,0 +1,59 @@
+nextflow_process {
+
+    name "Test Process FILTER_VALID_CANDIDATE_FAMILIES"
+    script "../main.nf"
+    process "FILTER_VALID_CANDIDATE_FAMILIES"
+
+    test("interpro_fixture - candidates and db metadata - filtered candidates") {
+
+        when {
+            process {
+                """
+                input[0] = file(params.fixture_dir + "/pre/interpro_candidates.tsv", checkIfExists: true)
+                input[1] = [
+                    file(params.fixture_dir + "/expected/hamap_metadata.tsv", checkIfExists: true),
+                    file(params.fixture_dir + "/expected/ncbifam_metadata.tsv", checkIfExists: true),
+                    file(params.fixture_dir + "/expected/panther_metadata.tsv", checkIfExists: true),
+                    file(params.fixture_dir + "/expected/pfam_metadata.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("interpro_fixture - candidates and db metadata - filtered candidates - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = file(params.fixture_dir + "/pre/interpro_candidates.tsv", checkIfExists: true)
+                input[1] = [
+                    file(params.fixture_dir + "/expected/hamap_metadata.tsv", checkIfExists: true),
+                    file(params.fixture_dir + "/expected/ncbifam_metadata.tsv", checkIfExists: true),
+                    file(params.fixture_dir + "/expected/panther_metadata.tsv", checkIfExists: true),
+                    file(params.fixture_dir + "/expected/pfam_metadata.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}
