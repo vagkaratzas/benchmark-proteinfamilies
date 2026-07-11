@@ -1,19 +1,16 @@
-include { VALIDATE_POST_SAMPLESHEET       } from '../subworkflows/local/validate_post_samplesheet/main'
-include { CALCULATE_SEQUENCE_STATS       } from '../modules/local/calculate_sequence_stats/main'
-include { CALCULATE_DB_SEQUENCE_COVERAGE } from '../modules/local/calculate_db_sequence_coverage/main'
-include { ANALYZE_RECRUITED_DECOYS       } from '../modules/local/analyze_recruited_decoys/main'
-include { CALCULATE_JACCARD_SIMILARITY   } from '../modules/local/calculate_jaccard_similarity/main'
-include { PRODUCE_DB_STACKED_BARPLOT     } from '../modules/local/produce_db_stacked_barplot/main'
-include { CALCULATE_DB_FAMILY_COVERAGE   } from '../modules/local/calculate_db_family_coverage/main'
-include { GET_SIZE_DISTRIBUTIONS         } from '../modules/local/get_size_distributions/main'
-include { INVESTIGATE_MATCHED_ORIGINALS  } from '../modules/local/investigate_matched_originals/main'
-include { CALCULATE_FAMILY_METRICS       } from '../modules/local/calculate_family_metrics/main'
-include { ANALYZE_SPLITS_MERGES          } from '../modules/local/analyze_splits_merges/main'
-include { COMPUTE_SCORECARD              } from '../modules/local/compute_scorecard/main'
-include { COMPARE_BENCHMARK_RUNS         } from '../modules/local/compare_benchmark_runs/main'
-include { MULTIQC                        } from '../modules/nf-core/multiqc/main'
+include { VALIDATE_POST_SAMPLESHEET } from '../subworkflows/local/validate_post_samplesheet/main'
+include { SCORE_SAMPLES             } from '../subworkflows/local/score_samples/main'
+include { REPORT_BENCHMARK          } from '../subworkflows/local/report_benchmark/main'
 
+//
+// POST scores tool runs against the universe PRE built, and ranks them.
+//
+// It is deliberately tool-agnostic: no hardcoded database layers, file extensions or protein-ID
+// formats, and no assumption that a tool emits anything beyond one MSA per family. Identity comes
+// from the PRE registry, never from the shape of the IDs a tool happened to write.
+//
 workflow POST {
+
     take:
     post_samplesheet
     pre_id_registry
@@ -32,163 +29,71 @@ workflow POST {
 
     main:
     VALIDATE_POST_SAMPLESHEET( post_samplesheet )
-    ch_samples = VALIDATE_POST_SAMPLESHEET.out.samples
 
+    // The PRE outputs are read once and shared by every downstream module. They are value
+    // channels so each one is re-emitted for every sample instead of being consumed by the first.
     ch_registry      = channel.value(file(pre_id_registry, checkIfExists: true))
     ch_universe      = channel.value(file(pre_universe_fasta, checkIfExists: true))
     ch_universe_sha  = channel.value(file(pre_universe_sha256, checkIfExists: true))
     ch_metadata      = channel.value(file(pre_sampled_metadata, checkIfExists: true))
     ch_sampled_fasta = channel.value(file(pre_sampled_fasta_dir, checkIfExists: true))
+
+    // Nextflow puts bin/ on PATH, not PYTHONPATH, so the two shared libraries are staged as
+    // ordinary path inputs and re-exported onto PYTHONPATH inside each module's script block.
     ch_benchmark_ids = channel.value(file("${projectDir}/bin/benchmark_ids.py", checkIfExists: true))
     ch_post_common   = channel.value(file("${projectDir}/bin/post_common.py", checkIfExists: true))
-    ch_multiqc_config = channel.value(file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true))
+
+    ch_multiqc_config  = channel.value(file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true))
     ch_comparison_meta = channel.value([id: 'comparison', tool: 'comparison'])
+
+    // These two are optional. An unset param must reach the script block as an empty string,
+    // because the modules test it for truthiness to decide whether to pass the CLI flag at all.
     min_universe_coverage_cli = min_universe_coverage == null ? '' : min_universe_coverage
-    scorecard_weights_cli = scorecard_weights == null ? '' : scorecard_weights.toString()
+    scorecard_weights_cli     = scorecard_weights == null ? '' : scorecard_weights.toString()
 
-    CALCULATE_SEQUENCE_STATS(
-        ch_samples,
+    //
+    // Score every run in the samplesheet against the curated originals.
+    //
+    SCORE_SAMPLES(
+        VALIDATE_POST_SAMPLESHEET.out.samples,
         ch_registry,
         ch_universe,
         ch_universe_sha,
-        ch_benchmark_ids,
-        ch_post_common
-    )
-
-    CALCULATE_DB_SEQUENCE_COVERAGE(
-        CALCULATE_SEQUENCE_STATS.out.original_count,
         ch_metadata,
         ch_sampled_fasta,
-        ch_registry,
-        ch_universe,
-        ch_universe_sha,
-        ch_benchmark_ids,
-        ch_post_common
-    )
-
-    ANALYZE_RECRUITED_DECOYS(
-        ch_samples,
-        ch_registry,
-        ch_universe,
-        ch_universe_sha,
-        ch_benchmark_ids,
-        ch_post_common
-    )
-
-    CALCULATE_JACCARD_SIMILARITY(
-        ch_samples,
-        ch_sampled_fasta,
-        ch_metadata,
-        ch_registry,
-        ch_universe,
-        ch_universe_sha,
         ch_benchmark_ids,
         ch_post_common,
         match_threshold,
+        association_threshold,
         max_unmapped_fraction,
         max_ambiguous_fraction,
-        min_universe_coverage_cli
-    )
-
-    CALCULATE_FAMILY_METRICS(
-        ch_samples,
-        ch_sampled_fasta,
-        ch_metadata,
-        ch_registry,
-        ch_universe,
-        ch_universe_sha,
-        ch_benchmark_ids,
-        ch_post_common
-    )
-
-    ANALYZE_SPLITS_MERGES(
-        ch_samples,
-        ch_sampled_fasta,
-        ch_metadata,
-        ch_registry,
-        ch_universe,
-        ch_universe_sha,
-        ch_benchmark_ids,
-        ch_post_common,
-        association_threshold,
-        min_intersection_size
-    )
-
-    PRODUCE_DB_STACKED_BARPLOT( CALCULATE_JACCARD_SIMILARITY.out.edgelist )
-
-    CALCULATE_DB_FAMILY_COVERAGE(
-        CALCULATE_JACCARD_SIMILARITY.out.edgelist,
-        ch_sampled_fasta,
-        ch_metadata,
-        ch_universe,
-        ch_universe_sha,
-        ch_benchmark_ids,
-        ch_post_common
-    )
-
-    GET_SIZE_DISTRIBUTIONS(
-        CALCULATE_JACCARD_SIMILARITY.out.edgelist,
-        ch_metadata,
-        ch_universe,
-        ch_universe_sha,
-        ch_benchmark_ids,
-        ch_post_common
-    )
-
-    ch_scorecard_inputs = ch_samples
-        .join(CALCULATE_FAMILY_METRICS.out.metrics)
-        .join(ANALYZE_SPLITS_MERGES.out.summary)
-
-    COMPUTE_SCORECARD(
-        ch_scorecard_inputs,
-        ch_sampled_fasta,
-        ch_metadata,
-        ch_registry,
-        ch_universe,
-        ch_universe_sha,
-        ch_benchmark_ids,
-        ch_post_common,
+        min_intersection_size,
+        min_universe_coverage_cli,
         scorecard_weights_cli
     )
 
-    INVESTIGATE_MATCHED_ORIGINALS(
-        ch_samples,
-        ch_sampled_fasta,
+    //
+    // Rank the runs against each other and render the report.
+    //
+    REPORT_BENCHMARK(
+        SCORE_SAMPLES.out.edgelist,
+        SCORE_SAMPLES.out.scorecard,
+        SCORE_SAMPLES.out.metrics,
+        SCORE_SAMPLES.out.summary,
+        SCORE_SAMPLES.out.coverage,
+        SCORE_SAMPLES.out.mqc,
         ch_metadata,
-        ch_registry,
+        ch_sampled_fasta,
         ch_universe,
         ch_universe_sha,
         ch_benchmark_ids,
-        ch_post_common
-    )
-
-    COMPARE_BENCHMARK_RUNS(
+        ch_post_common,
+        ch_multiqc_config,
         ch_comparison_meta,
-        COMPUTE_SCORECARD.out.scorecard.map { _meta, scorecard -> scorecard }.collect(),
-        CALCULATE_FAMILY_METRICS.out.metrics.map { _meta, metrics -> metrics }.collect(),
-        ANALYZE_SPLITS_MERGES.out.summary.map { _meta, summary -> summary }.collect(),
-        CALCULATE_DB_SEQUENCE_COVERAGE.out.coverage.map { _meta, coverage -> coverage }.collect(),
-        ch_benchmark_ids,
-        ch_post_common
+        skip_multiqc
     )
 
-
-    if (!skip_multiqc) {
-        ch_mqc_files = CALCULATE_FAMILY_METRICS.out.mqc
-            .mix(
-                ANALYZE_SPLITS_MERGES.out.mqc,
-                COMPUTE_SCORECARD.out.mqc,
-                COMPARE_BENCHMARK_RUNS.out.mqc_csv,
-                COMPARE_BENCHMARK_RUNS.out.mqc_f1_plot,
-                COMPARE_BENCHMARK_RUNS.out.mqc_db_plot
-            )
-            .map { _meta, mqc_file -> mqc_file }
-            .collect()
-
-        MULTIQC(
-            ch_comparison_meta,
-            ch_mqc_files,
-            ch_multiqc_config
-        )
-    }
+    emit:
+    comparison = REPORT_BENCHMARK.out.comparison
+    scorecard  = SCORE_SAMPLES.out.scorecard
 }
