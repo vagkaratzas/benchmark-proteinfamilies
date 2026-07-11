@@ -27,3 +27,15 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+  - repo: local
+    hooks:
+      # Checks only. Never add `-format`: the formatter silently deletes comments that sit inside
+      # a process `input:` / `output:` block, which is exactly where this pipeline explains its
+      # non-obvious emits. See AGENTS.md -> Conventions that will bite you.
+      - id: nextflow-lint
+        name: nextflow lint
+        entry: nextflow lint
+        language: system
+        files: '\.(nf|config)$'
+        pass_filenames: false
+        args: ["."]
