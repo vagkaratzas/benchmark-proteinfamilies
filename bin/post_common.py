@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+"""Shared helpers for the POST modules: alignment discovery, universe verification, ID resolution.
+
+This is a library, not a CLI. Nextflow puts bin/ on PATH but not on PYTHONPATH, so the modules
+that use it stage this file as a `path` input and prepend $PWD to PYTHONPATH in their script block.
+
+Biopython is imported lazily inside `iter_alignment_records` rather than at module scope: several
+callers only need the checksum and metadata helpers, and their containers deliberately do not ship
+biopython. A module-scope import would break them on import alone.
+"""
 
 import csv
 import gzip
@@ -9,6 +18,10 @@ from pathlib import Path
 from benchmark_ids import resolve
 
 
+# POST is tool-agnostic, so it cannot assume an output extension. This list is the union of what
+# the reference tools emit; anything outside it is not treated as an alignment. An earlier version
+# filtered on `.fasta.gz` alone, which matched nothing from either reference tool (they write
+# `.faa` / `.fas.gz`) and silently tagged every curated family "vanished".
 KNOWN_ALIGNMENT_EXTENSIONS = (
     ".fasta.gz",
     ".fas.gz",
@@ -28,6 +41,11 @@ def open_text(path):
 
 
 def strip_known_extension(filename):
+    """Family name from a filename, matching the longest known extension first.
+
+    `Path.stem` is wrong here: it would turn `PF00001.fasta.gz` into `PF00001.fasta`. The
+    extension list is ordered longest-first so the double extensions are tried before `.gz`.
+    """
     for ext in KNOWN_ALIGNMENT_EXTENSIONS:
         if filename.endswith(ext):
             return filename[: -len(ext)]
@@ -45,6 +63,11 @@ def discover_alignment_files(folder):
 
 
 def sniff_alignment_format(path):
+    """Detect Stockholm vs FASTA by content, falling back to the extension.
+
+    Content wins over the filename because NCBIFAM ships both formats under the same `.SEED`
+    extension -- trusting the extension there misparses half the database.
+    """
     path = Path(path)
     with open_text(path) as handle:
         for line in handle:
@@ -84,6 +107,12 @@ def sha256_file(path):
 
 
 def verify_universe_checksum(universe_fasta, checksum_file):
+    """Abort unless the universe FASTA is the one these results claim to be scored against.
+
+    Raises SystemExit on mismatch. Every result table records this checksum, which is what stops a
+    samplesheet from being scored against a *different* PRE universe than the tool actually ran on
+    -- a mistake that produces plausible-looking numbers rather than an error.
+    """
     expected = Path(checksum_file).read_text().strip().split()[0]
     observed = sha256_file(universe_fasta)
     if observed != expected:
@@ -101,6 +130,12 @@ def read_metadata_rows(metadata_file):
 
 
 def scan_family_files(sampled_fasta_dir):
+    """Index sampled family FASTAs as {db: {family: path}}.
+
+    Raises ValueError on two files with the same family basename in one database: the metadata maps
+    (db, dbkey) to exactly one file, and a duplicate makes that mapping ambiguous. Failing here is
+    deliberate -- picking one arbitrarily would score a tool against the wrong curated family.
+    """
     by_db = {}
     root = Path(sampled_fasta_dir)
     for db_dir in sorted(path for path in root.iterdir() if path.is_dir()):
@@ -118,6 +153,12 @@ def scan_family_files(sampled_fasta_dir):
 
 
 def family_files_from_metadata(sampled_fasta_dir, metadata_file):
+    """Pair each metadata row with its sampled FASTA, as (db, family, path, row).
+
+    Families in the metadata with no matching FASTA are warned about, not fatal: a database release
+    can list a family whose alignment it does not ship. Deduplicates on (db, dbkey) because one
+    curated family can be reached through several InterPro entries.
+    """
     scanned = scan_family_files(sampled_fasta_dir)
     rows = read_metadata_rows(metadata_file)
     family_files = []

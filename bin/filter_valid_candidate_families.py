@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Drop candidate families that do not exist in the downloaded databases.
+
+InterPro lists member families that a given database *release* may not actually ship. Sampling one
+of those would produce a curated family with no sequences, which scores as a family every tool
+"missed".
+"""
 
 import argparse
 from pathlib import Path

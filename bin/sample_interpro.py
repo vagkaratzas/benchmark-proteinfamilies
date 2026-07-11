@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+"""Sample curated families per database, respecting the InterPro tree.
+
+Sampling walks the hierarchy rather than the flat family list: drawing uniformly from the list
+would over-represent whichever branch happens to be largest, and would also let a parent and its
+child both be drawn -- two "independent" families that share most of their sequences.
+
+`--seed` is optional and unset by default. A fresh random pool per PRE run is the sampling design;
+cross-run comparability is enforced by the universe checksum, not by seeding. Set it only to
+reproduce one specific PRE run.
+"""
 
 import argparse
 import pandas as pd

@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Select SwissProt proteins with no DIAMOND hit against the curated families, to serve as decoys.
+
+A decoy must be a protein the curated set does not already contain -- otherwise it is a curated
+sequence in disguise and a tool is penalised for correctly recruiting it. Hence the DIAMOND search
+rather than sampling SwissProt at random: only queries with zero hits are eligible.
+"""
 
 import argparse
 import pyfastx

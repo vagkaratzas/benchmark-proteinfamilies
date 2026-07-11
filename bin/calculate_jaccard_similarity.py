@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+"""Jaccard similarity between every generated family and every curated original.
+
+Similarity is computed on resolved `universe_id` sets, so it measures membership overlap and is
+blind to how a tool wrote its headers.
+
+Jaccard is symmetric and one-to-one: it says how well two families pair up, but it cannot tell a
+tool that split one curated family into five from one that merged five into one. That is what
+analyze_splits_merges.py is for -- do not read this score as a topology metric.
+
+Aborts if too many of the tool's IDs came back unmapped or ambiguous (`--max_unmapped_fraction`,
+`--max_ambiguous_fraction`), because a low score caused by broken ID resolution looks exactly like
+a low score caused by a bad tool.
+"""
 
 import argparse
 import csv
@@ -305,6 +318,9 @@ def write_qc(
 
 
 def warn_and_gate(args, unmapped_fraction, ambiguous_fraction, universe_coverage):
+    # Fail the run rather than report. An unresolved ID does not raise on its own -- it just
+    # quietly shrinks a set and drags the score toward zero, which is indistinguishable from a tool
+    # that genuinely reconstructed nothing. These two gates are what turn that silence into an error.
     if unmapped_fraction > args.max_unmapped_fraction:
         raise SystemExit(
             f"unmapped_fraction {unmapped_fraction:.6f} exceeds "

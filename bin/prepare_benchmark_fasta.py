@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+"""Extract the sampled families' sequences from the four databases and record every ID.
+
+Emits one FASTA per family, a combined FASTA, and -- the load-bearing output -- `id_registry.tsv`,
+which maps every `universe_id` (the exact header written into the universe) to its `parent_id`,
+`source_type`, `db_layer`, family, coordinates and sequence hash.
+
+The registry is the single source of identity for the whole benchmark. POST never infers what a
+sequence is from the text of an ID; it looks it up here. Anything not recorded at this step cannot
+be recovered later.
+"""
 
 import argparse
 import csv
@@ -115,6 +125,10 @@ def clean_id(seq_id: str) -> str:
     return seq_id.translate(str.maketrans(".|=", "___"))
 
 
+# PRE strips only a trailing `/start-end`: curated alignments use no other coordinate form, and
+# this is the *authoritative* record of what each sequence is. POST's resolver deliberately accepts
+# more forms (`_start_end` too), because it is reconciling what a tool wrote, not recording truth.
+# The asymmetry is intentional -- do not "unify" the two.
 def split_parent_coords(universe_id: str):
     match = SLASH_COORD_PATTERN.search(universe_id)
     if not match:

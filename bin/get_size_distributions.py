@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""Compare the size distributions of the curated families a tool matched and those it missed.
+
+Answers whether a tool's misses are systematic -- e.g. only ever missing the small families -- which
+a single coverage number hides.
+"""
 
 import argparse
 

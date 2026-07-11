@@ -55,7 +55,7 @@ workflow POST {
     // Score every run in the samplesheet against the curated originals.
     //
     SCORE_SAMPLES(
-        VALIDATE_POST_SAMPLESHEET.out.samples,
+        VALIDATE_POST_SAMPLESHEET.out,
         ch_registry,
         ch_universe,
         ch_universe_sha,

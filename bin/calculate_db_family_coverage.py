@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""Fraction of curated families, per database layer, that a tool matched at least once.
+
+Complements the sequence-level coverage: a tool can recover most curated *sequences* while still
+reconstructing few curated *families*, and the two numbers separate those failure modes.
+"""
 
 import argparse
 import csv

@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""Concatenate curated family sequences with the decoys to form the benchmark universe.
+
+Emits the universe FASTA, the registry extended with decoy rows, and the sha256 that pins every
+downstream result to this exact universe.
+
+Deduplicates by name and by sequence: a decoy identical to a curated sequence would be scored as a
+false positive when a tool correctly recruits it. Removals are logged rather than silently dropped.
+"""
 
 import argparse
 import csv
