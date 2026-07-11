@@ -1,0 +1,6 @@
+# seed=1
+universe_id	parent_id	source_type	db_layer	family	coords	ungapped_len	seq_sha1
+hamap_seq1	hamap_seq1	family	hamap	MF_00001	-	4	e2512172abf8cc9f67fdd49eb6cacf2df71bbad3
+hamap_seq2	hamap_seq2	family	hamap	MF_00001	-	4	56900fb1d337cf7237ff766276b9c1e8ce507427
+sp_decoy_2	decoy	decoy	-	-	-	11	35a7f27377386228c6eefe534c60d5ef1b24bee7
+sp_decoy_3	decoy	decoy	-	-	-	11	c1c5f925079bfe6044d4bdaea76a2a4a578d547a

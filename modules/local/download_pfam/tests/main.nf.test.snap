@@ -1,0 +1,23 @@
+{
+    "no input - remote database - pfam seed alignments - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "PF00001.sto:md5,9e09992bb1f0fb0e56f8226cf9fc9d8b"
+                    ]
+                ],
+                "alignments": [
+                    [
+                        "PF00001.sto:md5,9e09992bb1f0fb0e56f8226cf9fc9d8b"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:16:14.919224869",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

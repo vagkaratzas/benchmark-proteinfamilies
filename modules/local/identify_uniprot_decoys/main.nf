@@ -15,7 +15,9 @@ process IDENTIFY_UNIPROT_DECOYS {
 
     output:
     path "decoys.fasta", emit: decoys
-    path "versions.yml", emit: versions
+
+    tuple val("${task.process}"), val('python'), eval("python --version 2>&1 | sed 's/Python //g'"), emit: versions_python, topic: versions
+    tuple val("${task.process}"), val('pyfastx'), eval("python -c \"import importlib.metadata; print(importlib.metadata.version('pyfastx'))\""), emit: versions_pyfastx, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -29,22 +31,10 @@ process IDENTIFY_UNIPROT_DECOYS {
         --output_file decoys.fasta \\
         --num_decoys ${num_decoys} \\
         ${seed_arg}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-        pyfastx: \$(python -c "import importlib.metadata; print(importlib.metadata.version('pyfastx'))")
-    END_VERSIONS
     """
 
     stub:
     """
     touch decoys.fasta
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: stub
-        pyfastx: stub
-    END_VERSIONS
     """
 }

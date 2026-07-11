@@ -1,0 +1,64 @@
+nextflow_process {
+
+    name "Test Process COMPARE_BENCHMARK_RUNS"
+    script "../main.nf"
+    process "COMPARE_BENCHMARK_RUNS"
+
+    test("universe_fixture - per run scorecards - ranked cross run comparison") {
+
+        when {
+            process {
+                """
+                input[0] = [ id:'comparison', tool:'comparison' ]
+                input[1] = [ file(params.fixture_dir + "/post/scorecard.tsv", checkIfExists: true) ]
+                input[2] = [ file(params.fixture_dir + "/post/family_metrics.tsv", checkIfExists: true) ]
+                input[3] = [ file(params.fixture_dir + "/post/split_merge_summary.tsv", checkIfExists: true) ]
+                input[4] = [ file(params.fixture_dir + "/post/sequence_coverage.txt", checkIfExists: true) ]
+                input[5] = file(params.repo_dir + "/bin/benchmark_ids.py", checkIfExists: true)
+                input[6] = file(params.repo_dir + "/bin/post_common.py", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(
+                    process.out.comparison,
+                    process.out.mqc_csv
+                ).match() },
+                { assert path(process.out.mqc_f1_plot[0][1]).exists() },
+                { assert path(process.out.mqc_db_plot[0][1]).exists() }
+            )
+        }
+
+    }
+
+    test("universe_fixture - per run scorecards - ranked cross run comparison - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [ id:'comparison', tool:'comparison' ]
+                input[1] = [ file(params.fixture_dir + "/post/scorecard.tsv", checkIfExists: true) ]
+                input[2] = [ file(params.fixture_dir + "/post/family_metrics.tsv", checkIfExists: true) ]
+                input[3] = [ file(params.fixture_dir + "/post/split_merge_summary.tsv", checkIfExists: true) ]
+                input[4] = [ file(params.fixture_dir + "/post/sequence_coverage.txt", checkIfExists: true) ]
+                input[5] = file(params.repo_dir + "/bin/benchmark_ids.py", checkIfExists: true)
+                input[6] = file(params.repo_dir + "/bin/post_common.py", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

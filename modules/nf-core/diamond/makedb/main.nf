@@ -16,6 +16,7 @@ process DIAMOND_MAKEDB {
     output:
     tuple val(meta), path("*.dmnd"), emit: db
     path "versions.yml"            , emit: versions
+    tuple val("${task.process}"), val('diamond'), eval("diamond --version 2>&1 | tail -n 1 | sed 's/^diamond version //'"), emit: versions_diamond, topic: versions
 
     when:
     task.ext.when == null || task.ext.when

@@ -12,7 +12,8 @@ process REMOVE_DUPLICATE_BRANCHES {
 
     output:
     path "parsed_hierarchy.txt", emit: hierarchy
-    path "versions.yml"        , emit: versions
+
+    tuple val("${task.process}"), val('python'), eval("python --version 2>&1 | sed 's/Python //g'"), emit: versions_python, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -24,20 +25,10 @@ process REMOVE_DUPLICATE_BRANCHES {
         --infile ${hierarchy} \\
         --max_depth \$max_depth \\
         --outfile parsed_hierarchy.txt
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-    END_VERSIONS
     """
 
     stub:
     """
     touch parsed_hierarchy.txt
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: stub
-    END_VERSIONS
     """
 }

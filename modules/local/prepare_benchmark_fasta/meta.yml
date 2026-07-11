@@ -1,0 +1,110 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "prepare_benchmark_fasta"
+description: "Pull sampled family sequences out of the four databases and record every ID in the registry."
+keywords:
+  - fasta
+  - sampling
+  - registry
+tools:
+  - "prepare_benchmark_fasta":
+      description: "Pull sampled family sequences out of the four databases and record every ID in the registry."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/prepare_benchmark_fasta/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/prepare_benchmark_fasta/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/prepare_benchmark_fasta/"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - sampled_metadata:
+        type: file
+        description: "Families chosen by SAMPLE_INTERPRO."
+        pattern: "*.csv"
+  - - hamap:
+        type: directory
+        description: "HAMAP alignments."
+  - - ncbifam:
+        type: directory
+        description: "NCBIFAM alignments."
+  - - panther:
+        type: directory
+        description: "PANTHER family FASTA files."
+  - - pfam:
+        type: directory
+        description: "Pfam per-family alignments."
+  - - seed:
+        type: integer
+        description: "Random seed. `null` leaves sampling nondeterministic, which is the design."
+output:
+  fasta_folder:
+    - - "sampled_fasta":
+          type: directory
+          description: "`sampled_fasta/`: one FASTA per curated family."
+  metadata:
+    - - "updated_sampled_metadata.csv":
+          type: file
+          description: "Metadata updated with realised family sizes."
+          pattern: "updated_sampled_metadata.csv"
+  fasta:
+    - - "combined_db.faa":
+          type: file
+          description: "`combined_db.faa`: every curated sequence in one file."
+          pattern: "combined_db.faa"
+  registry:
+    - - "id_registry.tsv":
+          type: file
+          description: "`id_registry.tsv` for the curated (non-decoy) sequences."
+          pattern: "id_registry.tsv"
+  combined_db_sha256:
+    - - "combined_db.sha256":
+          type: file
+          description: "Checksum of the curated FASTA."
+          pattern: "combined_db.sha256"
+  log:
+    - - "log.txt":
+          type: file
+          description: "Extraction log."
+          pattern: "log.txt"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_biopython:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - biopython:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - biopython:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

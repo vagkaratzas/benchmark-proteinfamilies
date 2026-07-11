@@ -1,0 +1,66 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "download_swissprot"
+description: "Download the SwissProt (UniProtKB reviewed) FASTA, the decoy source."
+keywords:
+  - download
+  - swissprot
+  - uniprot
+tools:
+  - "download_swissprot":
+      description: "Download the SwissProt (UniProtKB reviewed) FASTA, the decoy source."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/download_swissprot/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/download_swissprot/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/download_swissprot/"
+      licence: ["MIT"]
+      identifier: ""
+output:
+  fasta:
+    - - "uniprot_sprot.fasta":
+          type: file
+          description: "`uniprot_sprot.fasta`."
+          pattern: "uniprot_sprot.fasta"
+  versions_curl:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - curl:
+          type: string
+          description: The tool name
+      - curl --version | head -n 1 | sed 's/curl //; s/ .*//':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_gzip:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - gzip:
+          type: string
+          description: The tool name
+      - gzip --version | head -n 1 | sed 's/.* //':
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - curl:
+          type: string
+          description: The tool name
+      - curl --version | head -n 1 | sed 's/curl //; s/ .*//':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - gzip:
+          type: string
+          description: The tool name
+      - gzip --version | head -n 1 | sed 's/.* //':
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

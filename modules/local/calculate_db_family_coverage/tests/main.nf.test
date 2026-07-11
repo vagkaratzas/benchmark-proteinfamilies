@@ -1,0 +1,65 @@
+nextflow_process {
+
+    name "Test Process CALCULATE_DB_FAMILY_COVERAGE"
+    script "../main.nf"
+    process "CALCULATE_DB_FAMILY_COVERAGE"
+
+    test("universe_fixture - jaccard edgelist - family coverage") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'clean', tool:'tool_clean' ],
+                    file(params.fixture_dir + "/post/jaccard_similarities.csv", checkIfExists: true)
+                ]
+                input[1] = file(params.fixture_dir + "/universe/sampled_fasta", checkIfExists: true)
+                input[2] = file(params.fixture_dir + "/universe/sampled_metadata.csv", checkIfExists: true)
+                input[3] = file(params.fixture_dir + "/universe/combined_decoy.faa", checkIfExists: true)
+                input[4] = file(params.fixture_dir + "/universe/universe.sha256", checkIfExists: true)
+                input[5] = file(params.repo_dir + "/bin/benchmark_ids.py", checkIfExists: true)
+                input[6] = file(params.repo_dir + "/bin/post_common.py", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("universe_fixture - jaccard edgelist - family coverage - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'clean', tool:'tool_clean' ],
+                    file(params.fixture_dir + "/post/jaccard_similarities.csv", checkIfExists: true)
+                ]
+                input[1] = file(params.fixture_dir + "/universe/sampled_fasta", checkIfExists: true)
+                input[2] = file(params.fixture_dir + "/universe/sampled_metadata.csv", checkIfExists: true)
+                input[3] = file(params.fixture_dir + "/universe/combined_decoy.faa", checkIfExists: true)
+                input[4] = file(params.fixture_dir + "/universe/universe.sha256", checkIfExists: true)
+                input[5] = file(params.repo_dir + "/bin/benchmark_ids.py", checkIfExists: true)
+                input[6] = file(params.repo_dir + "/bin/post_common.py", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

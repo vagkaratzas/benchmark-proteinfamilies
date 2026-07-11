@@ -18,7 +18,8 @@ process CALCULATE_DB_FAMILY_COVERAGE {
 
     output:
     tuple val(meta), path("family_coverage.csv"), emit: coverage
-    tuple val(meta), path("versions.yml")       , emit: versions
+
+    tuple val("${task.process}"), val('python'), eval("python --version 2>&1 | sed 's/Python //g'"), emit: versions_python, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -35,19 +36,10 @@ process CALCULATE_DB_FAMILY_COVERAGE {
         --output_file family_coverage.csv \\
         --sample '${meta.id}' \\
         --tool '${meta.tool}'
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-    END_VERSIONS
     """
 
     stub:
     """
     touch family_coverage.csv
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: stub
-    END_VERSIONS
     """
 }

@@ -1,0 +1,116 @@
+{
+    "universe_fixture - tool msa dir - decoy stats - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "decoy_stats.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        "ANALYZE_RECRUITED_DECOYS",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "2": [
+                    [
+                        "ANALYZE_RECRUITED_DECOYS",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "stats": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "decoy_stats.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "ANALYZE_RECRUITED_DECOYS",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "ANALYZE_RECRUITED_DECOYS",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:00:07.692257889",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "universe_fixture - tool msa dir - decoy stats": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "decoy_stats.csv:md5,652f31d1856b94d8ce917830d4857acf"
+                    ]
+                ],
+                "1": [
+                    [
+                        "ANALYZE_RECRUITED_DECOYS",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "2": [
+                    [
+                        "ANALYZE_RECRUITED_DECOYS",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "stats": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "decoy_stats.csv:md5,652f31d1856b94d8ce917830d4857acf"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "ANALYZE_RECRUITED_DECOYS",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "ANALYZE_RECRUITED_DECOYS",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:00:03.549196396",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

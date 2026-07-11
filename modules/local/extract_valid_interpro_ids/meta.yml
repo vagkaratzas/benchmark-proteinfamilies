@@ -1,0 +1,51 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "extract_valid_interpro_ids"
+description: "Pull every InterPro accession out of the deduplicated hierarchy."
+keywords:
+  - interpro
+  - parsing
+tools:
+  - "extract_valid_interpro_ids":
+      description: "Pull every InterPro accession out of the deduplicated hierarchy."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/extract_valid_interpro_ids/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/extract_valid_interpro_ids/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/extract_valid_interpro_ids/"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - hierarchy:
+        type: file
+        description: "InterPro `ParentChildTreeFile.txt` hierarchy."
+        pattern: "*.txt"
+output:
+  output:
+    - - "intepro_valid_ids.txt":
+          type: file
+          description: "One InterPro accession per line."
+          pattern: "intepro_valid_ids.txt"
+  versions_sed:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - sed:
+          type: string
+          description: The tool name
+      - sed --version 2>&1 | sed -n 1p | sed 's/sed (GNU sed) //':
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - sed:
+          type: string
+          description: The tool name
+      - sed --version 2>&1 | sed -n 1p | sed 's/sed (GNU sed) //':
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

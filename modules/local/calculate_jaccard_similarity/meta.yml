@@ -1,0 +1,153 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "calculate_jaccard_similarity"
+description: "Jaccard similarity between every generated and curated family, with unmapped/ambiguous ID gates."
+keywords:
+  - jaccard
+  - similarity
+  - benchmark
+tools:
+  - "calculate_jaccard_similarity":
+      description: "Jaccard similarity between every generated and curated family, with unmapped/ambiguous ID gates."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/calculate_jaccard_similarity/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/calculate_jaccard_similarity/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/calculate_jaccard_similarity/"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+    - aln_folder:
+        type: directory
+        description: "Full-family MSA directory emitted by the benchmarked tool; the sole membership source."
+    - clustering_tsv:
+        type: file
+        description: "Optional tool clustering TSV; drives `cluster_count` and cross-checks MSA completeness."
+        pattern: "*.tsv"
+  - - original_folder:
+        type: directory
+        description: "PRE `sampled_fasta/`: per-database curated original family FASTA files."
+  - - metadata:
+        type: file
+        description: "Sampled family metadata CSV emitted by PRE."
+        pattern: "*.{csv,tsv}"
+  - - id_registry:
+        type: file
+        description: "PRE `id_registry.tsv`: the authoritative universe_id -> parent_id / source_type / db_layer map."
+        pattern: "*.tsv"
+  - - pre_universe_fasta:
+        type: file
+        description: "PRE `combined_decoy.faa`: the exact FASTA the benchmarked tool was fed."
+        pattern: "*.{faa,fasta}"
+  - - pre_universe_sha256:
+        type: file
+        description: "PRE `universe.sha256`: checksum pinning results to the universe they were scored against."
+        pattern: "*.sha256"
+  - - benchmark_ids:
+        type: file
+        description: "`bin/benchmark_ids.py`, staged as a library (Nextflow puts bin/ on PATH, not PYTHONPATH)."
+        pattern: "*.py"
+  - - post_common:
+        type: file
+        description: "`bin/post_common.py`, staged as a library (Nextflow puts bin/ on PATH, not PYTHONPATH)."
+        pattern: "*.py"
+  - - similarity_threshold:
+        type: number
+        description: "Score at or above which a pair is reported as a match."
+  - - max_unmapped_fraction:
+        type: number
+        description: "Hard-fail the run above this unmapped fraction."
+  - - max_ambiguous_fraction:
+        type: number
+        description: "Hard-fail the run above this ambiguous fraction."
+  - - min_universe_coverage:
+        type: number
+        description: "Opt-in hard gate on universe coverage; empty string disables it."
+output:
+  edgelist:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "jaccard_similarities.csv":
+          type: file
+          description: "Generated-vs-original Jaccard edgelist."
+          pattern: "jaccard_similarities.csv"
+  unmapped:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "unmapped.tsv":
+          type: file
+          description: "Every tool ID that could not be resolved to a universe_id."
+          pattern: "unmapped.tsv"
+  ambiguous:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "ambiguous.tsv":
+          type: file
+          description: "Every tool ID resolving to more than one universe_id."
+          pattern: "ambiguous.tsv"
+  qc:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "jaccard_qc.tsv":
+          type: file
+          description: "Unmapped / ambiguous / coverage fractions for the run."
+          pattern: "jaccard_qc.tsv"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_biopython:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - biopython:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - biopython:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

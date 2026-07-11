@@ -1,0 +1,94 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "combine_decoy_fasta"
+description: "Concatenate curated family sequences with SwissProt decoys into the benchmark universe."
+keywords:
+  - fasta
+  - decoy
+  - universe
+tools:
+  - "combine_decoy_fasta":
+      description: "Concatenate curated family sequences with SwissProt decoys into the benchmark universe."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/combine_decoy_fasta/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/combine_decoy_fasta/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/combine_decoy_fasta/"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - db_fasta:
+        type: file
+        description: "Curated family sequences (`combined_db.faa`)."
+        pattern: "*.faa"
+  - - decoy:
+        type: file
+        description: "Decoy sequences selected from SwissProt."
+        pattern: "*.fasta"
+  - - id_registry:
+        type: file
+        description: "PRE `id_registry.tsv`: the authoritative universe_id -> parent_id / source_type / db_layer map."
+        pattern: "*.tsv"
+output:
+  log:
+    - - "combined_decoy_log.txt":
+          type: file
+          description: "Combination log."
+          pattern: "combined_decoy_log.txt"
+  fasta:
+    - - "combined_decoy.faa":
+          type: file
+          description: "`combined_decoy.faa`: the universe handed to the benchmarked tool."
+          pattern: "combined_decoy.faa"
+  registry:
+    - - "id_registry.tsv":
+          type: file
+          description: "`id_registry.tsv` extended with the decoy rows."
+          pattern: "id_registry.tsv"
+  universe_sha256:
+    - - "universe.sha256":
+          type: file
+          description: "Checksum of the universe FASTA; every POST result records it."
+          pattern: "universe.sha256"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_biopython:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - biopython:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - biopython:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

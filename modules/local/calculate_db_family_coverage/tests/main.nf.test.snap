@@ -1,0 +1,88 @@
+{
+    "universe_fixture - jaccard edgelist - family coverage - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "family_coverage.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        "CALCULATE_DB_FAMILY_COVERAGE",
+                        "python",
+                        "3.13.0"
+                    ]
+                ],
+                "coverage": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "family_coverage.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "CALCULATE_DB_FAMILY_COVERAGE",
+                        "python",
+                        "3.13.0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:00:27.93458876",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "universe_fixture - jaccard edgelist - family coverage": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "family_coverage.csv:md5,62f4d56bad54fad0a7fe9c112f559810"
+                    ]
+                ],
+                "1": [
+                    [
+                        "CALCULATE_DB_FAMILY_COVERAGE",
+                        "python",
+                        "3.13.0"
+                    ]
+                ],
+                "coverage": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "family_coverage.csv:md5,62f4d56bad54fad0a7fe9c112f559810"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "CALCULATE_DB_FAMILY_COVERAGE",
+                        "python",
+                        "3.13.0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:00:23.171345687",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

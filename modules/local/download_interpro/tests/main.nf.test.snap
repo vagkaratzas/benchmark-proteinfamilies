@@ -1,0 +1,22 @@
+{
+    "no input - remote database - interpro hierarchy and mapping - stub": {
+        "content": [
+            {
+                "0": [
+                    "ParentChildTreeFile.txt:md5,0b0e9df20907d02f69d0365b123cf765"
+                ],
+                "1": [
+                    "interpro.xml.gz:md5,bfd98a850a3669d9e46ddd2f4d992634"
+                ],
+                "hierarchy": [
+                    "ParentChildTreeFile.txt:md5,0b0e9df20907d02f69d0365b123cf765"
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:15:55.405552633",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

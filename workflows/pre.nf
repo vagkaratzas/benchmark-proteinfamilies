@@ -15,7 +15,6 @@ include { DIAMOND_MAKEDB                      } from '../modules/nf-core/diamond
 include { DIAMOND_BLASTP                      } from '../modules/nf-core/diamond/blastp/main'
 include { IDENTIFY_UNIPROT_DECOYS             } from '../modules/local/identify_uniprot_decoys/main'
 include { COMBINE_DECOY_FASTA                 } from '../modules/local/combine_decoy_fasta/main'
-include { DUMP_SOFTWARE_VERSIONS              } from '../modules/local/dump_software_versions/main'
 
 def isNullPath(value) {
     value == null || value.toString().trim().equalsIgnoreCase('null')
@@ -60,11 +59,8 @@ workflow PRE {
     seed
 
     main:
-    ch_download_versions = channel.empty()
-
     if (isNullPath(interpro_hierarchy_file) || isNullPath(id_mapping_file)) {
         DOWNLOAD_INTERPRO()
-        ch_download_versions = ch_download_versions.mix(DOWNLOAD_INTERPRO.out.versions)
     }
     ch_hierarchy = isNullPath(interpro_hierarchy_file) ?
         DOWNLOAD_INTERPRO.out.hierarchy :
@@ -81,7 +77,6 @@ workflow PRE {
     if (isNullPath(path_to_hamap)) {
         DOWNLOAD_HAMAP()
         ch_hamap = DOWNLOAD_HAMAP.out.alignments
-        ch_download_versions = ch_download_versions.mix(DOWNLOAD_HAMAP.out.versions)
     } else {
         ch_hamap = channel.value(validatePreInputPath(path_to_hamap, 'path_to_hamap'))
     }
@@ -89,7 +84,6 @@ workflow PRE {
     if (isNullPath(path_to_ncbifam)) {
         DOWNLOAD_NCBIFAM()
         ch_ncbifam = DOWNLOAD_NCBIFAM.out.alignments
-        ch_download_versions = ch_download_versions.mix(DOWNLOAD_NCBIFAM.out.versions)
     } else {
         ch_ncbifam = channel.value(validatePreInputPath(path_to_ncbifam, 'path_to_ncbifam'))
     }
@@ -97,7 +91,6 @@ workflow PRE {
     if (isNullPath(path_to_panther)) {
         DOWNLOAD_PANTHER()
         ch_panther = DOWNLOAD_PANTHER.out.alignments
-        ch_download_versions = ch_download_versions.mix(DOWNLOAD_PANTHER.out.versions)
     } else {
         ch_panther = channel.value(validatePreInputPath(path_to_panther, 'path_to_panther'))
     }
@@ -105,7 +98,6 @@ workflow PRE {
     if (isNullPath(path_to_pfam)) {
         DOWNLOAD_PFAM()
         ch_pfam = DOWNLOAD_PFAM.out.alignments
-        ch_download_versions = ch_download_versions.mix(DOWNLOAD_PFAM.out.versions)
     } else {
         ch_pfam = channel.value(validatePreInputPath(path_to_pfam, 'path_to_pfam'))
     }
@@ -113,7 +105,6 @@ workflow PRE {
     if (isNullPath(path_to_swissprot)) {
         DOWNLOAD_SWISSPROT()
         ch_swissprot = DOWNLOAD_SWISSPROT.out.fasta
-        ch_download_versions = ch_download_versions.mix(DOWNLOAD_SWISSPROT.out.versions)
     } else {
         ch_swissprot = channel.value(validatePreInputPath(path_to_swissprot, 'path_to_swissprot'))
     }
@@ -154,20 +145,4 @@ workflow PRE {
         PREPARE_BENCHMARK_FASTA.out.registry
     )
 
-    ch_versions = ch_download_versions
-        .mix(
-            REMOVE_DUPLICATE_BRANCHES.out.versions,
-            EXTRACT_VALID_INTERPRO_IDS.out.versions,
-            EXTRACT_CANDIDATE_INTERPRO_FAMILIES.out.versions,
-            EXTRACT_DB_METADATA.out.versions.map { _meta, versions -> versions },
-            FILTER_VALID_CANDIDATE_FAMILIES.out.versions,
-            SAMPLE_INTERPRO.out.versions,
-            PREPARE_BENCHMARK_FASTA.out.versions,
-            DIAMOND_MAKEDB.out.versions,
-            DIAMOND_BLASTP.out.versions,
-            IDENTIFY_UNIPROT_DECOYS.out.versions,
-            COMBINE_DECOY_FASTA.out.versions
-        )
-
-    DUMP_SOFTWARE_VERSIONS( ch_versions.collect() )
 }

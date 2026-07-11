@@ -1,0 +1,47 @@
+nextflow_process {
+
+    name "Test Process REMOVE_DUPLICATE_BRANCHES"
+    script "../main.nf"
+    process "REMOVE_DUPLICATE_BRANCHES"
+
+    test("interpro_fixture - parent child tree - deduplicated hierarchy") {
+
+        when {
+            process {
+                """
+                input[0] = file(params.fixture_dir + "/pre/ParentChildTreeFile.txt", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("interpro_fixture - parent child tree - deduplicated hierarchy - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = file(params.fixture_dir + "/pre/ParentChildTreeFile.txt", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

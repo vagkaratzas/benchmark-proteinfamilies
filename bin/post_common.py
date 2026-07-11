@@ -6,9 +6,6 @@ import hashlib
 import sys
 from pathlib import Path
 
-from Bio import AlignIO
-from Bio import SeqIO
-
 from benchmark_ids import resolve
 
 
@@ -63,6 +60,12 @@ def sniff_alignment_format(path):
 
 
 def iter_alignment_records(path):
+    # Biopython is imported here, not at module scope, so that importing this library does not
+    # itself require biopython. Callers that only use the checksum/metadata helpers
+    # (CALCULATE_DB_FAMILY_COVERAGE, GET_SIZE_DISTRIBUTIONS) run in containers without it.
+    from Bio import AlignIO
+    from Bio import SeqIO
+
     fmt = sniff_alignment_format(path)
     with open_text(path) as handle:
         if fmt == "stockholm":

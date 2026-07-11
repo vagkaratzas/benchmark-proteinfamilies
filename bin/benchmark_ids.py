@@ -9,8 +9,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
-from Bio import SeqIO
-
 
 COORD_PATTERNS = (
     re.compile(r"/\d+-\d+$"),
@@ -166,6 +164,10 @@ def load_registry(
             _add_alias(registry, alias, universe_id)
 
     if universe_fasta is not None:
+        # Imported here rather than at module scope: only sequence-level disambiguation needs
+        # biopython, so modules that merely resolve IDs can run in a biopython-free container.
+        from Bio import SeqIO
+
         for record in SeqIO.parse(str(universe_fasta), "fasta"):
             registry.sequences[record.id] = ungap(str(record.seq))
 
@@ -472,6 +474,8 @@ def demo() -> None:
             universe_sha256,
             log_file,
         )
+
+        from Bio import SeqIO
 
         fasta_ids = {record.id for record in SeqIO.parse(combined_fasta, "fasta")}
         registry = load_registry(output_registry, combined_fasta)

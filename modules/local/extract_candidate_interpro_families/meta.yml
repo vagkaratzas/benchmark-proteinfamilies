@@ -1,0 +1,56 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "extract_candidate_interpro_families"
+description: "Map valid InterPro IDs onto their member-database families."
+keywords:
+  - interpro
+  - parsing
+  - metadata
+tools:
+  - "extract_candidate_interpro_families":
+      description: "Map valid InterPro IDs onto their member-database families."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/extract_candidate_interpro_families/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/extract_candidate_interpro_families/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/extract_candidate_interpro_families/"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - valid_ids:
+        type: file
+        description: "Valid InterPro accessions."
+        pattern: "*.txt"
+  - - mapping:
+        type: file
+        description: "`interpro.xml.gz` member-database mapping."
+        pattern: "*.xml.gz"
+output:
+  metadata:
+    - - "intepro_families.tsv":
+          type: file
+          description: "Candidate InterPro families with their member-database accessions."
+          pattern: "intepro_families.tsv"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

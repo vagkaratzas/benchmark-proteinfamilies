@@ -1,0 +1,134 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "calculate_sequence_stats"
+description: "Split a tool's sequences into curated originals, decoys, and unknowns via the PRE id_registry."
+keywords:
+  - statistics
+  - sequence
+  - benchmark
+tools:
+  - "calculate_sequence_stats":
+      description: "Split a tool's sequences into curated originals, decoys, and unknowns via the PRE id_registry."
+      homepage: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/calculate_sequence_stats/"
+      documentation: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/calculate_sequence_stats/"
+      tool_dev_url: "https://github.com/vagkaratzas/benchmark-proteinfamilies/tree/dev/modules/local/calculate_sequence_stats/"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+    - alignments:
+        type: directory
+        description: "Directory of alignment files."
+    - clustering_tsv:
+        type: file
+        description: "Optional tool clustering TSV; drives `cluster_count` and cross-checks MSA completeness."
+        pattern: "*.tsv"
+  - - id_registry:
+        type: file
+        description: "PRE `id_registry.tsv`: the authoritative universe_id -> parent_id / source_type / db_layer map."
+        pattern: "*.tsv"
+  - - pre_universe_fasta:
+        type: file
+        description: "PRE `combined_decoy.faa`: the exact FASTA the benchmarked tool was fed."
+        pattern: "*.{faa,fasta}"
+  - - pre_universe_sha256:
+        type: file
+        description: "PRE `universe.sha256`: checksum pinning results to the universe they were scored against."
+        pattern: "*.sha256"
+  - - benchmark_ids:
+        type: file
+        description: "`bin/benchmark_ids.py`, staged as a library (Nextflow puts bin/ on PATH, not PYTHONPATH)."
+        pattern: "*.py"
+  - - post_common:
+        type: file
+        description: "`bin/post_common.py`, staged as a library (Nextflow puts bin/ on PATH, not PYTHONPATH)."
+        pattern: "*.py"
+output:
+  decoy_count:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "sequence_decoy_counts.txt":
+          type: file
+          description: "Per-family decoy counts."
+          pattern: "sequence_decoy_counts.txt"
+  original_count:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "sequence_original_counts.txt":
+          type: file
+          description: "Per-family curated-original counts."
+          pattern: "sequence_original_counts.txt"
+  summary:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "sequence_summary.txt":
+          type: file
+          description: "Run-level sequence summary."
+          pattern: "sequence_summary.txt"
+  unknown:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', tool:'proteinfamilies' ]`
+      - "sequence_unknown_sequences.txt":
+          type: file
+          description: "Sequences resolving to neither a family nor a decoy."
+          pattern: "sequence_unknown_sequences.txt"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_biopython:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - biopython:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python --version 2>&1 | sed 's/Python //g':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - biopython:
+          type: string
+          description: The tool name
+      - python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@vagkaratzas"
+maintainers:
+  - "@vagkaratzas"

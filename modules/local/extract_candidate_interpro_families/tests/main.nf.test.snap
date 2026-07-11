@@ -1,0 +1,64 @@
+{
+    "interpro_fixture - valid ids and xml mapping - candidate families - stub": {
+        "content": [
+            {
+                "0": [
+                    "intepro_families.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    [
+                        "EXTRACT_CANDIDATE_INTERPRO_FAMILIES",
+                        "python",
+                        "3.13.0"
+                    ]
+                ],
+                "metadata": [
+                    "intepro_families.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "versions_python": [
+                    [
+                        "EXTRACT_CANDIDATE_INTERPRO_FAMILIES",
+                        "python",
+                        "3.13.0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:02:37.6713706",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "interpro_fixture - valid ids and xml mapping - candidate families": {
+        "content": [
+            {
+                "0": [
+                    "intepro_families.tsv:md5,4db500ac5b4e5d4573418f906501d20c"
+                ],
+                "1": [
+                    [
+                        "EXTRACT_CANDIDATE_INTERPRO_FAMILIES",
+                        "python",
+                        "3.13.0"
+                    ]
+                ],
+                "metadata": [
+                    "intepro_families.tsv:md5,4db500ac5b4e5d4573418f906501d20c"
+                ],
+                "versions_python": [
+                    [
+                        "EXTRACT_CANDIDATE_INTERPRO_FAMILIES",
+                        "python",
+                        "3.13.0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:02:31.988953554",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

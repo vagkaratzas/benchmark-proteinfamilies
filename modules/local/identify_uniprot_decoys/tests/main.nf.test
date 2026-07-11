@@ -1,0 +1,65 @@
+nextflow_process {
+
+    name "Test Process IDENTIFY_UNIPROT_DECOYS"
+    script "../main.nf"
+    process "IDENTIFY_UNIPROT_DECOYS"
+
+    test("swissprot_fixture - diamond hits - non hit decoys") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'decoys' ],
+                    file(params.fixture_dir + "/pre/diamond_hits.txt", checkIfExists: true)
+                ]
+                input[1] = [
+                    [ id:'sp' ],
+                    file(params.fixture_dir + "/pre/swissprot.fasta", checkIfExists: true)
+                ]
+                input[2] = 2
+                input[3] = 1
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("swissprot_fixture - diamond hits - non hit decoys - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'decoys' ],
+                    file(params.fixture_dir + "/pre/diamond_hits.txt", checkIfExists: true)
+                ]
+                input[1] = [
+                    [ id:'sp' ],
+                    file(params.fixture_dir + "/pre/swissprot.fasta", checkIfExists: true)
+                ]
+                input[2] = 2
+                input[3] = 1
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

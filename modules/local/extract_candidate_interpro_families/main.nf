@@ -13,7 +13,8 @@ process EXTRACT_CANDIDATE_INTERPRO_FAMILIES {
 
     output:
     path "intepro_families.tsv", emit: metadata
-    path "versions.yml"        , emit: versions
+
+    tuple val("${task.process}"), val('python'), eval("python --version 2>&1 | sed 's/Python //g'"), emit: versions_python, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -22,20 +23,10 @@ process EXTRACT_CANDIDATE_INTERPRO_FAMILIES {
     """
     extract_candidate_interpro_families.py \\
         ${mapping} ${valid_ids} intepro_families.tsv
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-    END_VERSIONS
     """
 
     stub:
     """
     touch intepro_families.tsv
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: stub
-    END_VERSIONS
     """
 }

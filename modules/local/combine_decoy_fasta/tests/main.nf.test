@@ -1,0 +1,61 @@
+nextflow_process {
+
+    name "Test Process COMBINE_DECOY_FASTA"
+    script "../main.nf"
+    process "COMBINE_DECOY_FASTA"
+
+    test("universe_fixture - curated families and decoys - benchmark universe") {
+
+        when {
+            process {
+                """
+                input[0] = file(params.fixture_dir + "/pre/combined_db.faa", checkIfExists: true)
+                input[1] = file(params.fixture_dir + "/pre/decoys.fasta", checkIfExists: true)
+                input[2] = file(params.fixture_dir + "/pre/id_registry.tsv", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                // The log channel is left out of the snapshot on purpose: the script writes to it
+                // only when it drops a duplicate, so on clean input it is legitimately empty and
+                // would snapshot as the empty-file md5. Assert that emptiness by name instead --
+                // "clean input produced no dedup warnings" is the claim worth pinning.
+                { assert snapshot(
+                    process.out.fasta,
+                    process.out.registry,
+                    process.out.universe_sha256,
+                    process.out.findAll { key, val -> key.startsWith("versions") }
+                ).match() },
+                { assert path(process.out.log[0]).readLines().isEmpty() }
+            )
+        }
+
+    }
+
+    test("universe_fixture - curated families and decoys - benchmark universe - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = file(params.fixture_dir + "/pre/combined_db.faa", checkIfExists: true)
+                input[1] = file(params.fixture_dir + "/pre/decoys.fasta", checkIfExists: true)
+                input[2] = file(params.fixture_dir + "/pre/id_registry.tsv", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

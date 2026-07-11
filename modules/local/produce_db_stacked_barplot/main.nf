@@ -12,7 +12,10 @@ process PRODUCE_DB_STACKED_BARPLOT {
 
     output:
     tuple val(meta), path("stacked_barplot.png"), emit: barplot
-    tuple val(meta), path("versions.yml")       , emit: versions
+
+    tuple val("${task.process}"), val('python'), eval("python --version 2>&1 | sed 's/Python //g'"), emit: versions_python, topic: versions
+    tuple val("${task.process}"), val('matplotlib'), eval("python -c \"import importlib.metadata; print(importlib.metadata.version('matplotlib'))\""), emit: versions_matplotlib, topic: versions
+    tuple val("${task.process}"), val('pandas'), eval("python -c \"import importlib.metadata; print(importlib.metadata.version('pandas'))\""), emit: versions_pandas, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -22,23 +25,10 @@ process PRODUCE_DB_STACKED_BARPLOT {
     produce_db_stacked_barplot.py \\
         --input_file ${jaccard_edgelist} \\
         --output_file stacked_barplot.png
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-        matplotlib: \$(python -c "import importlib.metadata; print(importlib.metadata.version('matplotlib'))")
-        pandas: \$(python -c "import importlib.metadata; print(importlib.metadata.version('pandas'))")
-    END_VERSIONS
     """
 
     stub:
     """
     touch stacked_barplot.png
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: stub
-        matplotlib: stub
-        pandas: stub
-    END_VERSIONS
     """
 }

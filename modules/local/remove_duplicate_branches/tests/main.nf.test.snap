@@ -1,0 +1,64 @@
+{
+    "interpro_fixture - parent child tree - deduplicated hierarchy": {
+        "content": [
+            {
+                "0": [
+                    "parsed_hierarchy.txt:md5,0b5aa88d5c1e83eae48f669c6f8161c5"
+                ],
+                "1": [
+                    [
+                        "REMOVE_DUPLICATE_BRANCHES",
+                        "python",
+                        "3.13.0"
+                    ]
+                ],
+                "hierarchy": [
+                    "parsed_hierarchy.txt:md5,0b5aa88d5c1e83eae48f669c6f8161c5"
+                ],
+                "versions_python": [
+                    [
+                        "REMOVE_DUPLICATE_BRANCHES",
+                        "python",
+                        "3.13.0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:04:29.737474813",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "interpro_fixture - parent child tree - deduplicated hierarchy - stub": {
+        "content": [
+            {
+                "0": [
+                    "parsed_hierarchy.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    [
+                        "REMOVE_DUPLICATE_BRANCHES",
+                        "python",
+                        "3.13.0"
+                    ]
+                ],
+                "hierarchy": [
+                    "parsed_hierarchy.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "versions_python": [
+                    [
+                        "REMOVE_DUPLICATE_BRANCHES",
+                        "python",
+                        "3.13.0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:04:36.113821277",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

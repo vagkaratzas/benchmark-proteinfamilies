@@ -19,7 +19,9 @@ process CALCULATE_DB_SEQUENCE_COVERAGE {
 
     output:
     tuple val(meta), path("sequence_coverage.txt"), emit: coverage
-    tuple val(meta), path("versions.yml")         , emit: versions
+
+    tuple val("${task.process}"), val('python'), eval("python --version 2>&1 | sed 's/Python //g'"), emit: versions_python, topic: versions
+    tuple val("${task.process}"), val('biopython'), eval("python -c \"import importlib.metadata; print(importlib.metadata.version('biopython'))\""), emit: versions_biopython, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -37,21 +39,10 @@ process CALCULATE_DB_SEQUENCE_COVERAGE {
         --output sequence_coverage.txt \\
         --sample '${meta.id}' \\
         --tool '${meta.tool}'
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-        biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
-    END_VERSIONS
     """
 
     stub:
     """
     touch sequence_coverage.txt
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: stub
-        biopython: stub
-    END_VERSIONS
     """
 }

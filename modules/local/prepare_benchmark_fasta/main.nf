@@ -22,7 +22,9 @@ process PREPARE_BENCHMARK_FASTA {
     path "id_registry.tsv"             , emit: registry
     path "combined_db.sha256"          , emit: combined_db_sha256
     path "log.txt"                     , emit: log
-    path "versions.yml"                , emit: versions
+
+    tuple val("${task.process}"), val('python'), eval("python --version 2>&1 | sed 's/Python //g'"), emit: versions_python, topic: versions
+    tuple val("${task.process}"), val('biopython'), eval("python -c \"import importlib.metadata; print(importlib.metadata.version('biopython'))\""), emit: versions_biopython, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -43,12 +45,6 @@ process PREPARE_BENCHMARK_FASTA {
         --combined_db_sha256 combined_db.sha256 \\
         --log_file log.txt \\
         ${seed_arg}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-        biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
-    END_VERSIONS
     """
 
     stub:
@@ -56,11 +52,5 @@ process PREPARE_BENCHMARK_FASTA {
     mkdir -p sampled_fasta
     touch sampled_fasta/.stub
     touch updated_sampled_metadata.csv combined_db.faa id_registry.tsv combined_db.sha256 log.txt
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-        biopython: \$(python -c "import importlib.metadata; print(importlib.metadata.version('biopython'))")
-    END_VERSIONS
     """
 }

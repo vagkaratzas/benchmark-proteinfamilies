@@ -11,7 +11,10 @@ process DOWNLOAD_HAMAP {
 
     output:
     path "hamap_alignments", emit: alignments
-    path "versions.yml"   , emit: versions
+
+    // No version emit here, deliberately: a topic-channel emit is a `tuple` output, and
+    // Nextflow allows only `val`/`path` outputs on a process with `storeDir`. The persistent
+    // database cache is worth more than a curl/tar version string, so the cache wins.
 
     when:
     task.ext.when == null || task.ext.when
@@ -24,12 +27,6 @@ process DOWNLOAD_HAMAP {
     find extract -type f -name '*.msa' -exec mv {} hamap_alignments/ \\;
     rm -rf extract hamap_alignments.tar.gz
     find hamap_alignments -type f -name '*.msa' -print -quit | grep -q .
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        curl: \$(curl --version | head -n 1 | sed 's/curl //; s/ .*//')
-        tar: \$(tar --version | head -n 1 | sed 's/.* //')
-    END_VERSIONS
     """
 
     stub:
@@ -39,11 +36,5 @@ process DOWNLOAD_HAMAP {
     >stub_hamap_seq
     MAAA
     EOF
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        curl: stub
-        tar: stub
-    END_VERSIONS
     """
 }

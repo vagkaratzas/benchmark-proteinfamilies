@@ -1,0 +1,320 @@
+{
+    "tiny_db_metadata - four db types - metadata tsv - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "hamap",
+                            "db_type": "hamap"
+                        },
+                        "hamap_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        {
+                            "id": "ncbifam",
+                            "db_type": "ncbifam"
+                        },
+                        "ncbifam_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        {
+                            "id": "panther",
+                            "db_type": "panther"
+                        },
+                        "panther_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        {
+                            "id": "pfam",
+                            "db_type": "pfam"
+                        },
+                        "pfam_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "2": [
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "metadata": [
+                    [
+                        {
+                            "id": "hamap",
+                            "db_type": "hamap"
+                        },
+                        "hamap_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        {
+                            "id": "ncbifam",
+                            "db_type": "ncbifam"
+                        },
+                        "ncbifam_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        {
+                            "id": "panther",
+                            "db_type": "panther"
+                        },
+                        "panther_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        {
+                            "id": "pfam",
+                            "db_type": "pfam"
+                        },
+                        "pfam_metadata.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:02:52.632723123",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "tiny_db_metadata - four db types - metadata tsv": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "hamap",
+                            "db_type": "hamap"
+                        },
+                        "hamap_metadata.tsv:md5,955884ad7fffa972a8954f81c1fa5b8d"
+                    ],
+                    [
+                        {
+                            "id": "ncbifam",
+                            "db_type": "ncbifam"
+                        },
+                        "ncbifam_metadata.tsv:md5,ae01536a5a09ab192d60085b6bcb4e7e"
+                    ],
+                    [
+                        {
+                            "id": "panther",
+                            "db_type": "panther"
+                        },
+                        "panther_metadata.tsv:md5,5d9e3192f11afb41353ae3e05c333779"
+                    ],
+                    [
+                        {
+                            "id": "pfam",
+                            "db_type": "pfam"
+                        },
+                        "pfam_metadata.tsv:md5,239e8129f17c714bbf3d26f9eb91261c"
+                    ]
+                ],
+                "1": [
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "2": [
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "metadata": [
+                    [
+                        {
+                            "id": "hamap",
+                            "db_type": "hamap"
+                        },
+                        "hamap_metadata.tsv:md5,955884ad7fffa972a8954f81c1fa5b8d"
+                    ],
+                    [
+                        {
+                            "id": "ncbifam",
+                            "db_type": "ncbifam"
+                        },
+                        "ncbifam_metadata.tsv:md5,ae01536a5a09ab192d60085b6bcb4e7e"
+                    ],
+                    [
+                        {
+                            "id": "panther",
+                            "db_type": "panther"
+                        },
+                        "panther_metadata.tsv:md5,5d9e3192f11afb41353ae3e05c333779"
+                    ],
+                    [
+                        {
+                            "id": "pfam",
+                            "db_type": "pfam"
+                        },
+                        "pfam_metadata.tsv:md5,239e8129f17c714bbf3d26f9eb91261c"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ],
+                    [
+                        "EXTRACT_DB_METADATA",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:02:45.232951878",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

@@ -21,7 +21,10 @@ process COMPARE_BENCHMARK_RUNS {
     tuple val(meta), path("benchmark_comparison_mqc.csv")    , emit: mqc_csv
     tuple val(meta), path("f1_jaccard_distribution_mqc.png") , emit: mqc_f1_plot
     tuple val(meta), path("db_layer_coverage_mqc.png")       , emit: mqc_db_plot
-    tuple val(meta), path("versions.yml")                    , emit: versions
+
+    tuple val("${task.process}"), val('python'), eval("python --version 2>&1 | sed 's/Python //g'"), emit: versions_python, topic: versions
+    tuple val("${task.process}"), val('matplotlib'), eval("python -c \"import importlib.metadata; print(importlib.metadata.version('matplotlib'))\""), emit: versions_matplotlib, topic: versions
+    tuple val("${task.process}"), val('pandas'), eval("python -c \"import importlib.metadata; print(importlib.metadata.version('pandas'))\""), emit: versions_pandas, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -38,23 +41,10 @@ process COMPARE_BENCHMARK_RUNS {
         --mqc_csv benchmark_comparison_mqc.csv \\
         --f1_jaccard_plot f1_jaccard_distribution_mqc.png \\
         --db_coverage_plot db_layer_coverage_mqc.png
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-        matplotlib: \$(python -c "import importlib.metadata; print(importlib.metadata.version('matplotlib'))")
-        pandas: \$(python -c "import importlib.metadata; print(importlib.metadata.version('pandas'))")
-    END_VERSIONS
     """
 
     stub:
     """
     touch benchmark_comparison.csv benchmark_comparison_mqc.csv f1_jaccard_distribution_mqc.png db_layer_coverage_mqc.png
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: stub
-        matplotlib: stub
-        pandas: stub
-    END_VERSIONS
     """
 }

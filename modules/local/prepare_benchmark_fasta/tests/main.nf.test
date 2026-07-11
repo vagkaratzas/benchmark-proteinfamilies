@@ -1,0 +1,57 @@
+nextflow_process {
+
+    name "Test Process PREPARE_BENCHMARK_FASTA"
+    script "../main.nf"
+    process "PREPARE_BENCHMARK_FASTA"
+
+    test("universe_fixture - sampled metadata and db dirs - fasta and registry") {
+
+        when {
+            process {
+                """
+                input[0] = file(params.fixture_dir + "/universe/sampled_metadata.csv", checkIfExists: true)
+                input[1] = file(params.fixture_dir + "/db_metadata/hamap", checkIfExists: true)
+                input[2] = file(params.fixture_dir + "/db_metadata/ncbifam", checkIfExists: true)
+                input[3] = file(params.fixture_dir + "/db_metadata/panther", checkIfExists: true)
+                input[4] = file(params.fixture_dir + "/db_metadata/pfam", checkIfExists: true)
+                input[5] = 7
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("universe_fixture - sampled metadata and db dirs - fasta and registry - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = file(params.fixture_dir + "/universe/sampled_metadata.csv", checkIfExists: true)
+                input[1] = file(params.fixture_dir + "/db_metadata/hamap", checkIfExists: true)
+                input[2] = file(params.fixture_dir + "/db_metadata/ncbifam", checkIfExists: true)
+                input[3] = file(params.fixture_dir + "/db_metadata/panther", checkIfExists: true)
+                input[4] = file(params.fixture_dir + "/db_metadata/pfam", checkIfExists: true)
+                input[5] = 7
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

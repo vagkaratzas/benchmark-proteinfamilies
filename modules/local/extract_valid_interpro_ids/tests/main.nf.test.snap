@@ -1,0 +1,64 @@
+{
+    "interpro_fixture - parent child tree - valid interpro ids - stub": {
+        "content": [
+            {
+                "0": [
+                    "intepro_valid_ids.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    [
+                        "EXTRACT_VALID_INTERPRO_IDS",
+                        "sed",
+                        "4.9"
+                    ]
+                ],
+                "output": [
+                    "intepro_valid_ids.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "versions_sed": [
+                    [
+                        "EXTRACT_VALID_INTERPRO_IDS",
+                        "sed",
+                        "4.9"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:03:04.059448873",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "interpro_fixture - parent child tree - valid interpro ids": {
+        "content": [
+            {
+                "0": [
+                    "intepro_valid_ids.txt:md5,d3cfaa953718c9954f204aa090b080a8"
+                ],
+                "1": [
+                    [
+                        "EXTRACT_VALID_INTERPRO_IDS",
+                        "sed",
+                        "4.9"
+                    ]
+                ],
+                "output": [
+                    "intepro_valid_ids.txt:md5,d3cfaa953718c9954f204aa090b080a8"
+                ],
+                "versions_sed": [
+                    [
+                        "EXTRACT_VALID_INTERPRO_IDS",
+                        "sed",
+                        "4.9"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:02:58.092790124",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

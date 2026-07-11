@@ -1,0 +1,23 @@
+{
+    "no input - remote database - ncbifam seed alignments - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "NF000001.1.SEED:md5,2741e6e6f2afffa57c732f86eae3f3ad"
+                    ]
+                ],
+                "alignments": [
+                    [
+                        "NF000001.1.SEED:md5,2741e6e6f2afffa57c732f86eae3f3ad"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:16:01.81733707",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

@@ -1,0 +1,63 @@
+nextflow_process {
+
+    name "Test Process GET_SIZE_DISTRIBUTIONS"
+    script "../main.nf"
+    process "GET_SIZE_DISTRIBUTIONS"
+
+    test("universe_fixture - jaccard edgelist - matched and unmatched size distributions") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'clean', tool:'tool_clean' ],
+                    file(params.fixture_dir + "/post/jaccard_similarities.csv", checkIfExists: true)
+                ]
+                input[1] = file(params.fixture_dir + "/universe/sampled_metadata.csv", checkIfExists: true)
+                input[2] = file(params.fixture_dir + "/universe/combined_decoy.faa", checkIfExists: true)
+                input[3] = file(params.fixture_dir + "/universe/universe.sha256", checkIfExists: true)
+                input[4] = file(params.repo_dir + "/bin/benchmark_ids.py", checkIfExists: true)
+                input[5] = file(params.repo_dir + "/bin/post_common.py", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("universe_fixture - jaccard edgelist - matched and unmatched size distributions - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'clean', tool:'tool_clean' ],
+                    file(params.fixture_dir + "/post/jaccard_similarities.csv", checkIfExists: true)
+                ]
+                input[1] = file(params.fixture_dir + "/universe/sampled_metadata.csv", checkIfExists: true)
+                input[2] = file(params.fixture_dir + "/universe/combined_decoy.faa", checkIfExists: true)
+                input[3] = file(params.fixture_dir + "/universe/universe.sha256", checkIfExists: true)
+                input[4] = file(params.repo_dir + "/bin/benchmark_ids.py", checkIfExists: true)
+                input[5] = file(params.repo_dir + "/bin/post_common.py", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

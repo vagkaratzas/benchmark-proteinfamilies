@@ -1,0 +1,23 @@
+{
+    "no input - remote database - hamap alignments - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "MF_00001.msa:md5,6b5269e739a85ca2c15573fc53d25a3a"
+                    ]
+                ],
+                "alignments": [
+                    [
+                        "MF_00001.msa:md5,6b5269e739a85ca2c15573fc53d25a3a"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:15:46.376882896",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}

@@ -1,0 +1,4 @@
+# metric_key=universe_id; parent_id_not_used=true
+# precision_denom=|G| for split associations; recall_denom=|O| for merge associations; unique_contribution=member beyond union of all other associated families
+sample	tool	universe_sha256	association_threshold	min_intersection_size	original_overlap_jaccard_threshold	n_splits	n_merges	n_one_to_one	n_vanished	n_spurious	n_cross_db_matches	n_merges_excl_overlapping_originals	n_high_overlap_original_pairs
+clean	tool_clean	e537c5fd3a6b85d2f4ff9e7d876514cc499dadf69018f5f8a08759c27b1444f4	0.100000	1	0.500000	0	0	2	3	0	0	0	0

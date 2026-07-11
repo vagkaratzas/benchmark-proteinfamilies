@@ -1,0 +1,224 @@
+{
+    "universe_fixture - tool msa dir - original decoy unknown counts": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_decoy_counts.txt:md5,5b8ad4ff3d1580789ac788acc43de4b9"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_original_counts.txt:md5,5c1db42ce40da083882dfeae62fa74e9"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_summary.txt:md5,485387eae876ce7035eaa3ca9da30376"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_unknown_sequences.txt:md5,80112e98d0795721009ad5b4f48bec7b"
+                    ]
+                ],
+                "4": [
+                    [
+                        "CALCULATE_SEQUENCE_STATS",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "5": [
+                    [
+                        "CALCULATE_SEQUENCE_STATS",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "decoy_count": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_decoy_counts.txt:md5,5b8ad4ff3d1580789ac788acc43de4b9"
+                    ]
+                ],
+                "original_count": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_original_counts.txt:md5,5c1db42ce40da083882dfeae62fa74e9"
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_summary.txt:md5,485387eae876ce7035eaa3ca9da30376"
+                    ]
+                ],
+                "unknown": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_unknown_sequences.txt:md5,80112e98d0795721009ad5b4f48bec7b"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "CALCULATE_SEQUENCE_STATS",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "CALCULATE_SEQUENCE_STATS",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:01:08.821156219",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    },
+    "universe_fixture - tool msa dir - original decoy unknown counts - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_decoy_counts.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_original_counts.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_summary.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_unknown_sequences.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
+                    [
+                        "CALCULATE_SEQUENCE_STATS",
+                        "python",
+                        "3.12.7"
+                    ]
+                ],
+                "5": [
+                    [
+                        "CALCULATE_SEQUENCE_STATS",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "decoy_count": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_decoy_counts.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "original_count": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_original_counts.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_summary.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "unknown": [
+                    [
+                        {
+                            "id": "clean",
+                            "tool": "tool_clean"
+                        },
+                        "sequence_unknown_sequences.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_biopython": [
+                    [
+                        "CALCULATE_SEQUENCE_STATS",
+                        "biopython",
+                        "1.84"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "CALCULATE_SEQUENCE_STATS",
+                        "python",
+                        "3.12.7"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-11T09:01:15.174541877",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
+    }
+}
