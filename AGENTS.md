@@ -2,6 +2,16 @@
 
 Guidance for coding agents (Claude Code, Codex, etc.) working in this repository.
 
+## Working rules
+
+- **Never push to remote.** Commit only when explicitly asked, one commit per feature.
+- **Before a commit, run the build, lint, typecheck, and the relevant test suite** (see _Testing_).
+- **Always use the `token-saviour` skill.**
+- **While a `PLAN*.md` file is being worked on:** implement one feature per commit, tick its
+  checkboxes as you go, and verify each at runtime before moving on.
+- **Keep responses concise** — summarise rather than dumping full files, to stay inside output token
+  limits.
+
 ## Project Overview
 
 Nextflow DSL2 framework that benchmarks **any** protein-family generation tool against manually
