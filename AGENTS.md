@@ -7,10 +7,13 @@ Guidance for coding agents (Claude Code, Codex, etc.) working in this repository
 - **Never push to remote.** Commit only when explicitly asked, one commit per feature.
 - **Before a commit, run the build, lint, typecheck, and the relevant test suite** (see _Testing_).
 - **Always use the `token-saviour` skill.**
-- **While a `PLAN*.md` file is being worked on:** implement one feature per commit, tick its
-  checkboxes as you go, and verify each at runtime before moving on.
 - **Keep responses concise** — summarise rather than dumping full files, to stay inside output token
   limits.
+- **`README.md` is for users of the pipeline; `AGENTS.md` is for developers.** Design rationale,
+  measurements, conventions and risks belong here, not there.
+- **These three files are the whole documentation set** (`README.md`, `AGENTS.md`, and `CLAUDE.md`,
+  which only points here). Do not add `PLAN.md`, status reports or review logs — fold durable
+  conclusions into these instead.
 
 ## Project Overview
 
@@ -65,10 +68,53 @@ The failure mode is silence, so POST fails loudly: `unmapped_fraction` / `ambigu
 full `unmapped.tsv` / `ambiguous.tsv` per run, and a `universe.sha256` check recorded in every result
 table so a samplesheet cannot be scored against a different universe than it was built from.
 
+**Measured, on real tool output** (registries built from the exact FASTA each pipeline consumed —
+this needs no curated databases and is reproducible today):
+
+| tool                    | universe                            | raw IDs | resolved | unmapped   | ambiguous | fragments/seq |
+| ----------------------- | ----------------------------------- | ------- | -------- | ---------- | --------- | ------------- |
+| nf-core/proteinfamilies | `mgnifams_input_small.faa` (50,000) | 115     | 115      | **0.0000** | 0.0000    | 1.00          |
+| mgnifams                | `mgnifams_v2.fa` (26,949)           | 486     | 486      | **0.0000** | 0.0000    | **1.40**      |
+
+mgnifams' 1.40 fragments per input sequence is the domain-shredding signal the design preserves
+rather than discards. Against the same output the old `record.id.split("/")[0]` resolved 95/486 —
+`'1814953751/178-297' -> '1814953751'`, not in the universe. That is the bug this design exists to
+kill, and it is why every change here is checked against real output, not only fixtures.
+
+### Rejected designs — do not re-litigate
+
+Each of these was proposed, argued and rejected on evidence. Re-proposing one needs new evidence.
+
+- **Regex canonicalisation of observed IDs against the universe** (the original design). Unsound:
+  false attribution (`X_1_2/3-4` strips to a universe hit `X_1_2` when the true source was `X`),
+  strip-order sensitivity on mixed suffixes, and legitimate input IDs ending `_12_34` silently
+  reinterpreted as coordinates. Replaced by the registry — PRE knows the truth at construction time.
+- **Collapsing to `parent_id` for scoring.** Merges two unrelated curated domains of the same protein
+  across families and inflates scores. `universe_id` needs no collapsing: the tools are fed
+  `combined_decoy.faa`, whose headers _are_ the `universe_id`s.
+- **Flagging every coordinate-looking exact registry hit as ambiguous.** Over-triggers on legitimate
+  inputs and pushes `ambiguous_fraction` toward the fail gate. Sequence disambiguation settles the
+  real case (`X` vs `X_1_2` both present) using evidence already in hand.
+- **Generating aliases backward from the observed ID.** `sp|P12345|NAME -> P12345` is not a registry
+  key, so every decoy resolved to unmapped. Aliases are built **forward from registry rows**.
+- **A separate `membership_dir` / `generated_fasta_dir` samplesheet column.** Dropped by the user;
+  `membership_source = MSA` stated prominently in every report addresses the honesty concern without
+  a schema change.
+- **A hard `universe_coverage` gate.** A conservative tool legitimately recruits few sequences, so a
+  hard gate false-fails good runs. It warns; `min_universe_coverage` (default `null`) opts in, and
+  the `clustering_tsv` cross-check is the real seed-MSA detector.
+- **Seeding PRE by default.** A fresh random family pool per run _is_ the sampling design;
+  comparability comes from `universe.sha256`. `seed` stays `null`.
+
+A withdrawn claim worth remembering: "a family cannot have two matches at Jaccard >= 0.5 by
+definition" is **false** — `O={1,2}`, `G1={1}`, `G2={2}` gives two edges at exactly 0.5. That error
+is why split/merge is defined directionally rather than off Jaccard.
+
 ## Running the Pipeline
 
 Requires Nextflow >= 24.04.2 (developed against 26.04.4). A container/conda profile is required
-alongside any executor profile. See `REPORT.md` for copy-pasteable commands on this machine.
+alongside any executor profile. Production invocations are in `README.md`; these are the offline
+developer smoke tests.
 
 ```bash
 # offline smoke tests over the committed synthetic fixtures
@@ -168,6 +214,12 @@ There is no `versions.yml` and no collector process.
   numerics do: `--skip_pfam true` arrives as the String `"true"` and `validateParameters()` rejects
   it against a bare `boolean` before the workflow's own coercion ever runs. Only the bare-flag form
   `--skip_pfam` survives a boolean-only schema.
+- **Alignment format is sniffed, never inferred from the extension.** Observed in the wild:
+  `.clipkit` (FASTA-formatted), `.aln`, `.fas.gz`, `.sto`, `.sto.gz`, `.faa`, `.fasta`, `.afa`.
+  Detect Stockholm vs FASTA from the first non-blank line (`# STOCKHOLM` vs `>`); fall back to the
+  extension only when sniffing is inconclusive. `.clipkit` says nothing about format.
+- **Match families to files by exact mapping from the metadata CSV, never by prefix** — `PF1`
+  prefix-matches `PF10`.
 
 ## Key Parameters
 
@@ -232,7 +284,7 @@ files are Stockholm _or_ FASTA, and its family id is derived with `fname.split("
 python3 bin/benchmark_ids.py                        # identity-core self-check
 python3 -m unittest discover -s tests -p 'test_*.py'
 
-# 50 nf-tests: 2 per local module (real + stub) plus the 2 workflow stubs.
+# 51 nf-tests: 2 per local module (real + stub) plus the 3 workflow stubs.
 # The `+` APPENDS the container profile to the base `test` profile from nf-test.config, which
 # supplies resourceLimits. Without the `+` it REPLACES it, and process_medium then asks for 36.GB
 # and never schedules.
@@ -242,6 +294,12 @@ nf-test test --profile +singularity
 nextflow lint .                                     # check only -- never -format, see above
 ```
 
+**Snapshots pin tool versions, so they are environment-sensitive.** Many module snapshots currently
+fail on a drifted conda environment with `python`/`biopython` version mismatches while every file
+md5 matches. Before blaming your change, get a baseline: `git worktree add --detach /tmp/base HEAD`
+and run the suite there. Regenerate a snapshot only when its _content_ changed, and regenerate on
+the reference environment rather than baking a local toolchain version into the repo.
+
 Testing the modules against a container profile rather than host Python matters: two container
 bugs (a pandas image pinned with both a tag and a digest, which Singularity refuses; and a
 biopython import forced onto two modules whose images do not ship it) were invisible for as long
@@ -250,9 +308,42 @@ as the tests ran on the host interpreter.
 Tests are expected to be **load-bearing**: each regression test here fails when its bug is
 reintroduced (verified by mutation). If you add one, check it can fail.
 
+## Linting
+
+`pre-commit` enforces formatting; install once with `pip install pre-commit && pre-commit install`.
+Hooks: prettier (Nextflow, YAML, Markdown), trailing-whitespace / end-of-file-fixer, ruff (`bin/`),
+and `nextflow lint` in check-only mode. Run them all with `pre-commit run --all-files`.
+
 ## Open risks
 
-See `PLAN.md` → _Risks / open questions_. Notably: the six `DOWNLOAD_*` URLs have never been fetched
-(all proofs are `-stub`), those modules ship without a SHA-pinned container, and the end-to-end
-benchmark against curated InterPro families has not been run because the reference databases are not
-present on this machine.
+1. **The six `DOWNLOAD_*` remote URLs have never been fetched.** `-profile test_pre_download`
+   exercises the modules end to end — curl, tar, gunzip, `split_pfam_seed.py`, the non-empty
+   assertions — but only against local `file://` fixture archives, so the real endpoints remain
+   unproven. HAMAP's `.../hamap/old/hamap_alignments.tar.gz` looks wrong and should be confirmed
+   against the provider before release.
+2. **The download modules ship without a SHA-pinned container.** They declare conda +
+   `environment.yml` (curl, plus python for Pfam), but no digest could be resolved or verified
+   offline, and an invented one fails at runtime rather than at review. Under `-profile
+docker/singularity` they run on the host. Use `-profile conda`, or supply the paths directly.
+3. **The end-to-end benchmark against curated InterPro families has not been run** — it needs the
+   real reference databases, which are not on this machine.
+4. **The scorecard composite and `association_threshold = 0.1` are heuristics**, labelled
+   EXPLORATORY until tuned on real runs with a threshold-sensitivity sweep. `min_intersection_size`
+   blunts the worst of it but does not remove the arbitrariness.
+5. **A tool that fully renames sequences** (hash IDs, integer reindexing) cannot be resolved against
+   the registry; the run fails loudly on `unmapped_fraction`. Accepted limitation — such tools need a
+   per-tool mapping file.
+6. **Seed-vs-full MSA** is a user-configuration hazard mitigated by the `clustering_tsv` cross-check
+   and warnings, not prevented.
+7. PANTHER is tens of GB, so the download path is not fully testable on a laptop.
+
+## Out of scope
+
+Deliberately excluded; do not add without asking:
+
+- Running the external family-generation pipelines from inside this pipeline. The benchmark is
+  tool-agnostic precisely because it does not own the tool invocation.
+- HMM retrieval benchmarking (`hmmsearch` vs `combined_decoy.faa`) — deferred by the user, which is
+  why the samplesheet schema is kept additive so it can return without a breaking change.
+- Domain-level re-projection of InterPro originals.
+- Structural / functional-annotation metrics.
