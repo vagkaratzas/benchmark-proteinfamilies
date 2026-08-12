@@ -1,0 +1,477 @@
+{
+    "meta": {
+        "title": "benchmark-proteinfamilies",
+        "repo": "https://github.com/vagkaratzas/benchmark-proteinfamilies",
+        "readme": "https://github.com/vagkaratzas/benchmark-proteinfamilies#readme",
+        "agents": "https://github.com/vagkaratzas/benchmark-proteinfamilies/blob/main/AGENTS.md",
+        "changelog": "https://github.com/vagkaratzas/benchmark-proteinfamilies/blob/main/CHANGELOG.md",
+        "interpro": "https://www.ebi.ac.uk/interpro/",
+        "proteinfamilies": "https://nf-co.re/proteinfamilies"
+    },
+
+    "lanes": [
+        {
+            "id": "pre",
+            "label": "PRE",
+            "sub": "--workflow_mode pre",
+            "blurb": "Runs once. Builds the benchmark universe out of manually curated InterPro families plus SwissProt decoys, and records what every sequence in it actually is."
+        },
+        {
+            "id": "tool",
+            "label": "Outside the pipeline",
+            "sub": "any family-generation tool",
+            "blurb": "The step this benchmark deliberately does not own. You run whichever tool you are evaluating, however you like, on the universe FASTA."
+        },
+        {
+            "id": "post",
+            "label": "POST",
+            "sub": "--workflow_mode post",
+            "blurb": "Runs per samplesheet. Scores one or more tool runs against the curated originals and ranks them against each other."
+        }
+    ],
+
+    "stations": [
+        {
+            "id": "pre_dbs",
+            "lane": "pre",
+            "label": "Resolve reference databases",
+            "proc": "DOWNLOAD_DBS",
+            "kind": "input",
+            "blurb": "Stages the seven reference databases the sampling needs: the InterPro hierarchy and mapping, the four member databases (NCBIFAM, PANTHER, HAMAP, PFAM), and SwissProt.",
+            "io": {
+                "in": "*_db paths, or *_latest_link URLs",
+                "out": "hierarchy + mapping + member alignment dirs + SwissProt FASTA"
+            },
+            "points": [
+                "Any *_db left null is downloaded from the matching *_latest_link. The link, not *_version, decides what gets fetched — *_version is recorded for provenance only.",
+                "Downloads are published under <outdir>/pre/databases. Point the matching *_db at that directory on the next run instead of refetching tens of GB.",
+                "The four member databases can be skipped individually with --skip_hamap / --skip_ncbifam / --skip_panther / --skip_pfam; at least one must remain enabled.",
+                "InterPro and SwissProt cannot be skipped: InterPro defines the curated families being sampled, SwissProt supplies the decoys.",
+                "PFAM is the one database that needs preprocessing — Pfam ships every family concatenated in a single Pfam-A.seed, which is split into one PFxxxxx.sto per family keyed on the #=GF AC accession.",
+                "Alignment format is detected by sniffing the file, not by extension: NCBIFAM ships both FASTA (.SEED for NFxxxxxx) and Stockholm (TIGRxxxxx)."
+            ],
+            "params": [
+                "interpro_hierarchy_db",
+                "interpro_mapping_db",
+                "hamap_db",
+                "ncbifam_db",
+                "panther_db",
+                "pfam_db",
+                "swissprot_db",
+                "skip_hamap",
+                "skip_ncbifam",
+                "skip_panther",
+                "skip_pfam"
+            ],
+            "caveat": "The remote *_latest_link URLs have never actually been fetched — the download modules are exercised end to end against local fixture archives only, and the HAMAP URL in particular looks wrong. The download modules also ship without a SHA-pinned container: use -profile conda, or supply the database paths yourself."
+        },
+        {
+            "id": "pre_hierarchy",
+            "lane": "pre",
+            "label": "Deduplicate the InterPro tree",
+            "proc": "REMOVE_DUPLICATE_BRANCHES → EXTRACT_VALID_INTERPRO_IDS",
+            "blurb": "Parses ParentChildTreeFile.txt into a tree with each family reachable once, then extracts the set of InterPro accessions that survived.",
+            "io": { "in": "ParentChildTreeFile.txt", "out": "deduplicated hierarchy + valid InterPro IDs" },
+            "points": [
+                "InterPro is a DAG, not a tree: a family reachable down two branches would be sampled twice and then score as its own duplicate. Deduplicating first is what prevents that.",
+                "The deduplicated hierarchy is used twice — here, and again by the sampler, which walks the tree rather than a flat list."
+            ],
+            "params": []
+        },
+        {
+            "id": "pre_candidates",
+            "lane": "pre",
+            "label": "Find candidate families",
+            "proc": "EXTRACT_CANDIDATE_INTERPRO_FAMILIES + EXTRACT_DB_METADATA",
+            "blurb": "Joins the surviving InterPro IDs to their member-database families through interpro.xml.gz, and counts membership in each staged database.",
+            "io": {
+                "in": "valid InterPro IDs, interpro.xml.gz, member DB dirs",
+                "out": "candidate metadata + per-database family membership counts"
+            },
+            "points": [
+                "EXTRACT_DB_METADATA is a single parameterised module fanned out over however many databases survived --skip_*. Adding a database is a new channel element, not new code.",
+                "Membership counts are what --min_membership is later tested against, so they are computed from the actual staged alignments rather than from InterPro's own numbers."
+            ],
+            "params": []
+        },
+        {
+            "id": "pre_filter",
+            "lane": "pre",
+            "label": "Keep only families that exist",
+            "proc": "FILTER_VALID_CANDIDATE_FAMILIES",
+            "blurb": "Drops candidates that do not resolve to a family present in the downloaded databases.",
+            "io": { "in": "candidate metadata + per-database metadata", "out": "filtered candidate metadata" },
+            "points": [
+                "InterPro lists member families that a given database release may not actually ship. Without this filter the sampler would pick families whose sequences cannot be materialised."
+            ],
+            "params": []
+        },
+        {
+            "id": "pre_sample",
+            "lane": "pre",
+            "label": "Sample the tree",
+            "proc": "SAMPLE_INTERPRO",
+            "blurb": "Picks the families that will make up the benchmark, walking the deduplicated hierarchy so the sample spreads across branches.",
+            "io": { "in": "filtered candidates + deduplicated hierarchy", "out": "sampled family metadata" },
+            "points": [
+                "Sampling walks the tree, not the flat list, so the sample is not dominated by whichever branch happens to be largest.",
+                "--min_membership sets the smallest family worth benchmarking; --num_per_db sets how many families are taken from each member database.",
+                "--seed exists only to reproduce a specific PRE run. By default the family pool is intentionally random: a fresh pool per PRE run is the sampling design.",
+                "Comparability across tool runs does not come from seeding — it comes from every run scoring against the same universe, which universe.sha256 enforces."
+            ],
+            "params": ["min_membership (25)", "num_per_db (50)", "seed"]
+        },
+        {
+            "id": "pre_prepare",
+            "lane": "pre",
+            "label": "Materialise the sequences",
+            "proc": "PREPARE_BENCHMARK_FASTA",
+            "blurb": "Pulls the member sequences of every sampled family out of the staged alignments, writes one FASTA per family, and records identity for each sequence.",
+            "io": {
+                "in": "sampled metadata + staged member databases",
+                "out": "sampled_fasta/, combined_db.faa, id_registry.tsv, updated_sampled_metadata.csv"
+            },
+            "points": [
+                "This is where the id_registry.tsv is born, and it is the whole reason the benchmark works. Protein-family tools do not round-trip sequence IDs: mgnifams emits 1814953751/178-297, proteinfamilies emits 2632373804_177_299/1-122, the curated original is keyed Q9X1J3/1-250.",
+                "Identity is therefore recorded at construction time rather than guessed downstream from the shape of whatever ID a tool wrote.",
+                "The module is told which database each staged directory is, because staging renames directories to break basename collisions between user-supplied paths."
+            ],
+            "params": []
+        },
+        {
+            "id": "pre_decoys",
+            "lane": "pre",
+            "label": "Spike in decoys",
+            "proc": "GENERATE_DECOYS (DIAMOND makedb → blastp → IDENTIFY_UNIPROT_DECOYS → COMBINE_DECOY_FASTA)",
+            "blurb": "Adds negative controls: SwissProt proteins that align to none of the curated families, so a tool that over-recruits can be caught doing it.",
+            "io": {
+                "in": "combined_db.faa + SwissProt FASTA",
+                "out": "combined_decoy.faa, extended id_registry.tsv, universe.sha256"
+            },
+            "points": [
+                "DIAMOND is run rather than sampling SwissProt blindly: every SwissProt protein is searched against the curated set, and only the ones with no hit are eligible as decoys.",
+                "The registry is extended with the decoy rows here, so source_type is recorded by PRE instead of being inferred from an ID shape by POST.",
+                "universe.sha256 is written at the same moment as the FASTA, which is what lets POST later refuse a mismatched pairing."
+            ],
+            "params": ["num_decoys (10000)", "seed"]
+        },
+        {
+            "id": "pre_universe",
+            "lane": "pre",
+            "label": "The universe",
+            "proc": "PRE outputs",
+            "kind": "artefact",
+            "blurb": "The three files that define one benchmark experiment, plus the curated originals POST scores against. Keep them together.",
+            "io": { "in": "—", "out": "combined_decoy.faa, id_registry.tsv, universe.sha256" },
+            "points": [
+                "pre/combined_decoy.faa — feed this to the family-generation tool.",
+                "pre/families/sampled/id_registry.tsv — the identity ledger every POST metric resolves through.",
+                "pre/universe.sha256 — the checksum that ties a tool run to the universe it was produced from.",
+                "pre/families/sampled/sampled_fasta/ — the curated originals.",
+                "pre/families/sampled/updated_sampled_metadata.csv — which family came from which database layer.",
+                "pre/databases/ — whatever was downloaded, kept for reuse."
+            ],
+            "params": [],
+            "caveat": "A v1.0.0 universe cannot be scored by v2.0.0: id_registry.tsv and universe.sha256 did not exist before v2.0.0, so PRE must be rerun."
+        },
+
+        {
+            "id": "tool",
+            "lane": "tool",
+            "label": "Your family-generation tool",
+            "proc": "runs outside this pipeline",
+            "kind": "external",
+            "blurb": "Whatever tool you are evaluating — nf-core/proteinfamilies, mgnifams, or something of your own — run on combined_decoy.faa, on your own terms.",
+            "io": { "in": "combined_decoy.faa", "out": "a full-family MSA directory (+ an optional clustering TSV)" },
+            "points": [
+                "PRE and POST are two separate runs, not two halves of one DAG, precisely because this step sits between them. Wiring them together would mean owning the tool invocation, which a tool-agnostic benchmark cannot do.",
+                "The MSA directory must be the FULL-FAMILY MSA directory, not a seed MSA. A seed MSA is not full family membership, and pointing at one measures something different.",
+                "Supplying the optional clustering TSV switches on the clustering investigation, whose cluster-ID cross-check is what detects exactly that seed-MSA misconfiguration.",
+                "Example: nextflow run proteinfamilies --input samplesheet.csv --clustering_tool cluster --cluster_size_threshold 3 --cluster_seq_identity 0.5 --save_non_redundant_fams_fasta true"
+            ],
+            "params": [],
+            "caveat": "A tool that fully renames its sequences (hash IDs, integer reindexing) cannot be resolved against the registry. unmapped_fraction goes to 1.0 and the run fails loudly, by design; such a tool needs a per-tool mapping file."
+        },
+
+        {
+            "id": "post_validate",
+            "lane": "post",
+            "label": "Validate the samplesheet",
+            "proc": "VALIDATE_POST_SAMPLESHEET",
+            "blurb": "Reads one row per tool run and turns it into a meta map, so everything downstream fans out per run and publishes under its own directory.",
+            "io": { "in": "post_samplesheet.csv", "out": "[ meta, msa_dir, clustering_tsv ] per row" },
+            "points": [
+                "Columns: sample, tool, msa_dir, clustering_tsv.",
+                "msa_dir is required and must be the full-family MSA directory.",
+                "clustering_tsv is optional. When present, POST runs the clustering investigation and cross-checks cluster IDs; when absent, that process is simply skipped.",
+                "Several runs in one samplesheet is the normal case — that is what makes the final report a cross-run ranking rather than a single score."
+            ],
+            "params": ["post_samplesheet"]
+        },
+        {
+            "id": "post_seqstats",
+            "lane": "post",
+            "label": "Resolve identity",
+            "proc": "CALCULATE_SEQUENCE_STATS",
+            "blurb": "Resolves every ID the tool emitted through the PRE registry and splits the tool's sequences into curated originals, decoys and unknowns.",
+            "io": {
+                "in": "tool MSAs + id_registry.tsv + combined_decoy.faa + universe.sha256",
+                "out": "per-run sequence stats and the original count"
+            },
+            "points": [
+                "Every metric downstream is a set intersection on universe_id strings resolved here — never on the raw text of a tool's IDs.",
+                "The universe checksum is verified at this point. POST refuses to score a samplesheet against a universe it was not built from: pointed at tool outputs made from different input, it fails with a high unmapped_fraction rather than silently reporting zeros.",
+                "parent_id coverage is reported as auxiliary QC only and is not part of the ranking.",
+                "The original counts feed the coverage denominator, which is why this runs before coverage."
+            ],
+            "params": [
+                "pre_id_registry",
+                "pre_universe_fasta",
+                "pre_universe_sha256",
+                "max_unmapped_fraction",
+                "max_ambiguous_fraction"
+            ],
+            "caveat": "Always check post/<sample>/reproducibility_stats/jaccard_qc.tsv first. If unmapped_fraction is not ≈ 0, the IDs did not resolve and no downstream number means anything."
+        },
+        {
+            "id": "post_decoyrec",
+            "lane": "post",
+            "label": "Decoy recruitment",
+            "proc": "ANALYZE_RECRUITED_DECOYS",
+            "kind": "parallel",
+            "blurb": "Counts how many of the SwissProt decoys the tool pulled into its families.",
+            "io": { "in": "tool MSAs + registry", "out": "decoy_stats.csv" },
+            "points": [
+                "Decoys have no curated family by construction, so anything recruited from them is an unambiguous false positive.",
+                "1 − decoy_recruitment_rate is one of the five scorecard components."
+            ],
+            "params": []
+        },
+        {
+            "id": "post_jaccard",
+            "lane": "post",
+            "label": "Pair families up",
+            "proc": "CALCULATE_JACCARD_SIMILARITY",
+            "kind": "parallel",
+            "blurb": "Computes Jaccard similarity between each generated family and each curated original, and emits the edgelist the report is built on.",
+            "io": {
+                "in": "tool MSAs + sampled_fasta/ + metadata + registry",
+                "out": "jaccard_similarities.csv, jaccard_qc.tsv, unmapped.tsv, ambiguous.tsv"
+            },
+            "points": [
+                "Jaccard is symmetric and one-to-one: it says how well families pair up, but it cannot tell a tool that split one family into five from one that merged five into one. That is why P/R/F1 and split/merge topology are computed separately.",
+                "--match_threshold (default 0.5) is the bar for calling a pair a reported family match.",
+                "Do not conflate --match_threshold with --association_threshold (default 0.1): they are two different notions of \"match\" living in one report."
+            ],
+            "params": ["match_threshold (0.5)", "min_universe_coverage"]
+        },
+        {
+            "id": "post_metrics",
+            "lane": "post",
+            "label": "Per-family P / R / F1",
+            "proc": "CALCULATE_FAMILY_METRICS",
+            "kind": "parallel",
+            "blurb": "One row for every generated/original pair whose universe_id intersection is non-empty.",
+            "io": {
+                "in": "tool MSAs + sampled_fasta/ + registry",
+                "out": "family_metrics.tsv (tp/fp/fn, P/R/F1, jaccard)"
+            },
+            "points": [
+                "precision_denom = |G| (the generated family), recall_denom = |O| (the curated original).",
+                "f1 is their harmonic mean; jaccard_denom = |G ∪ O|.",
+                "mean_f1 across pairs is the headline component of the scorecard."
+            ],
+            "params": []
+        },
+        {
+            "id": "post_splitmerge",
+            "lane": "post",
+            "label": "Split / merge topology",
+            "proc": "ANALYZE_SPLITS_MERGES",
+            "kind": "parallel",
+            "blurb": "Detects the failure modes Jaccard is blind to: one curated family shattered across many generated ones, or many collapsed into one.",
+            "io": {
+                "in": "tool MSAs + sampled_fasta/ + registry",
+                "out": "split_merge_summary.tsv, original_overlap_baseline.tsv"
+            },
+            "points": [
+                "Counts are directional and computed within each db_layer: split associations use precision(G,O), merge associations use recall(G,O).",
+                "Both require |G ∩ O| ≥ --min_intersection_size (default 3), so a single shared sequence does not create an edge.",
+                "--association_threshold (default 0.1) decides which edges are considered for topology at all. It is a heuristic.",
+                "1 − split_merge_rate is a scorecard component."
+            ],
+            "params": ["association_threshold (0.1)", "min_intersection_size (3)"]
+        },
+        {
+            "id": "post_coverage",
+            "lane": "post",
+            "label": "Coverage",
+            "proc": "CALCULATE_DB_SEQUENCE_COVERAGE + CALCULATE_DB_FAMILY_COVERAGE",
+            "kind": "parallel",
+            "blurb": "How much of the curated universe the tool reconstructed at all — by sequence, and by family, per database layer.",
+            "io": {
+                "in": "original counts + edgelist + metadata + sampled_fasta/",
+                "out": "family_coverage.csv, sequence_coverage.txt"
+            },
+            "points": [
+                "A tool can score a high mean F1 on the families it did produce while covering only a fraction of the universe. Coverage is what keeps that honest.",
+                "Both family_coverage and sequence_coverage are scorecard components.",
+                "Reported per db_layer (NCBIFAM / PANTHER / HAMAP / PFAM), so a tool that is strong on one curation style and weak on another is visible."
+            ],
+            "params": []
+        },
+        {
+            "id": "post_scorecard",
+            "lane": "post",
+            "label": "Per-run scorecard",
+            "proc": "COMPUTE_SCORECARD",
+            "blurb": "Folds the five components into one composite per tool run.",
+            "io": { "in": "family metrics + split/merge summary + coverage + decoy stats", "out": "scorecard.tsv" },
+            "points": [
+                "The five components are mean_f1, family_coverage, sequence_coverage, 1 − decoy_recruitment_rate and 1 − split_merge_rate, all keyed on universe_id.",
+                "It consumes the family metrics and the split/merge summary, joined back onto the sample they came from rather than relying on channel order.",
+                "--scorecard_weights re-weights the composite. Every raw component is published beside it, so you can re-weight after the fact."
+            ],
+            "params": ["scorecard_weights"],
+            "caveat": "The composite ships labelled EXPLORATORY. Equal weights are arbitrary-but-defensible and association_threshold = 0.1 is a heuristic. Do not present it as settled."
+        },
+        {
+            "id": "post_report",
+            "lane": "post",
+            "label": "Rank the runs and report",
+            "proc": "REPORT_BENCHMARK (COMPARE_BENCHMARK_RUNS, barplots, size distributions, MultiQC)",
+            "kind": "artefact",
+            "blurb": "The deliverable: one row per tool run, ranked, with every raw component published beside it so the ranking is auditable.",
+            "io": {
+                "in": "every run's scorecard, metrics, summary and coverage",
+                "out": "post/comparison/benchmark_comparison.csv + MultiQC report"
+            },
+            "points": [
+                "COMPARE_BENCHMARK_RUNS is the only step that sees every run at once — a .collect() is what makes it cross-run. Everything before it is per-sample.",
+                "Ranked by the EXPLORATORY composite, rank 1 = highest, sorted descending.",
+                "The stacked barplots, db family coverage and size distributions are still per-sample; they all read the Jaccard edgelist.",
+                "--skip_multiqc turns off the rendered report without touching the CSVs."
+            ],
+            "params": ["skip_multiqc"],
+            "caveat": "The end-to-end benchmark against real curated InterPro families has not been run yet."
+        }
+    ],
+
+    "gotchas": [
+        {
+            "title": "Identity comes from the registry, never from the ID text",
+            "body": "Protein-family tools do not round-trip sequence IDs. PRE records identity at construction time in id_registry.tsv and POST resolves every observed ID through it. Any metric you see is a set intersection on universe_id, not on the string a tool happened to write."
+        },
+        {
+            "title": "The three PRE files travel together",
+            "body": "combined_decoy.faa, id_registry.tsv and universe.sha256 define one experiment. POST verifies the checksum and refuses to score a samplesheet against a universe it was not built from."
+        },
+        {
+            "title": "Read jaccard_qc.tsv before anything else",
+            "body": "If unmapped_fraction is not ≈ 0, the IDs did not resolve and no downstream number means anything — including a healthy-looking rank."
+        },
+        {
+            "title": "Two thresholds, two meanings",
+            "body": "match_threshold (0.5) is a reported family match. association_threshold (0.1) is an edge considered for split/merge topology. They coexist in one report and must never be conflated."
+        },
+        {
+            "title": "Full-family MSAs, not seed MSAs",
+            "body": "A seed MSA is not full family membership. Pointing msa_dir at one silently measures something different — supply the optional clustering_tsv and the cluster-ID cross-check will catch it."
+        },
+        {
+            "title": "The ranking is EXPLORATORY",
+            "body": "Equal component weights are arbitrary-but-defensible and the association threshold is a heuristic. Every raw component is published so you can re-weight; do not present the headline ranking as settled."
+        },
+        {
+            "title": "Seeding is not what makes runs comparable",
+            "body": "By default the family pool is intentionally random — a fresh pool per PRE run is the sampling design. Comparability comes from every tool run scoring against the same universe, which universe.sha256 enforces. Use --seed only to reproduce one specific PRE run."
+        }
+    ],
+
+    "params": [
+        {
+            "mode": "pre",
+            "name": "--workflow_mode pre",
+            "default": "—",
+            "note": "Selects the universe-building workflow."
+        },
+        {
+            "mode": "pre",
+            "name": "--min_membership",
+            "default": "25",
+            "note": "Smallest curated family worth benchmarking."
+        },
+        {
+            "mode": "pre",
+            "name": "--num_per_db",
+            "default": "50",
+            "note": "Families sampled from each member database."
+        },
+        {
+            "mode": "pre",
+            "name": "--num_decoys",
+            "default": "10000",
+            "note": "SwissProt negative controls spiked into the universe."
+        },
+        { "mode": "pre", "name": "--seed", "default": "null", "note": "Only to reproduce a specific PRE run." },
+        {
+            "mode": "pre",
+            "name": "--skip_hamap / _ncbifam / _panther / _pfam",
+            "default": "false",
+            "note": "Skip member databases individually; at least one must remain."
+        },
+        {
+            "mode": "pre",
+            "name": "--*_db",
+            "default": "null",
+            "note": "Supply a database yourself; null downloads from --*_latest_link."
+        },
+        { "mode": "post", "name": "--workflow_mode post", "default": "—", "note": "Selects the scoring workflow." },
+        {
+            "mode": "post",
+            "name": "--post_samplesheet",
+            "default": "—",
+            "note": "sample,tool,msa_dir,clustering_tsv — one row per tool run."
+        },
+        { "mode": "post", "name": "--pre_id_registry", "default": "—", "note": "PRE id_registry.tsv." },
+        { "mode": "post", "name": "--pre_universe_fasta", "default": "—", "note": "PRE combined_decoy.faa." },
+        {
+            "mode": "post",
+            "name": "--pre_universe_sha256",
+            "default": "—",
+            "note": "PRE universe.sha256 — the mismatch guard."
+        },
+        { "mode": "post", "name": "--pre_sampled_metadata", "default": "—", "note": "PRE sampled_metadata.csv." },
+        {
+            "mode": "post",
+            "name": "--pre_sampled_fasta_dir",
+            "default": "—",
+            "note": "PRE sampled_fasta/ — the curated originals."
+        },
+        { "mode": "post", "name": "--match_threshold", "default": "0.5", "note": "A reported family match." },
+        {
+            "mode": "post",
+            "name": "--association_threshold",
+            "default": "0.1",
+            "note": "An edge considered for split/merge topology."
+        },
+        {
+            "mode": "post",
+            "name": "--min_intersection_size",
+            "default": "3",
+            "note": "Minimum |G ∩ O| for a split/merge association."
+        },
+        {
+            "mode": "post",
+            "name": "--scorecard_weights",
+            "default": "null",
+            "note": "Re-weight the EXPLORATORY composite."
+        },
+        {
+            "mode": "post",
+            "name": "--skip_multiqc",
+            "default": "false",
+            "note": "Skip the rendered report; CSVs are unaffected."
+        }
+    ]
+}

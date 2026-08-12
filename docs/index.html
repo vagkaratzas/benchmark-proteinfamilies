@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>benchmark-proteinfamilies — how the benchmark works</title>
+    <meta
+      name="description"
+      content="Educational companion to the benchmark-proteinfamilies pipeline: what the PRE workflow builds, what your own tool does in the middle, and what the POST workflow measures."
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>benchmark-proteinfamilies</h1>
+      <p class="sub">
+        Sample manually curated InterPro families, then measure how well <em>any</em> protein-family generation tool
+        reconstructs them. This page is the map: what each station does, why it exists, and which artefacts tie the
+        three phases together. It is teaching material for the pipeline &mdash; it does not track any real run.
+      </p>
+      <p class="meta-line" id="metaline"></p>
+
+      <div id="err" role="alert">
+        <strong>Could not load <code>data.json</code>.</strong>
+        <span id="errdetail"></span><br />
+        This page reads its content over <code>fetch()</code>, which browsers block on <code>file://</code>. Serve the
+        folder instead: <code>python3 -m http.server -d docs 8080</code>, then open <code>http://localhost:8080/</code>.
+      </div>
+
+      <div id="phases"></div>
+
+      <div class="legend" id="legend"></div>
+      <div class="figure">
+        <svg
+          class="floor"
+          id="floor"
+          viewBox="0 0 920 900"
+          role="img"
+          aria-label="Three-phase diagram: the PRE workflow, your own tool, and the POST workflow. Every station opens a description."
+        ></svg>
+      </div>
+      <p class="meta-line">
+        Boxes in a lane are <strong>stages in reading order</strong>, not a literal DAG &mdash; the dashed stations run
+        in parallel, fanned out per tool run. Click any station.
+      </p>
+
+      <h2>Running it</h2>
+      <pre>
+# 1. build the universe (once)
+nextflow run benchmark-proteinfamilies --workflow_mode pre --outdir results -profile singularity
+
+# 2. run whatever tool you are benchmarking on results/pre/combined_decoy.faa
+
+# 3. score the tool runs listed in your samplesheet
+nextflow run benchmark-proteinfamilies -c post.config --workflow_mode post -profile singularity
+</pre
+      >
+
+      <h2>Reference</h2>
+
+      <details id="d-stations" open>
+        <summary>Stations <span class="count" id="n-st"></span></summary>
+        <div class="scroller">
+          <table id="st-table">
+            <thead>
+              <tr>
+                <th>Phase</th>
+                <th>Station</th>
+                <th>Process</th>
+                <th>In</th>
+                <th>Out</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details id="d-gotchas">
+        <summary>Things that will bite you <span class="count" id="n-g"></span></summary>
+        <div id="gotchas"></div>
+      </details>
+
+      <details id="d-params">
+        <summary>Key parameters <span class="count" id="n-p"></span></summary>
+        <div class="scroller">
+          <table id="p-table">
+            <thead>
+              <tr>
+                <th>Mode</th>
+                <th>Parameter</th>
+                <th>Default</th>
+                <th>What it does</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </details>
+
+      <footer id="footer"></footer>
+    </div>
+
+    <dialog id="dlg">
+      <div class="dlg-head">
+        <div>
+          <strong id="dlg-title"></strong>
+          <div class="mono" id="dlg-proc"></div>
+        </div>
+        <button class="close" id="dlg-x">Close</button>
+      </div>
+      <div class="dlg-body" id="dlg-body"></div>
+    </dialog>
+
+    <script>
+      const SVGNS = "http://www.w3.org/2000/svg";
+      const W = 222,
+        H = 48,
+        ROW0 = 64,
+        ROWH = 94,
+        DUR = 6;
+      const LANE_X = { pre: 40, tool: 350, post: 660 };
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let D, byId, pos;
+
+      const el = (n, a = {}) => {
+        const e = document.createElementNS(SVGNS, n);
+        for (const k in a) e.setAttribute(k, a[k]);
+        return e;
+      };
+      const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+      const clip = (s, n) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
+
+      fetch("data.json")
+        .then((r) => {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        })
+        .then((d) => {
+          for (const k of ["meta", "lanes", "stations", "gotchas", "params"])
+            if (!d[k]) throw new Error("missing top-level key: " + k);
+          D = d;
+          byId = Object.fromEntries(d.stations.map((s) => [s.id, s]));
+          boot();
+        })
+        .catch((e) => {
+          document.getElementById("errdetail").textContent = " (" + e.message + ")";
+          document.getElementById("err").style.display = "block";
+        });
+
+      // Lane order is the station order in data.json — a station's row is its index within its lane,
+      // so reordering the file reorders the diagram and no coordinate needs touching.
+      function layout() {
+        const seen = {};
+        pos = {};
+        D.stations.forEach((s) => {
+          const i = (seen[s.lane] = (seen[s.lane] ?? -1) + 1);
+          pos[s.id] = { x: LANE_X[s.lane], y: ROW0 + i * ROWH, lane: s.lane, row: i };
+        });
+        // The single middle station is centred against the two workflow lanes rather than pinned
+        // to row 0, because it sits between them in the story, not at the top of one.
+        const mid = D.stations.filter((s) => s.lane === "tool");
+        const tallest = Math.max(...Object.values(pos).map((p) => p.y));
+        mid.forEach((s) => {
+          pos[s.id].y = Math.round((ROW0 + tallest) / 2);
+        });
+      }
+
+      function boot() {
+        layout();
+        document.getElementById("metaline").innerHTML =
+          `<a href="${D.meta.repo}">repository</a> &middot; <a href="${D.meta.readme}">README</a> &middot;
+     <a href="${D.meta.changelog}">CHANGELOG</a> &middot;
+     <a href="${D.meta.agents}">contributor guide</a> &middot;
+     curated families from <a href="${D.meta.interpro}">InterPro</a>`;
+        document.getElementById("footer").innerHTML =
+          `Companion documentation for the <a href="${D.meta.repo}">benchmark-proteinfamilies</a> pipeline.
+     Nothing on this page reflects a real pipeline run &mdash; the numbers quoted are defaults and
+     definitions, not results. The scorecard composite and its ranking are labelled
+     <strong>EXPLORATORY</strong> in the pipeline itself, and the end-to-end benchmark against real
+     curated InterPro families has not been run yet.`;
+        phases();
+        legend();
+        draw();
+        stationTable();
+        gotchas();
+        paramTable();
+        const set = (id, n) => (document.getElementById(id).textContent = n);
+        set("n-st", D.stations.length);
+        set("n-g", D.gotchas.length);
+        set("n-p", D.params.length);
+      }
+
+      function phases() {
+        document.getElementById("phases").innerHTML = D.lanes
+          .map(
+            (l) =>
+              `<p><span class="chip c-${l.id}">${esc(l.label)}</span>
+     <span class="mono">${esc(l.sub)}</span> &mdash; ${esc(l.blurb)}</p>`,
+          )
+          .join("");
+      }
+
+      function legend() {
+        document.getElementById("legend").innerHTML = [
+          ["st-box", "process step"],
+          ["st-box input", "reference input"],
+          ["st-box parallel", "runs in parallel, per tool run"],
+          ["st-box artefact", "the artefacts you carry forward"],
+          ["st-box external", "runs outside this pipeline"],
+        ]
+          .map(
+            ([c, t]) => `<span><svg width="22" height="12" aria-hidden="true"><rect class="${c}"
+       x="1" y="1" width="20" height="10" rx="2"/></svg> ${t}</span>`,
+          )
+          .join("");
+      }
+
+      /* ---- diagram -------------------------------------------------------------
+   Within a lane the flow is a straight vertical drop, so the belt reads as one
+   column per phase. Between lanes it is a cubic pushed out horizontally, which
+   is the hop that leaves the pipeline entirely.                             */
+      function pathFor(a, b) {
+        const p = pos[a.id],
+          q = pos[b.id];
+        if (p.lane === q.lane) {
+          const x = p.x + W / 2;
+          return `M${x},${p.y + H} L${x},${q.y}`;
+        }
+        const sx = p.x + W,
+          sy = p.y + H / 2,
+          tx = q.x,
+          ty = q.y + H / 2;
+        const dx = Math.max(70, (tx - sx) * 0.6);
+        return `M${sx},${sy} C${sx + dx},${sy} ${tx - dx},${ty} ${tx},${ty}`;
+      }
+
+      // Consecutive stations in a lane, plus one hop into and one out of the middle lane.
+      function edges() {
+        const out = [];
+        D.lanes.forEach((l) => {
+          const st = D.stations.filter((s) => s.lane === l.id);
+          st.forEach((s, i) => {
+            if (st[i + 1]) out.push({ from: s, to: st[i + 1], hop: false });
+          });
+        });
+        const lane = (id) => D.stations.filter((s) => s.lane === id);
+        const pre = lane("pre"),
+          tool = lane("tool"),
+          post = lane("post");
+        if (pre.length && tool.length) out.push({ from: pre.at(-1), to: tool[0], hop: true });
+        if (tool.length && post.length) out.push({ from: tool.at(-1), to: post[0], hop: true });
+        return out;
+      }
+
+      function draw() {
+        const svg = document.getElementById("floor");
+        svg.textContent = "";
+        const gB = el("g"),
+          gE = el("g"),
+          gD = el("g"),
+          gS = el("g");
+        svg.append(gB, gE, gD, gS);
+
+        // Band backdrops are measured from the stations they contain, so adding a station
+        // grows its band instead of leaving it clipped.
+        D.lanes.forEach((l) => {
+          const ps = D.stations.filter((s) => s.lane === l.id).map((s) => pos[s.id]);
+          if (!ps.length) return;
+          const top = Math.min(...ps.map((p) => p.y)) - 26;
+          const bot = Math.max(...ps.map((p) => p.y)) + H + 16;
+          gB.append(
+            el("rect", { x: LANE_X[l.id] - 18, y: top, width: W + 36, height: bot - top, rx: 8, class: "band" }),
+          );
+          const t1 = el("text", { x: LANE_X[l.id] - 18, y: top - 20, class: "band-t" });
+          t1.textContent = l.label;
+          const t2 = el("text", { x: LANE_X[l.id] - 18, y: top - 7, class: "band-s" });
+          t2.textContent = l.sub;
+          gB.append(t1, t2);
+        });
+
+        edges().forEach((e, i) => {
+          const id = "p_" + i;
+          gE.append(el("path", { id, d: pathFor(e.from, e.to), class: "e" + (e.hop ? " hop" : "") }));
+          for (let k = 0; k < 2; k++) {
+            const c = el("circle", { r: 4, cx: 0, cy: 0, class: "dot" + (e.hop ? " hop" : "") });
+            gD.append(c);
+            animate(c, id, k, 2);
+          }
+        });
+
+        D.stations.forEach((s) => {
+          const p = pos[s.id];
+          const g = el("g", { class: "st-g", tabindex: "0", role: "button" });
+          g.append(
+            el("rect", {
+              x: p.x,
+              y: p.y,
+              width: W,
+              height: H,
+              rx: 6,
+              class: "st-box " + (s.kind || ""),
+              id: "b_" + s.id,
+            }),
+          );
+          const t1 = el("text", { x: p.x + 11, y: p.y + 20, class: "st-label" });
+          t1.textContent = clip(s.label, 30);
+          const t2 = el("text", { x: p.x + 11, y: p.y + 35, class: "st-sub" });
+          t2.textContent = clip(s.proc, 36);
+          const title = el("title");
+          title.textContent = s.label + " — " + s.proc;
+          g.append(t1, t2, title);
+          const open = () => openPanel(s, g);
+          g.addEventListener("click", open);
+          g.addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter" || ev.key === " ") {
+              ev.preventDefault();
+              open();
+            }
+          });
+          gS.append(g);
+        });
+      }
+
+      // SMIL first; if the engine cannot drive it, fall back to one rAF loop over the same
+      // path geometry. Reduced motion gets neither — dots are simply placed.
+      function animate(circle, pathId, i, total) {
+        const path = document.getElementById(pathId);
+        const place = (f) => {
+          const p = path.getPointAtLength(path.getTotalLength() * f);
+          circle.setAttribute("cx", p.x);
+          circle.setAttribute("cy", p.y);
+        };
+        if (reduce) {
+          place((i + 1) / (total + 1));
+          return;
+        }
+
+        // Negative begin: the animation is already mid-cycle at t=0, so dots sit spread along
+        // the path from the first frame rather than parking on the SVG origin until their turn.
+        const am = el("animateMotion", {
+          dur: DUR + "s",
+          repeatCount: "indefinite",
+          begin: (-i * (DUR / total)).toFixed(2) + "s",
+        });
+        const mp = el("mpath");
+        mp.setAttribute("href", "#" + pathId);
+        mp.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#" + pathId);
+        am.append(mp);
+        circle.append(am);
+
+        if (typeof am.beginElement !== "function") {
+          am.remove();
+          const off = i / total;
+          place(off);
+          const tick = (t) => {
+            place((t / 1000 / DUR + off) % 1);
+            requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }
+      }
+
+      function stationTable() {
+        const tb = document.querySelector("#st-table tbody");
+        tb.innerHTML = "";
+        D.stations.forEach((s) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td><span class="chip c-${s.lane}">${esc(s.lane.toUpperCase())}</span></td>
+      <td></td><td class="mono">${esc(s.proc)}</td>
+      <td class="mono">${esc(s.io.in)}</td><td class="mono">${esc(s.io.out)}</td>`;
+          const b = document.createElement("button");
+          b.className = "rowbtn";
+          b.textContent = s.label;
+          b.setAttribute("aria-haspopup", "dialog");
+          b.onclick = () => openPanel(s, b);
+          tr.children[1].append(b);
+          tb.append(tr);
+        });
+      }
+
+      function gotchas() {
+        document.getElementById("gotchas").innerHTML = D.gotchas
+          .map((g) => `<div class="gotcha"><b>${esc(g.title)}</b><span>${esc(g.body)}</span></div>`)
+          .join("");
+      }
+
+      function paramTable() {
+        document.querySelector("#p-table tbody").innerHTML = D.params
+          .map(
+            (p) => `<tr>
+    <td><span class="chip c-${p.mode}">${esc(p.mode.toUpperCase())}</span></td>
+    <td class="mono">${esc(p.name)}</td><td class="mono">${esc(p.default)}</td>
+    <td>${esc(p.note)}</td></tr>`,
+          )
+          .join("");
+      }
+
+      const dlg = document.getElementById("dlg");
+      document.getElementById("dlg-x").onclick = () => dlg.close();
+
+      function openPanel(s, opener) {
+        document.getElementById("dlg-title").textContent = s.label;
+        document.getElementById("dlg-proc").textContent = s.proc;
+        document.getElementById("dlg-body").innerHTML = `
+    <h4>What it does</h4><p>${esc(s.blurb)}</p>
+    <h4>Input &rarr; output</h4>
+    <p class="mono">${esc(s.io.in)} &rarr; ${esc(s.io.out)}</p>
+    ${
+      s.points && s.points.length
+        ? `<h4>Worth knowing</h4>
+      <ul>${s.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>`
+        : ""
+    }
+    ${
+      s.params && s.params.length
+        ? `<h4>Parameters</h4>
+      <p class="mono">${s.params.map(esc).join(" &middot; ")}</p>`
+        : ""
+    }
+    ${s.caveat ? `<div class="caveat">${esc(s.caveat)}</div>` : ""}`;
+
+        document.querySelectorAll(".st-box.hit").forEach((n) => n.classList.remove("hit"));
+        const box = document.getElementById("b_" + s.id);
+        if (box) box.classList.add("hit");
+        dlg.showModal();
+        dlg.addEventListener("close", () => opener.focus && opener.focus(), { once: true });
+      }
+    </script>
+  </body>
+</html>

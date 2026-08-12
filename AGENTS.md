@@ -317,6 +317,20 @@ reintroduced (verified by mutation). If you add one, check it can fail.
 Hooks: prettier (Nextflow, YAML, Markdown), trailing-whitespace / end-of-file-fixer, ruff (`bin/`),
 and `nextflow lint` in check-only mode. Run them all with `pre-commit run --all-files`.
 
+## Documentation site
+
+`docs/` is a static GitHub Pages site (Settings → Pages → deploy from `main`, folder `/docs`) with
+educational material only — it explains the PRE stations, the tool-agnostic middle step and the POST
+stations, and tracks no real run. `index.html` renders everything from `docs/data.json`, so content
+edits are JSON edits; the station order in `data.json` _is_ the diagram order, and no coordinate
+needs touching to add or move a station.
+
+`fetch()` is blocked on `file://`, so preview it over HTTP:
+
+```bash
+python3 -m http.server -d docs 8080   # then open http://localhost:8080/
+```
+
 ## Open risks
 
 1. **The six `DOWNLOAD_*` remote URLs have never been fetched.** `-profile test_pre_download`
