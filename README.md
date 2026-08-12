@@ -19,6 +19,10 @@ them, and it refuses to score a tool run against a universe it was not built fro
 
 Requires Nextflow >= 24.04.2. A container or conda profile is required alongside any executor profile.
 
+> **Upgrading from v1.0.0?** Every parameter was renamed or replaced, and POST now needs the
+> `id_registry.tsv` and `universe.sha256` that v1.0.0 did not produce — so a v1.0.0 universe cannot
+> be scored by v2.0.0, and PRE must be rerun. See [CHANGELOG.md](CHANGELOG.md) for the mapping.
+
 Contributing? See **[AGENTS.md](AGENTS.md)**.
 
 ## pre-proteinfamilies

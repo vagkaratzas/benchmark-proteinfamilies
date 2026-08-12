@@ -11,9 +11,12 @@ Guidance for coding agents (Claude Code, Codex, etc.) working in this repository
   limits.
 - **`README.md` is for users of the pipeline; `AGENTS.md` is for developers.** Design rationale,
   measurements, conventions and risks belong here, not there.
-- **These three files are the whole documentation set** (`README.md`, `AGENTS.md`, and `CLAUDE.md`,
-  which only points here). Do not add `PLAN.md`, status reports or review logs — fold durable
-  conclusions into these instead.
+- **These four files are the whole documentation set** (`README.md`, `AGENTS.md`, `CHANGELOG.md`,
+  and `CLAUDE.md`, which only points here).
+- **A user-visible change means a `CHANGELOG.md` entry** under the unreleased heading, in the same
+  commit. User-visible means a parameter, an output, a default, or a behaviour someone running the
+  pipeline would notice — not a refactor, a test, or a doc edit. Renaming or removing a parameter
+  also needs a row in that release's _Breaking changes_ table.
 
 ## Project Overview
 
