@@ -22,6 +22,18 @@ workflow PIPELINE_INITIALISATION {
         error "Missing required parameter --outdir."
     }
 
+    // A PRE run whose four member databases are all skipped would build a universe with no
+    // curated families in it -- a benchmark with nothing to score. Caught here rather than
+    // downstream, where it surfaces as an empty-channel deadlock instead of a message.
+    if (params.workflow_mode == 'pre') {
+        def enabled_dbs = ['hamap', 'ncbifam', 'panther', 'pfam'].findAll { db ->
+            params["skip_${db}"].toString().toLowerCase() != 'true'
+        }
+        if (!enabled_dbs) {
+            error "All four member databases are skipped. PRE needs at least one of --skip_hamap, --skip_ncbifam, --skip_panther, --skip_pfam left false."
+        }
+    }
+
     //
     // Coerce and bound-check the numeric params.
     //
@@ -58,13 +70,13 @@ workflow PIPELINE_INITIALISATION {
     Outdir   : ${params.outdir}
 
     PRE parameters:
-      interpro_hierarchy_file : ${params.interpro_hierarchy_file}
-      id_mapping_file         : ${params.id_mapping_file}
-      path_to_hamap           : ${params.path_to_hamap}
-      path_to_ncbifam         : ${params.path_to_ncbifam}
-      path_to_panther         : ${params.path_to_panther}
-      path_to_pfam            : ${params.path_to_pfam}
-      path_to_swissprot       : ${params.path_to_swissprot}
+      interpro_hierarchy_db   : ${params.interpro_hierarchy_db ?: "download <- ${params.interpro_hierarchy_latest_link}"}
+      interpro_mapping_db     : ${params.interpro_mapping_db ?: "download <- ${params.interpro_mapping_latest_link}"}
+      hamap_db                : ${params.skip_hamap ? 'skipped' : params.hamap_db ?: "download <- ${params.hamap_latest_link}"}
+      ncbifam_db              : ${params.skip_ncbifam ? 'skipped' : params.ncbifam_db ?: "download <- ${params.ncbifam_latest_link}"}
+      panther_db              : ${params.skip_panther ? 'skipped' : params.panther_db ?: "download <- ${params.panther_latest_link}"}
+      pfam_db                 : ${params.skip_pfam ? 'skipped' : params.pfam_db ?: "download <- ${params.pfam_latest_link}"}
+      swissprot_db            : ${params.swissprot_db ?: "download <- ${params.swissprot_latest_link}"}
       min_membership          : ${params.min_membership}
       num_per_db              : ${params.num_per_db}
       num_decoys              : ${params.num_decoys}

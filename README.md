@@ -18,19 +18,35 @@ along with unrelated sequences from UniProt-SwissProt.
 A configuration file can provide the following paths:
 
 ```
-interpro_hierarchy_file = '/path/to/interpro/ParentChildTreeFile.txt'
-id_mapping_file         = '/path/to/interpro/interpro.xml.gz'
-path_to_hamap           = '/path/to/hamap/hamap_alignments'
-path_to_ncbifam         = '/path/to/ncbifam/hmm_PGAP'
-path_to_panther         = '/path/to/panther/msa/PANTHER19.0_fasta'
-path_to_pfam            = '/path/to/pfam/37.2/seed/alignments'
-path_to_swissprot       = '/path/to/uniprot/fasta/uniprot_sprot_parsed.fasta'
+interpro_hierarchy_db = '/path/to/interpro/ParentChildTreeFile.txt'
+interpro_mapping_db   = '/path/to/interpro/interpro.xml.gz'
+hamap_db              = '/path/to/hamap/hamap_alignments'
+ncbifam_db            = '/path/to/ncbifam/hmm_PGAP'
+panther_db            = '/path/to/panther/msa/PANTHER19.0_fasta'
+pfam_db               = '/path/to/pfam/37.2/seed/alignments'
+swissprot_db          = '/path/to/uniprot/fasta/uniprot_sprot_parsed.fasta'
 ```
 
-When any of these seven path parameters is `null`, the PRE workflow downloads the corresponding
-reference database into `--db_cache_dir` and uses the cached path. `--db_cache_dir` is a persistent
-Nextflow `storeDir` root, not a published output directory. Keep it outside `work/` and outside
-`--outdir` so cached databases survive work cleanup and are not copied into result bundles.
+When any of these seven `*_db` parameters is `null`, the PRE workflow downloads that database from
+the matching `*_latest_link` parameter. Each database also has a `*_version` parameter, which is
+recorded for provenance only — the link, not the version, decides what gets fetched.
+
+Downloaded databases are published under `<outdir>/pre/databases`. To avoid refetching tens of GB on
+the next run, point the matching `*_db` parameter at the published directory:
+
+```bash
+# first run downloads everything
+nextflow run benchmark-proteinfamilies --workflow_mode pre --outdir results -profile singularity
+
+# later runs reuse it
+nextflow run benchmark-proteinfamilies --workflow_mode pre --outdir results2 -profile singularity \
+    --pfam_db results/pre/databases/pfam \
+    --hamap_db results/pre/databases/hamap_alignments
+```
+
+The four member databases can be skipped individually with `--skip_hamap`, `--skip_ncbifam`,
+`--skip_panther` and `--skip_pfam`; at least one must remain enabled. InterPro and SwissProt cannot
+be skipped: InterPro defines the curated families being sampled, and SwissProt supplies the decoys.
 
 Example versions and formats of the databases can be found [here](#protein-families-database-links-and-versions).
 
@@ -87,8 +103,8 @@ An example run command looks like this:
 ### Protein families database links and versions
 
 If internet access is unavailable on worker nodes, download and decompress the protein family SEED
-alignments yourself and set the path parameters above. Otherwise leave those params as `null` and
-let the PRE workflow populate `--db_cache_dir`.
+alignments yourself and set the `*_db` parameters above. Otherwise leave them as `null` and let the
+PRE workflow download each database from its `*_latest_link`.
 
 ```
 DB  ver link    last_update size

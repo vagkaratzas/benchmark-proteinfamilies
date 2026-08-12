@@ -1,5 +1,5 @@
 process DOWNLOAD_NCBIFAM {
-    tag "ncbifam:current"
+    tag "ncbifam:${params.ncbifam_version}"
     label 'process_download'
 
     conda "${moduleDir}/environment.yml"
@@ -7,21 +7,18 @@ process DOWNLOAD_NCBIFAM {
     // Left unset deliberately: no digest could be resolved or verified offline, and shipping an
     // unverified image would fail at runtime under -profile docker/singularity. Use -profile conda,
     // or supply the database paths directly, until this is pinned.
-    storeDir "${params.db_cache_dir}/ncbifam/current"
 
     output:
     path "ncbifam", emit: alignments
 
-    // No version emit here, deliberately: a topic-channel emit is a `tuple` output, and
-    // Nextflow allows only `val`/`path` outputs on a process with `storeDir`. The persistent
-    // database cache is worth more than a curl/tar version string, so the cache wins.
+    tuple val("${task.process}"), val('curl'), eval("curl --version | head -n1 | sed 's/^curl //; s/ .*//'"), emit: versions_curl, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     """
-    curl -fL --retry 3 -o hmm_PGAP.SEED.tgz https://ftp.ncbi.nlm.nih.gov/hmm/current/hmm_PGAP.SEED.tgz
+    curl -fL --retry 3 -o hmm_PGAP.SEED.tgz ${params.ncbifam_latest_link}
     mkdir -p extract ncbifam
     tar -xzf hmm_PGAP.SEED.tgz -C extract
     find extract -type f -name '*.SEED' -exec mv {} ncbifam/ \\;

@@ -71,16 +71,38 @@ Requires Nextflow >= 24.04.2 (developed against 26.04.4). A container/conda prof
 alongside any executor profile. See `REPORT.md` for copy-pasteable commands on this machine.
 
 ```bash
-# offline smoke test over the committed synthetic fixtures
-nextflow run . -profile test --outdir /tmp/post_test
-nextflow run . -stub -profile test_pre --outdir /tmp/pre_stub
+# offline smoke tests over the committed synthetic fixtures
+nextflow run . -profile test,conda --outdir /tmp/post_test              # POST
+nextflow run . -profile test_pre,conda --outdir /tmp/pre_test           # PRE, every *_db supplied
+nextflow run . -profile test_pre_download,conda --outdir /tmp/pre_dl    # PRE via the DOWNLOAD_* path
 ```
 
-PRE accepts paths to the InterPro hierarchy, XML mapping, and five database directories. **If any of
-those seven path params is `null`, the matching `DOWNLOAD_*` module populates it under
-`--db_cache_dir`.** `--db_cache_dir` is a persistent Nextflow `storeDir` root — keep it outside
-`work/` and outside `--outdir`, or work cleanup will destroy, or output publishing will duplicate,
-tens of GB of reference databases.
+`test_pre` and `test_pre_download` produce a byte-identical universe; they differ only in whether the
+databases arrive from `conf/test_pre.config`'s fixture paths or are fetched by the `DOWNLOAD_*`
+modules from `file://` fixture archives in `assets/fixtures/downloads/`. Both need `-profile conda`
+(the `DOWNLOAD_*` modules ship no container — see the TODO in each).
+
+### Reference databases
+
+Every database follows the same three-param shape:
+
+| Param           | Meaning                                                          |
+| --------------- | ---------------------------------------------------------------- |
+| `*_db`          | path to a copy you already have; when set, nothing is downloaded |
+| `*_latest_link` | URL fetched when `*_db` is null                                  |
+| `*_version`     | **provenance only** — process `tag`, trace, execution report     |
+
+`*_version` does not build the URL and does not select a release; the link does. Bump both together.
+
+Downloaded databases are **published under `<outdir>/pre/databases`**, like any other output. That
+is the whole reuse mechanism: point the matching `--*_db` at the published directory on the next run
+instead of refetching tens of GB. There is no `storeDir` and no `--db_cache_dir` any more, so publish
+somewhere with room, and remember `publish_dir_mode = 'copy'` duplicates rather than moves.
+
+The four member databases (`hamap`, `ncbifam`, `panther`, `pfam`) are individually skippable via
+`--skip_<db>`; InterPro and SwissProt are not, since one drives the sampling design and the other is
+the decoy source. **At least one member database must survive** — `pipeline_initialisation` rejects
+an all-skipped run rather than letting it deadlock on an empty channel downstream.
 
 ## Architecture
 
@@ -88,8 +110,9 @@ Routed in `main.nf` by `--workflow_mode` (`pre` | `post`), wrapped by
 `subworkflows/local/pipeline_initialisation` (nf-schema `validateParameters()` + explicit assertions)
 and `pipeline_completion`.
 
-- **`workflows/pre.nf`** — parses the InterPro hierarchy, extracts metadata from the 4 databases in
-  parallel via one parameterised `EXTRACT_DB_METADATA`, samples families respecting tree structure,
+- **`workflows/pre.nf`** — parses the InterPro hierarchy, extracts metadata from however many
+  member databases survived `--skip_*` (one keyed `DOWNLOAD_DBS.out.member_dbs` channel fanned out
+  through one parameterised `EXTRACT_DB_METADATA`), samples families respecting tree structure,
   emits `sampled_fasta/`, `combined_db.faa`, `id_registry.tsv`, then generates decoys via DIAMOND
   BLASTP against SwissProt and emits `combined_decoy.faa` + `universe.sha256`.
 - **`workflows/post.nf`** — samplesheet-driven, one `meta` map per row, per-`${meta.id}` publishDir.
@@ -138,26 +161,30 @@ There is no `versions.yml` and no collector process.
   processes emit no versions at all). `nextflow lint .` (check only) is what runs in pre-commit and
   is what must stay clean.
 - **A `storeDir` process cannot emit `topic: versions`.** A topic emit is a `tuple` output and
-  Nextflow permits only `val`/`path` outputs alongside `storeDir`, so the six `DOWNLOAD_*` modules
-  emit no versions by design. Adding one back trades the persistent database cache for a `curl`
-  version string.
+  Nextflow permits only `val`/`path` outputs alongside `storeDir`. This is why the `DOWNLOAD_*`
+  modules emitted no versions while they used `storeDir`; they now publish normally and do emit.
+  Reintroducing `storeDir` anywhere means giving up that module's version emit.
+- **Boolean params need `["boolean","string"]` in the schema too**, for exactly the reason the
+  numerics do: `--skip_pfam true` arrives as the String `"true"` and `validateParameters()` rejects
+  it against a bare `boolean` before the workflow's own coercion ever runs. Only the bare-flag form
+  `--skip_pfam` survives a boolean-only schema.
 
 ## Key Parameters
 
-| Param                    | Default                        | Meaning                                                                                                                                                                                                               |
-| ------------------------ | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `min_membership`         | 25                             | minimum proteins per family to be sampled                                                                                                                                                                             |
-| `num_per_db`             | 50                             | families sampled per database                                                                                                                                                                                         |
-| `num_decoys`             | 10000                          | SwissProt decoys                                                                                                                                                                                                      |
-| `seed`                   | `null`                         | **nondeterministic by design.** A fresh random family pool per PRE run is the sampling design; cross-run comparability is enforced by `universe.sha256`, not by seeding. Set it only to reproduce a specific PRE run. |
-| `match_threshold`        | 0.5                            | a reported family match (was `jaccard_similarity_threshold`)                                                                                                                                                          |
-| `association_threshold`  | 0.1                            | an edge considered for split/merge topology                                                                                                                                                                           |
-| `min_intersection_size`  | 3                              | floor on \|G ∩ O\| for an association                                                                                                                                                                                 |
-| `max_unmapped_fraction`  | 0.05                           | hard fail above this                                                                                                                                                                                                  |
-| `max_ambiguous_fraction` | 0.01                           | hard fail above this                                                                                                                                                                                                  |
-| `min_universe_coverage`  | `null`                         | opt-in hard gate; low coverage otherwise only warns                                                                                                                                                                   |
-| `scorecard_weights`      | `null`                         | equal weights                                                                                                                                                                                                         |
-| `db_cache_dir`           | `${projectDir}/data/reference` | persistent `storeDir` root                                                                                                                                                                                            |
+| Param                    | Default | Meaning                                                                                                                                                                                                               |
+| ------------------------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `min_membership`         | 25      | minimum proteins per family to be sampled                                                                                                                                                                             |
+| `num_per_db`             | 50      | families sampled per database                                                                                                                                                                                         |
+| `num_decoys`             | 10000   | SwissProt decoys                                                                                                                                                                                                      |
+| `seed`                   | `null`  | **nondeterministic by design.** A fresh random family pool per PRE run is the sampling design; cross-run comparability is enforced by `universe.sha256`, not by seeding. Set it only to reproduce a specific PRE run. |
+| `match_threshold`        | 0.5     | a reported family match (was `jaccard_similarity_threshold`)                                                                                                                                                          |
+| `association_threshold`  | 0.1     | an edge considered for split/merge topology                                                                                                                                                                           |
+| `min_intersection_size`  | 3       | floor on \|G ∩ O\| for an association                                                                                                                                                                                 |
+| `max_unmapped_fraction`  | 0.05    | hard fail above this                                                                                                                                                                                                  |
+| `max_ambiguous_fraction` | 0.01    | hard fail above this                                                                                                                                                                                                  |
+| `min_universe_coverage`  | `null`  | opt-in hard gate; low coverage otherwise only warns                                                                                                                                                                   |
+| `scorecard_weights`      | `null`  | equal weights                                                                                                                                                                                                         |
+| `skip_<db>`              | `false` | skip one of the four member databases (`hamap`, `ncbifam`, `panther`, `pfam`). At least one must stay enabled.                                                                                                        |
 
 `match_threshold` and `association_threshold` are two different notions of "match" in one report —
 never conflate them.

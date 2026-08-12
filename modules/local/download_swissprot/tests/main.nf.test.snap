@@ -5,15 +5,29 @@
                 "0": [
                     "uniprot_sprot.fasta:md5,ce0b6d1241fe9e99fcd15f6a93b82313"
                 ],
+                "1": [
+                    [
+                        "DOWNLOAD_SWISSPROT",
+                        "curl",
+                        "7.81.0"
+                    ]
+                ],
                 "fasta": [
                     "uniprot_sprot.fasta:md5,ce0b6d1241fe9e99fcd15f6a93b82313"
+                ],
+                "versions_curl": [
+                    [
+                        "DOWNLOAD_SWISSPROT",
+                        "curl",
+                        "7.81.0"
+                    ]
                 ]
             }
         ],
-        "timestamp": "2026-07-11T09:16:21.527978232",
+        "timestamp": "2026-08-12T09:32:57.236917299",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.04.4"
+            "nextflow": "26.04.6"
         }
     }
 }

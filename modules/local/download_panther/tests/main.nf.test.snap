@@ -7,17 +7,31 @@
                         "PTHR00001.fasta:md5,7a36274e92393119ad1361880a255ebe"
                     ]
                 ],
+                "1": [
+                    [
+                        "DOWNLOAD_PANTHER",
+                        "curl",
+                        "7.81.0"
+                    ]
+                ],
                 "alignments": [
                     [
                         "PTHR00001.fasta:md5,7a36274e92393119ad1361880a255ebe"
                     ]
+                ],
+                "versions_curl": [
+                    [
+                        "DOWNLOAD_PANTHER",
+                        "curl",
+                        "7.81.0"
+                    ]
                 ]
             }
         ],
-        "timestamp": "2026-07-11T09:16:08.392194727",
+        "timestamp": "2026-08-12T09:32:46.187577852",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.04.4"
+            "nextflow": "26.04.6"
         }
     }
 }

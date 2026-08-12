@@ -42,14 +42,16 @@ def parse_args():
     parser.add_argument(
         "--metadata_file", required=True, help="Path to the sampled_metadata.csv file"
     )
-    parser.add_argument("--hamap", required=True, help="Path to HAMAP alignment folder")
     parser.add_argument(
-        "--ncbifam", required=True, help="Path to NCBIfam alignment folder"
+        "--db",
+        action="append",
+        required=True,
+        metavar="NAME=PATH",
+        help=(
+            "Member database alignment folder as NAME=PATH, e.g. pfam=/path/to/pfam. "
+            "Repeat once per database; databases skipped by the pipeline are simply absent."
+        ),
     )
-    parser.add_argument(
-        "--panther", required=True, help="Path to Panther alignment folder"
-    )
-    parser.add_argument("--pfam", required=True, help="Path to Pfam alignment folder")
     parser.add_argument(
         "--output_folder", required=True, help="Output sampled FASTA dir"
     )
@@ -197,15 +199,21 @@ def write_registry(path: Path, rows, seed=None):
         writer.writerows(rows)
 
 
+def parse_db_args(items):
+    """Turn the repeated NAME=PATH arguments into the {db: folder} map the walk below expects."""
+    db_paths = {}
+    for item in items:
+        name, sep, path = item.partition("=")
+        if not sep or not name or not path:
+            raise ValueError(f"--db expects NAME=PATH, got {item!r}")
+        db_paths[name.lower()] = Path(path)
+    return db_paths
+
+
 def main():
     args = parse_args()
 
-    db_paths = {
-        "hamap": Path(args.hamap),
-        "ncbifam": Path(args.ncbifam),
-        "panther": Path(args.panther),
-        "pfam": Path(args.pfam),
-    }
+    db_paths = parse_db_args(args.db)
 
     output_base = Path(args.output_folder)
     updated_metadata = []
@@ -241,7 +249,9 @@ def main():
 
             matching_file = find_matching_file(base_path, dbkey)
             if not matching_file:
-                log.write(f"[NOT FOUND] {dbkey} in {base_path}\n")
+                # The database name, not base_path: the caller stages these directories under
+                # generated names, so logging the path would make the report depend on staging.
+                log.write(f"[NOT FOUND] {dbkey} in {db}\n")
                 continue
 
             fmt = detect_format(matching_file)

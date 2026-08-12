@@ -27,62 +27,146 @@
         "pre_options": {
             "title": "PRE workflow options",
             "type": "object",
-            "description": "Parameters used when workflow_mode is 'pre'. Path parameters in this section are required for PRE runs and ignored by POST runs.",
+            "description": "Parameters used when workflow_mode is 'pre' and ignored by POST runs. Each reference database takes a *_db path, a *_latest_link URL used when that path is null, and a *_version string kept for provenance only.",
             "properties": {
-                "interpro_hierarchy_file": {
+                "interpro_hierarchy_db": {
                     "type": ["string", "null"],
-                    "description": "PRE-only required path to the InterPro ParentChildTreeFile.txt hierarchy.",
-                    "default": null
+                    "description": "Path to the InterPro ParentChildTreeFile.txt hierarchy.",
+                    "default": null,
+                    "help_text": "Leave null to download it from the matching *_latest_link. Downloaded databases are published under <outdir>/pre/databases; point this parameter at that directory to reuse them on a later run instead of refetching."
                 },
-                "id_mapping_file": {
-                    "type": ["string", "null"],
-                    "description": "PRE-only required path to the InterPro XML mapping file read by EXTRACT_CANDIDATE_INTERPRO_FAMILIES, typically interpro.xml.gz.",
-                    "default": null
-                },
-                "path_to_hamap": {
-                    "type": ["string", "null"],
-                    "description": "PRE-only required path to the HAMAP alignment directory.",
-                    "default": null
-                },
-                "path_to_ncbifam": {
-                    "type": ["string", "null"],
-                    "description": "PRE-only required path to the NCBIFAM alignment directory.",
-                    "default": null
-                },
-                "path_to_panther": {
-                    "type": ["string", "null"],
-                    "description": "PRE-only required path to the PANTHER alignment directory.",
-                    "default": null
-                },
-                "path_to_pfam": {
-                    "type": ["string", "null"],
-                    "description": "PRE-only required path to the PFAM alignment directory.",
-                    "default": null
-                },
-                "path_to_swissprot": {
-                    "type": ["string", "null"],
-                    "description": "PRE-only required path to the SwissProt FASTA used for decoy selection.",
-                    "default": null
-                },
-                "db_cache_dir": {
+                "interpro_hierarchy_latest_link": {
                     "type": "string",
-                    "description": "Persistent storeDir root for downloaded reference databases used when PRE database path parameters are null. Must not be inside work/ or outdir/.",
-                    "default": "data/reference"
+                    "description": "URL of the InterPro ParentChildTreeFile.txt fetched when interpro_hierarchy_db is null.",
+                    "default": "https://ftp.ebi.ac.uk/pub/databases/interpro/current_release/ParentChildTreeFile.txt"
+                },
+                "interpro_mapping_db": {
+                    "type": ["string", "null"],
+                    "description": "Path to the InterPro XML mapping file read by EXTRACT_CANDIDATE_INTERPRO_FAMILIES, typically interpro.xml.gz.",
+                    "default": null,
+                    "help_text": "Leave null to download it from the matching *_latest_link. Downloaded databases are published under <outdir>/pre/databases; point this parameter at that directory to reuse them on a later run instead of refetching."
+                },
+                "interpro_mapping_latest_link": {
+                    "type": "string",
+                    "description": "URL of the InterPro XML mapping file fetched when interpro_mapping_db is null.",
+                    "default": "https://ftp.ebi.ac.uk/pub/databases/interpro/current_release/interpro.xml.gz"
                 },
                 "interpro_release": {
                     "type": "string",
-                    "description": "InterPro release directory to download when interpro_hierarchy_file or id_mapping_file is null. Use 'current' for the current_release FTP directory.",
+                    "description": "InterPro release recorded for provenance in the process tag and execution report. Downloads follow the interpro_*_latest_link parameters, not this value.",
                     "default": "current"
                 },
-                "pfam_version": {
+                "skip_hamap": {
+                    "type": ["boolean", "string"],
+                    "fa_icon": "fas fa-ban",
+                    "description": "Skip the HAMAP member database entirely.",
+                    "default": false,
+                    "help_text": "Families belonging to this database are excluded from the benchmark universe. At least one of the four member databases must remain enabled. Nextflow passes `--skip_x true` from the CLI as a string, so a string-encoded boolean is accepted here; the workflow coerces it. The bare flag form `--skip_x` also works.",
+                    "pattern": "^(true|false)$"
+                },
+                "hamap_db": {
+                    "type": ["string", "null"],
+                    "description": "Path to the HAMAP alignment directory.",
+                    "default": null,
+                    "help_text": "Leave null to download it from the matching *_latest_link. Downloaded databases are published under <outdir>/pre/databases; point this parameter at that directory to reuse them on a later run instead of refetching."
+                },
+                "hamap_latest_link": {
                     "type": "string",
-                    "description": "Pfam release version used when path_to_pfam is null.",
-                    "default": "37.2"
+                    "description": "URL of the HAMAP archive fetched when hamap_db is null.",
+                    "default": "https://ftp.expasy.org/databases/hamap/old/hamap_alignments.tar.gz"
+                },
+                "hamap_version": {
+                    "type": "string",
+                    "description": "HAMAP release recorded for provenance in the process tag and execution report. Downloads follow hamap_latest_link, not this value.",
+                    "default": "current"
+                },
+                "skip_ncbifam": {
+                    "type": ["boolean", "string"],
+                    "fa_icon": "fas fa-ban",
+                    "description": "Skip the NCBIfam member database entirely.",
+                    "default": false,
+                    "help_text": "Families belonging to this database are excluded from the benchmark universe. At least one of the four member databases must remain enabled. Nextflow passes `--skip_x true` from the CLI as a string, so a string-encoded boolean is accepted here; the workflow coerces it. The bare flag form `--skip_x` also works.",
+                    "pattern": "^(true|false)$"
+                },
+                "ncbifam_db": {
+                    "type": ["string", "null"],
+                    "description": "Path to the NCBIfam SEED alignment directory.",
+                    "default": null,
+                    "help_text": "Leave null to download it from the matching *_latest_link. Downloaded databases are published under <outdir>/pre/databases; point this parameter at that directory to reuse them on a later run instead of refetching."
+                },
+                "ncbifam_latest_link": {
+                    "type": "string",
+                    "description": "URL of the NCBIfam archive fetched when ncbifam_db is null.",
+                    "default": "https://ftp.ncbi.nlm.nih.gov/hmm/current/hmm_PGAP.SEED.tgz"
+                },
+                "ncbifam_version": {
+                    "type": "string",
+                    "description": "NCBIfam release recorded for provenance in the process tag and execution report. Downloads follow ncbifam_latest_link, not this value.",
+                    "default": "current"
+                },
+                "skip_panther": {
+                    "type": ["boolean", "string"],
+                    "fa_icon": "fas fa-ban",
+                    "description": "Skip the PANTHER member database entirely.",
+                    "default": false,
+                    "help_text": "Families belonging to this database are excluded from the benchmark universe. At least one of the four member databases must remain enabled. Nextflow passes `--skip_x true` from the CLI as a string, so a string-encoded boolean is accepted here; the workflow coerces it. The bare flag form `--skip_x` also works.",
+                    "pattern": "^(true|false)$"
+                },
+                "panther_db": {
+                    "type": ["string", "null"],
+                    "description": "Path to the PANTHER FASTA/MSA directory.",
+                    "default": null,
+                    "help_text": "Leave null to download it from the matching *_latest_link. Downloaded databases are published under <outdir>/pre/databases; point this parameter at that directory to reuse them on a later run instead of refetching."
+                },
+                "panther_latest_link": {
+                    "type": "string",
+                    "description": "URL of the PANTHER archive fetched when panther_db is null.",
+                    "default": "https://data.pantherdb.org/ftp/panther_library/current_release/PANTHER19.0_fasta.tgz"
                 },
                 "panther_version": {
                     "type": "string",
-                    "description": "PANTHER library version used when path_to_panther is null.",
+                    "description": "PANTHER release recorded for provenance in the process tag and execution report. Downloads follow panther_latest_link, not this value.",
                     "default": "19.0"
+                },
+                "skip_pfam": {
+                    "type": ["boolean", "string"],
+                    "fa_icon": "fas fa-ban",
+                    "description": "Skip the Pfam member database entirely.",
+                    "default": false,
+                    "help_text": "Families belonging to this database are excluded from the benchmark universe. At least one of the four member databases must remain enabled. Nextflow passes `--skip_x true` from the CLI as a string, so a string-encoded boolean is accepted here; the workflow coerces it. The bare flag form `--skip_x` also works.",
+                    "pattern": "^(true|false)$"
+                },
+                "pfam_db": {
+                    "type": ["string", "null"],
+                    "description": "Path to the Pfam seed alignment directory.",
+                    "default": null,
+                    "help_text": "Leave null to download it from the matching *_latest_link. Downloaded databases are published under <outdir>/pre/databases; point this parameter at that directory to reuse them on a later run instead of refetching."
+                },
+                "pfam_latest_link": {
+                    "type": "string",
+                    "description": "URL of the Pfam archive fetched when pfam_db is null.",
+                    "default": "https://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam37.2/Pfam-A.seed.gz"
+                },
+                "pfam_version": {
+                    "type": "string",
+                    "description": "Pfam release recorded for provenance in the process tag and execution report. Downloads follow pfam_latest_link, not this value.",
+                    "default": "37.2"
+                },
+                "swissprot_db": {
+                    "type": ["string", "null"],
+                    "description": "Path to the SwissProt FASTA used for decoy selection.",
+                    "default": null,
+                    "help_text": "Leave null to download it from the matching *_latest_link. Downloaded databases are published under <outdir>/pre/databases; point this parameter at that directory to reuse them on a later run instead of refetching."
+                },
+                "swissprot_latest_link": {
+                    "type": "string",
+                    "description": "URL of the gzipped SwissProt FASTA fetched when swissprot_db is null.",
+                    "default": "https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz"
+                },
+                "swissprot_version": {
+                    "type": "string",
+                    "description": "SwissProt release recorded for provenance in the process tag and execution report. Downloads follow swissprot_latest_link, not this value.",
+                    "default": "current"
                 },
                 "min_membership": {
                     "type": ["integer", "string"],
@@ -202,9 +286,11 @@
                     "default": null
                 },
                 "skip_multiqc": {
-                    "type": "boolean",
+                    "type": ["boolean", "string"],
                     "description": "Skip MultiQC report generation for POST runs when true.",
-                    "default": false
+                    "default": false,
+                    "pattern": "^(true|false)$",
+                    "help_text": "Nextflow passes `--skip_x true` from the CLI as a string, so a string-encoded boolean is accepted here; the workflow coerces it. The bare flag form `--skip_x` also works."
                 }
             }
         },

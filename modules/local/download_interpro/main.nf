@@ -7,25 +7,20 @@ process DOWNLOAD_INTERPRO {
     // Left unset deliberately: no digest could be resolved or verified offline, and shipping an
     // unverified image would fail at runtime under -profile docker/singularity. Use -profile conda,
     // or supply the database paths directly, until this is pinned.
-    storeDir "${params.db_cache_dir}/interpro/${params.interpro_release}"
 
     output:
     path "ParentChildTreeFile.txt", emit: hierarchy
     path "interpro.xml.gz"       , emit: mapping
 
-    // No version emit here, deliberately: a topic-channel emit is a `tuple` output, and
-    // Nextflow allows only `val`/`path` outputs on a process with `storeDir`. The persistent
-    // database cache is worth more than a curl/tar version string, so the cache wins.
+    tuple val("${task.process}"), val('curl'), eval("curl --version | head -n1 | sed 's/^curl //; s/ .*//'"), emit: versions_curl, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def releaseDir = params.interpro_release == 'current' ? 'current_release' : params.interpro_release
-    def baseUrl = "https://ftp.ebi.ac.uk/pub/databases/interpro/${releaseDir}"
     """
-    curl -fL --retry 3 -o ParentChildTreeFile.txt ${baseUrl}/ParentChildTreeFile.txt
-    curl -fL --retry 3 -o interpro.xml.gz ${baseUrl}/interpro.xml.gz
+    curl -fL --retry 3 -o ParentChildTreeFile.txt ${params.interpro_hierarchy_latest_link}
+    curl -fL --retry 3 -o interpro.xml.gz ${params.interpro_mapping_latest_link}
     test -s ParentChildTreeFile.txt
     test -s interpro.xml.gz
     """

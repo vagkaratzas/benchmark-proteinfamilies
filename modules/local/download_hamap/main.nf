@@ -1,5 +1,5 @@
 process DOWNLOAD_HAMAP {
-    tag "hamap:current"
+    tag "hamap:${params.hamap_version}"
     label 'process_download'
 
     conda "${moduleDir}/environment.yml"
@@ -7,21 +7,18 @@ process DOWNLOAD_HAMAP {
     // Left unset deliberately: no digest could be resolved or verified offline, and shipping an
     // unverified image would fail at runtime under -profile docker/singularity. Use -profile conda,
     // or supply the database paths directly, until this is pinned.
-    storeDir "${params.db_cache_dir}/hamap/current"
 
     output:
     path "hamap_alignments", emit: alignments
 
-    // No version emit here, deliberately: a topic-channel emit is a `tuple` output, and
-    // Nextflow allows only `val`/`path` outputs on a process with `storeDir`. The persistent
-    // database cache is worth more than a curl/tar version string, so the cache wins.
+    tuple val("${task.process}"), val('curl'), eval("curl --version | head -n1 | sed 's/^curl //; s/ .*//'"), emit: versions_curl, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     """
-    curl -fL --retry 3 -o hamap_alignments.tar.gz https://ftp.expasy.org/databases/hamap/old/hamap_alignments.tar.gz
+    curl -fL --retry 3 -o hamap_alignments.tar.gz ${params.hamap_latest_link}
     mkdir -p extract hamap_alignments
     tar -xzf hamap_alignments.tar.gz -C extract
     find extract -type f -name '*.msa' -exec mv {} hamap_alignments/ \\;

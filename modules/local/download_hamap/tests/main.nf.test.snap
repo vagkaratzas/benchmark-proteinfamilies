@@ -7,17 +7,31 @@
                         "MF_00001.msa:md5,6b5269e739a85ca2c15573fc53d25a3a"
                     ]
                 ],
+                "1": [
+                    [
+                        "DOWNLOAD_HAMAP",
+                        "curl",
+                        "7.81.0"
+                    ]
+                ],
                 "alignments": [
                     [
                         "MF_00001.msa:md5,6b5269e739a85ca2c15573fc53d25a3a"
                     ]
+                ],
+                "versions_curl": [
+                    [
+                        "DOWNLOAD_HAMAP",
+                        "curl",
+                        "7.81.0"
+                    ]
                 ]
             }
         ],
-        "timestamp": "2026-07-11T09:15:46.376882896",
+        "timestamp": "2026-08-12T09:32:29.017990625",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.04.4"
+            "nextflow": "26.04.6"
         }
     }
 }

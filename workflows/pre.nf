@@ -18,13 +18,17 @@ include { PREPARE_BENCHMARK_FASTA             } from '../modules/local/prepare_b
 workflow PRE {
 
     take:
-    interpro_hierarchy_file
-    id_mapping_file
-    path_to_hamap
-    path_to_ncbifam
-    path_to_panther
-    path_to_pfam
-    path_to_swissprot
+    interpro_hierarchy_db
+    interpro_mapping_db
+    hamap_db
+    ncbifam_db
+    panther_db
+    pfam_db
+    swissprot_db
+    skip_hamap
+    skip_ncbifam
+    skip_panther
+    skip_pfam
     min_membership
     num_per_db
     num_decoys
@@ -32,16 +36,21 @@ workflow PRE {
 
     main:
     //
-    // Resolve the reference databases: any path the user left null is downloaded and cached.
+    // Resolve the reference databases: any *_db the user left null is downloaded from its
+    // *_latest_link, and any skipped member database contributes nothing at all.
     //
     DOWNLOAD_DBS(
-        interpro_hierarchy_file,
-        id_mapping_file,
-        path_to_hamap,
-        path_to_ncbifam,
-        path_to_panther,
-        path_to_pfam,
-        path_to_swissprot
+        interpro_hierarchy_db,
+        interpro_mapping_db,
+        hamap_db,
+        ncbifam_db,
+        panther_db,
+        pfam_db,
+        swissprot_db,
+        skip_hamap,
+        skip_ncbifam,
+        skip_panther,
+        skip_pfam
     )
 
     //
@@ -58,16 +67,11 @@ workflow PRE {
     )
 
     //
-    // Count family membership in each database. One parameterised module handles all four, so
-    // the databases fan out in parallel and a new database means a new channel, not new code.
+    // Count family membership in each database. One parameterised module handles whichever
+    // databases arrived, so they fan out in parallel and a new database means a new channel
+    // element, not new code.
     //
-    ch_db_metadata_inputs = DOWNLOAD_DBS.out.hamap.map { hamap -> [[id: 'hamap', db_type: 'hamap'], hamap] }
-        .mix(
-            DOWNLOAD_DBS.out.ncbifam.map { ncbifam -> [[id: 'ncbifam', db_type: 'ncbifam'], ncbifam] },
-            DOWNLOAD_DBS.out.panther.map { panther -> [[id: 'panther', db_type: 'panther'], panther] },
-            DOWNLOAD_DBS.out.pfam.map { pfam -> [[id: 'pfam', db_type: 'pfam'], pfam] }
-        )
-    EXTRACT_DB_METADATA( ch_db_metadata_inputs )
+    EXTRACT_DB_METADATA( DOWNLOAD_DBS.out.member_dbs )
 
     // A candidate is only usable if it resolves to a family that exists in the downloaded
     // databases -- InterPro lists members that a given database release may not ship.
@@ -90,12 +94,16 @@ workflow PRE {
         seed
     )
 
+    // The module is told which database each staged directory is, because staging renames the
+    // directories to break basename collisions between user-supplied paths. Sorting by id keeps
+    // the pairing stable, so a rerun stages the same directory under the same name.
+    ch_named_member_dbs = DOWNLOAD_DBS.out.member_dbs
+        .toSortedList { a, b -> a[0].id <=> b[0].id }
+        .map { rows -> [rows.collect { meta, _db -> meta.id }, rows.collect { _meta, db -> db }] }
+
     PREPARE_BENCHMARK_FASTA(
         SAMPLE_INTERPRO.out.metadata,
-        DOWNLOAD_DBS.out.hamap,
-        DOWNLOAD_DBS.out.ncbifam,
-        DOWNLOAD_DBS.out.panther,
-        DOWNLOAD_DBS.out.pfam,
+        ch_named_member_dbs,
         seed
     )
 

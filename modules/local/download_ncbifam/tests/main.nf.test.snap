@@ -7,17 +7,31 @@
                         "NF000001.1.SEED:md5,2741e6e6f2afffa57c732f86eae3f3ad"
                     ]
                 ],
+                "1": [
+                    [
+                        "DOWNLOAD_NCBIFAM",
+                        "curl",
+                        "7.81.0"
+                    ]
+                ],
                 "alignments": [
                     [
                         "NF000001.1.SEED:md5,2741e6e6f2afffa57c732f86eae3f3ad"
                     ]
+                ],
+                "versions_curl": [
+                    [
+                        "DOWNLOAD_NCBIFAM",
+                        "curl",
+                        "7.81.0"
+                    ]
                 ]
             }
         ],
-        "timestamp": "2026-07-11T09:16:01.81733707",
+        "timestamp": "2026-08-12T09:32:40.387625277",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.04.4"
+            "nextflow": "26.04.6"
         }
     }
 }

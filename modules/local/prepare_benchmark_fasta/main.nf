@@ -9,10 +9,10 @@ process PREPARE_BENCHMARK_FASTA {
 
     input:
     path sampled_metadata
-    path hamap
-    path ncbifam
-    path panther
-    path pfam
+    // db_names is aligned with db_dirs by position. The directories are restaged under generated
+    // names so that two databases supplied from paths with the same basename cannot collide, which
+    // is exactly why the names have to travel alongside them rather than be read off the path.
+    tuple val(db_names), path(db_dirs, stageAs: 'member_db_*')
     val seed
 
     output:
@@ -31,13 +31,15 @@ process PREPARE_BENCHMARK_FASTA {
 
     script:
     def seed_arg = seed == null ? '' : "--seed ${seed}"
+    // A single-element input arrives as a bare value rather than a list, so both are normalised
+    // before being zipped -- otherwise a one-database run would iterate over characters.
+    def names = db_names instanceof List ? db_names : [db_names]
+    def dirs = db_dirs instanceof List ? db_dirs : [db_dirs]
+    def db_args = [names, dirs].transpose().collect { name, dir -> "--db ${name}=${dir}" }.join(' \\\n        ')
     """
     prepare_benchmark_fasta.py \\
         --metadata_file ${sampled_metadata} \\
-        --hamap ${hamap} \\
-        --ncbifam ${ncbifam} \\
-        --panther ${panther} \\
-        --pfam ${pfam} \\
+        ${db_args} \\
         --output_folder sampled_fasta \\
         --updated_metadata_file updated_sampled_metadata.csv \\
         --combined_fasta combined_db.faa \\

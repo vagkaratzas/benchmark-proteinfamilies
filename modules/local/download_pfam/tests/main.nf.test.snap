@@ -7,17 +7,45 @@
                         "PF00001.sto:md5,9e09992bb1f0fb0e56f8226cf9fc9d8b"
                     ]
                 ],
+                "1": [
+                    [
+                        "DOWNLOAD_PFAM",
+                        "curl",
+                        "7.81.0"
+                    ]
+                ],
+                "2": [
+                    [
+                        "DOWNLOAD_PFAM",
+                        "python",
+                        "3.10.18"
+                    ]
+                ],
                 "alignments": [
                     [
                         "PF00001.sto:md5,9e09992bb1f0fb0e56f8226cf9fc9d8b"
                     ]
+                ],
+                "versions_curl": [
+                    [
+                        "DOWNLOAD_PFAM",
+                        "curl",
+                        "7.81.0"
+                    ]
+                ],
+                "versions_python": [
+                    [
+                        "DOWNLOAD_PFAM",
+                        "python",
+                        "3.10.18"
+                    ]
                 ]
             }
         ],
-        "timestamp": "2026-07-11T09:16:14.919224869",
+        "timestamp": "2026-08-12T09:32:51.611977631",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.04.4"
+            "nextflow": "26.04.6"
         }
     }
 }

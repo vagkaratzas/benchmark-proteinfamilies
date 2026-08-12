@@ -7,37 +7,32 @@ process DOWNLOAD_PANTHER {
     // Left unset deliberately: no digest could be resolved or verified offline, and shipping an
     // unverified image would fail at runtime under -profile docker/singularity. Use -profile conda,
     // or supply the database paths directly, until this is pinned.
-    storeDir "${params.db_cache_dir}/panther/${params.panther_version}"
 
     output:
-    path "PANTHER${params.panther_version}_fasta", emit: alignments
+    // Named for the database, not the release: the version lives in the `tag` and in
+    // --panther_version, so bumping a release does not rename an output channel.
+    path "panther", emit: alignments
 
-    // No version emit here, deliberately: a topic-channel emit is a `tuple` output, and
-    // Nextflow allows only `val`/`path` outputs on a process with `storeDir`. The persistent
-    // database cache is worth more than a curl/tar version string, so the cache wins.
+    tuple val("${task.process}"), val('curl'), eval("curl --version | head -n1 | sed 's/^curl //; s/ .*//'"), emit: versions_curl, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def releaseDir = params.panther_version == 'current' ? 'current_release' : params.panther_version
-    def archiveVersion = params.panther_version == 'current' ? '19.0' : params.panther_version
-    def archive = "PANTHER${archiveVersion}_fasta.tgz"
-    def outputDir = "PANTHER${params.panther_version}_fasta"
     """
-    echo "[WARN] PANTHER FASTA/MSA archive is large; ensure ${params.db_cache_dir}/panther/${params.panther_version} has sufficient persistent storage." >&2
-    curl -fL --retry 3 -o ${archive} https://data.pantherdb.org/ftp/panther_library/${releaseDir}/${archive}
-    mkdir -p extract ${outputDir}
-    tar -xzf ${archive} -C extract
-    find extract -type f -name '*.fasta' -exec mv {} ${outputDir}/ \\;
-    rm -rf extract ${archive}
-    find ${outputDir} -type f -name '*.fasta' -print -quit | grep -q .
+    echo "[WARN] The PANTHER FASTA/MSA archive is large; ensure the work directory and --outdir have sufficient storage." >&2
+    curl -fL --retry 3 -o panther.tgz ${params.panther_latest_link}
+    mkdir -p extract panther
+    tar -xzf panther.tgz -C extract
+    find extract -type f -name '*.fasta' -exec mv {} panther/ \\;
+    rm -rf extract panther.tgz
+    find panther -type f -name '*.fasta' -print -quit | grep -q .
     """
 
     stub:
     """
-    mkdir -p PANTHER${params.panther_version}_fasta
-    cat > PANTHER${params.panther_version}_fasta/PTHR00001.fasta <<'EOF'
+    mkdir -p panther
+    cat > panther/PTHR00001.fasta <<'EOF'
     >stub_panther_seq
     MAAA
     EOF

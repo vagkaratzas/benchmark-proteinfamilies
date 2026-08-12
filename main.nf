@@ -22,13 +22,19 @@ workflow BENCHMARK_PROTEINFAMILIES {
     //
     if (workflow_mode == "pre") {
         PRE(
-            params.interpro_hierarchy_file,
-            params.id_mapping_file,
-            params.path_to_hamap,
-            params.path_to_ncbifam,
-            params.path_to_panther,
-            params.path_to_pfam,
-            params.path_to_swissprot,
+            params.interpro_hierarchy_db,
+            params.interpro_mapping_db,
+            params.hamap_db,
+            params.ncbifam_db,
+            params.panther_db,
+            params.pfam_db,
+            params.swissprot_db,
+            // Same String-truthiness trap as skip_multiqc below: `--skip_pfam false` arrives as
+            // the String "false", so the flags are coerced here rather than tested raw.
+            params.skip_hamap.toString().toLowerCase() == 'true',
+            params.skip_ncbifam.toString().toLowerCase() == 'true',
+            params.skip_panther.toString().toLowerCase() == 'true',
+            params.skip_pfam.toString().toLowerCase() == 'true',
             params.min_membership,
             params.num_per_db,
             params.num_decoys,
